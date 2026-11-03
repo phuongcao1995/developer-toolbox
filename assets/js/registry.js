@@ -16,6 +16,7 @@ export const TOOLS = [
   t('cyberchef', 'Data Converter', 'CyberChef-style pipeline: Base64, URL, Hex, HTML entities, SHA-256, MD5, UTF-8.', 'data', 'chef-hat', ['cyberchef', 'encode', 'decode', 'hash', 'sha256', 'md5', 'hex', 'pipeline']),
   t('jwt-decoder', 'JWT Decoder', 'Decode JSON Web Tokens and inspect header, payload and expiry (no signature check).', 'data', 'key-round', ['jwt', 'token', 'bearer', 'auth', 'decode', 'claims']),
   t('regex-tester', 'Regex Tester', 'Test JavaScript regular expressions with live match and group highlighting.', 'data', 'regex', ['regex', 'regexp', 'pattern', 'match', 'groups']),
+  t('saltbox', 'Saltbox', 'Hash (SHA/MD5), PBKDF2 password hashing, AES-GCM encryption, CryptoJS-compatible AES, secure random generator and encoders — all local.', 'data', 'lock-keyhole', ['saltbox', 'hash', 'sha256', 'md5', 'pbkdf2', 'salt', 'password', 'aes', 'encrypt', 'decrypt', 'cryptojs', 'random', 'key', 'iv']),
   t('api-client', 'API Client', 'Send HTTP requests, inspect responses, and keep a request history.', 'data', 'send', ['http', 'rest', 'request', 'fetch', 'postman', 'headers']),
 
   t('diff-checker', 'Diff Checker', 'Compare two texts side-by-side or unified with highlighted changes.', 'text', 'git-compare', ['diff', 'compare', 'difference', 'merge']),

@@ -23,7 +23,7 @@ Open <http://localhost:8080>. Routing is hash-based (`#/tool/json-formatter`), s
 
 | Category | Tools |
 |---|---|
-| JSON & Data | JSON Formatter · Data Converter (CyberChef-style) · JWT Decoder · Regex Tester · API Client |
+| JSON & Data | JSON Formatter · Data Converter (CyberChef-style) · JWT Decoder · Saltbox (hash, PBKDF2, AES-GCM, random generator) · Regex Tester · API Client |
 | Text & Docs | Diff Checker · Markdown Editor · Markdown Viewer · Code Beautifier · SQL Formatter |
 | Code Development | Prettier Playground · Code Image Generator · Base64 Converter |
 | URL, Time & Utilities | URL Encoder/Decoder · Cron Generator · UUID Generator · Timestamp Converter |
@@ -72,6 +72,8 @@ docs/architecture.md  tool contract and architecture
 ```bash
 node --input-type=module -e "import('./tools/uuid-generator/logic.js').then(m => console.log(Object.keys(m)))"
 ```
+
+Saltbox ships its own Node tests (crypto vectors and round-trips): `node tools/saltbox/tests/run-tests.js`.
 
 ## Browser support
 Current Chrome, Edge, Firefox, Safari (ES2020+, `color-mix`, `crypto.subtle` on secure contexts — `localhost` counts).

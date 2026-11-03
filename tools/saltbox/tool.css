@@ -1,0 +1,97 @@
+/* Saltbox – every selector is scoped under .tool-saltbox and uses the shell's theme tokens. */
+.tool-saltbox .sb-tool { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }
+.tool-saltbox .sb-tool[hidden] { display: none; }
+.tool-saltbox .sb-main { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.tool-saltbox .sb-header h2 { font-size: 16px; margin: 0 0 4px; }
+.tool-saltbox .sb-header p { margin: 0; color: var(--text-muted); }
+.tool-saltbox .sb-aside { position: sticky; top: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--primary); border-radius: var(--radius-sm); font-size: 13px; }
+.tool-saltbox .sb-aside h3 { font-size: 13px; margin: 0 0 4px; }
+.tool-saltbox .sb-aside h3:not(:first-child) { margin-top: 12px; }
+.tool-saltbox .sb-aside p { margin: 0 0 8px; color: var(--text-muted); }
+.tool-saltbox .sb-aside .aside-warning { color: var(--warn); margin-bottom: 0; }
+.tool-saltbox .sb-foot { margin-top: 18px; }
+
+.tool-saltbox .io { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.tool-saltbox .io-in, .tool-saltbox .io-out { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.tool-saltbox .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+.tool-saltbox .actions, .tool-saltbox .samples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tool-saltbox .label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.tool-saltbox .label-row label, .tool-saltbox .field legend { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.tool-saltbox .field legend { padding: 0; margin-bottom: 4px; }
+.tool-saltbox fieldset.field { border: 0; margin: 0; padding: 0; }
+.tool-saltbox .meta { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.tool-saltbox .meta.is-error { color: var(--danger); }
+.tool-saltbox .subsection { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border); }
+.tool-saltbox .subsection h3 { font-size: 14px; margin: 0; }
+.tool-saltbox .subsection .hint { margin: 0; }
+
+/* Form controls (the Saltbox markup uses bare elements; mirror the shell's .input/.select/.textarea). */
+.tool-saltbox input[type="text"], .tool-saltbox input[type="password"], .tool-saltbox input[type="number"],
+.tool-saltbox select, .tool-saltbox textarea {
+  width: 100%; min-width: 0; padding: 0 10px; height: 34px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text); font: inherit;
+}
+.tool-saltbox textarea { height: auto; min-height: 120px; padding: 10px; resize: vertical; line-height: 1.5; }
+.tool-saltbox input:focus, .tool-saltbox select:focus, .tool-saltbox textarea:focus {
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.tool-saltbox input[aria-invalid="true"] { border-color: var(--danger); }
+.tool-saltbox .mono, .tool-saltbox textarea.mono, .tool-saltbox input.mono { font-family: var(--mono); font-size: var(--editor-font-size); }
+.tool-saltbox textarea[readonly] { background: var(--surface-2); }
+.tool-saltbox .input-with-button { display: flex; gap: 8px; }
+.tool-saltbox .input-with-button input { flex: 1; min-width: 0; }
+.tool-saltbox .input-with-button .btn { flex: none; }
+.tool-saltbox details.advanced { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; }
+.tool-saltbox details.advanced summary { cursor: pointer; font-size: 13px; color: var(--text-muted); }
+.tool-saltbox details.advanced .grid-2 { margin-top: 10px; }
+
+/* Segmented radio group */
+.tool-saltbox .segmented { display: flex; flex-wrap: wrap; }
+.tool-saltbox .segmented legend { width: 100%; }
+.tool-saltbox .segmented label { position: relative; display: inline-flex; align-items: center; padding: 0 14px; height: 34px;
+  border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; cursor: pointer; }
+.tool-saltbox .segmented label + label { margin-left: -1px; }
+.tool-saltbox .segmented label:first-of-type { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.tool-saltbox .segmented label:last-of-type { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.tool-saltbox .segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.tool-saltbox .segmented label:has(input:checked) { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); z-index: 1; }
+.tool-saltbox .segmented label:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; z-index: 2; }
+.tool-saltbox .field.checkbox label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; color: var(--text); }
+
+/* Messages */
+.tool-saltbox .callout { padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid; font-size: 13px; }
+.tool-saltbox .callout-warn { background: var(--warn-soft); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, var(--border)); }
+.tool-saltbox .callout-info { background: var(--info-soft); color: var(--text); border-color: color-mix(in srgb, var(--info) 35%, var(--border)); }
+.tool-saltbox .callout[hidden], .tool-saltbox .alert[hidden] { display: none; }
+.tool-saltbox .status, .tool-saltbox .result { margin: 0; font-size: 13px; }
+.tool-saltbox .status:empty, .tool-saltbox .result:empty { display: none; }
+.tool-saltbox .status.is-ok, .tool-saltbox .result.is-ok { color: var(--success); }
+.tool-saltbox .status.is-error, .tool-saltbox .result.is-error { color: var(--danger); }
+.tool-saltbox .status.is-warn { color: var(--warn); }
+.tool-saltbox .result.is-ok, .tool-saltbox .result.is-error { padding: 8px 12px; border-radius: var(--radius-sm); font-weight: 600; }
+.tool-saltbox .result.is-ok { background: var(--success-soft); }
+.tool-saltbox .result.is-error { background: var(--danger-soft); }
+
+/* Hash / derived-key display */
+.tool-saltbox .hexview { display: block; min-height: 52px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--code-bg); font-family: var(--mono); font-size: var(--editor-font-size); line-height: 1.7; overflow-wrap: anywhere; word-break: break-all; }
+.tool-saltbox .hexview:empty::before { content: attr(data-empty); color: var(--text-muted); font-family: inherit; font-size: 12px; }
+.tool-saltbox .hexview .b { padding: 0.1em 0.06em; border-radius: 2px; }
+.tool-saltbox .hexview .b:nth-child(even) { background: var(--surface-3); }
+.tool-saltbox .hexview .b:nth-child(4n + 1) { margin-left: 0.18em; }
+.tool-saltbox .hexview .b:first-child { margin-left: 0; }
+.tool-saltbox .params { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: 13px; }
+.tool-saltbox .params:empty { display: none; }
+.tool-saltbox .params dt { color: var(--text-muted); }
+.tool-saltbox .params dd { margin: 0; font-family: var(--mono); overflow-wrap: anywhere; }
+
+@media (max-width: 960px) {
+  .tool-saltbox .sb-tool { grid-template-columns: minmax(0, 1fr); }
+  .tool-saltbox .sb-aside { position: static; }
+}
+@media (max-width: 760px) {
+  .tool-saltbox .io, .tool-saltbox .grid-2, .tool-saltbox .grid-3 { grid-template-columns: minmax(0, 1fr); }
+  .tool-saltbox .input-with-button { flex-wrap: wrap; }
+}

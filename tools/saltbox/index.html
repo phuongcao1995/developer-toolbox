@@ -1,0 +1,576 @@
+<div class="sb-wrap">
+<div id="sb-insecure-banner" class="alert alert-error" role="alert" hidden>
+  Web Crypto is unavailable in this context. Open the page over HTTPS or from <code>http://localhost</code>.
+  Encoding and MD5 still work; everything else is disabled.
+</div>
+  <div class="tabs" role="tablist" aria-label="Saltbox tools">
+    <button type="button" class="tab active" role="tab" data-tab="hash">Hash generator</button>
+    <button type="button" class="tab" role="tab" data-tab="password">Password hashing</button>
+    <button type="button" class="tab" role="tab" data-tab="encrypt">Encrypt / decrypt</button>
+    <button type="button" class="tab" role="tab" data-tab="keycipher">Encrypt with key</button>
+    <button type="button" class="tab" role="tab" data-tab="generator">Key &amp; salt generator</button>
+    <button type="button" class="tab" role="tab" data-tab="encode">Encode / decode</button>
+  </div>
+    <!-- ================================================================ HASH -->
+    <section class="sb-tool" data-panel="hash">
+      <div class="sb-main">
+        <header class="sb-header">
+          <h2>Hash generator</h2>
+          <p>Compute a fixed-length fingerprint of text or a file. Hashing is one-way: a hash cannot be turned back into the original input.</p>
+        </header>
+
+        <div class="controls">
+          <div class="field">
+            <label for="hash-alg">Algorithm</label>
+            <select id="hash-alg">
+              <optgroup label="Recommended">
+                <option value="SHA-256" selected>SHA-256</option>
+                <option value="SHA-384">SHA-384</option>
+                <option value="SHA-512">SHA-512</option>
+              </optgroup>
+              <optgroup label="Legacy, insecure">
+                <option value="SHA-1">SHA-1 (insecure)</option>
+                <option value="MD5">MD5 (insecure)</option>
+              </optgroup>
+            </select>
+          </div>
+          <fieldset class="field segmented">
+            <legend>Input</legend>
+            <label><input type="radio" name="hash-source" value="text" checked> Text</label>
+            <label><input type="radio" name="hash-source" value="file"> File</label>
+          </fieldset>
+        </div>
+
+        <div id="hash-legacy-warning" class="callout callout-warn" hidden>
+          <strong>Insecure algorithm.</strong> Use this only to match checksums from older systems. Never use it to store passwords or to detect deliberate tampering.
+        </div>
+
+        <div class="io">
+          <div class="io-in">
+            <div id="hash-text-group">
+              <div class="field">
+                <div class="label-row">
+                  <label for="hash-input">Text to hash</label>
+                  <span class="meta" id="hash-input-meta">0 characters, 0 bytes</span>
+                </div>
+                <textarea id="hash-input" rows="6" spellcheck="false" autocomplete="off" placeholder="Type or paste text"></textarea>
+              </div>
+              <div class="samples" role="group" aria-label="Sample inputs">
+                <span class="meta">Try:</span>
+                <button type="button" class="btn btn-sm" data-sample="abc">abc</button>
+                <button type="button" class="btn btn-sm" data-sample="">empty string</button>
+                <button type="button" class="btn btn-sm" data-sample="The quick brown fox jumps over the lazy dog">quick brown fox</button>
+              </div>
+            </div>
+            <div id="hash-file-group" hidden>
+              <div class="field">
+                <label for="hash-file">File to hash</label>
+                <input type="file" id="hash-file">
+                <p class="meta" id="hash-file-meta">The file is read in this tab and never uploaded.</p>
+              </div>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn btn-primary" id="hash-run">Generate hash</button>
+              <button type="button" class="btn" data-import="#hash-input" id="hash-import">Import text file</button>
+              <button type="button" class="btn btn-ghost" data-clear="#hash-input,#hash-output,#hash-compare-input,#hash-file" data-status="#hash-status">Clear</button>
+            </div>
+          </div>
+
+          <div class="io-out">
+            <div class="field">
+              <div class="label-row">
+                <span class="label" id="hash-output-label">Hash (hex)</span>
+                <span class="meta" id="hash-output-meta"></span>
+              </div>
+              <output id="hash-output" class="hexview" aria-labelledby="hash-output-label" data-empty="Generate a hash to see it here."></output>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn" data-copy="#hash-output">Copy</button>
+              <button type="button" class="btn" data-download="#hash-output" data-filename="hash.txt">Download</button>
+            </div>
+
+            <div class="subsection">
+              <h3>Compare with a known hash</h3>
+              <p class="hint">Hashes the current input with the selected algorithm and checks it against the hash you paste. Hex in any case, or Base64.</p>
+              <div class="field">
+                <label for="hash-compare-input">Expected hash</label>
+                <input type="text" id="hash-compare-input" spellcheck="false" autocomplete="off" class="mono">
+              </div>
+              <div class="actions">
+                <button type="button" class="btn" id="hash-compare-run">Compare</button>
+              </div>
+              <p id="hash-compare-result" class="result" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+        <p id="hash-status" class="status" role="status" aria-live="polite"></p>
+      </div>
+
+      <aside class="sb-aside" aria-label="About the selected algorithm">
+        <h3 id="hash-note-title">SHA-256</h3>
+        <p id="hash-note"></p>
+        <p class="aside-warning">Don't store passwords with a plain hash, even SHA-256. Fast hashes let attackers test billions of guesses per second. Use the Password hashing tab.</p>
+      </aside>
+    </section>
+
+    <!-- ============================================================ PASSWORD -->
+    <section class="sb-tool" data-panel="password" hidden>
+      <div class="sb-main">
+        <header class="sb-header">
+          <h2>Password hashing</h2>
+          <p>Derive a salted, deliberately slow hash with PBKDF2. Store the salt and parameters with the hash so the password can be checked later.</p>
+        </header>
+
+        <div class="io">
+          <div class="io-in">
+            <div class="field">
+              <label for="pw-password">Password</label>
+              <div class="input-with-button">
+                <input type="password" id="pw-password" autocomplete="off" spellcheck="false">
+                <button type="button" class="btn btn-ghost" data-toggle-visibility="#pw-password" aria-pressed="false">Show</button>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="pw-alg">Algorithm</label>
+                <select id="pw-alg">
+                  <option value="SHA-256" selected>PBKDF2-HMAC-SHA-256</option>
+                  <option value="SHA-512">PBKDF2-HMAC-SHA-512</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pw-iterations">Iterations</label>
+                <input type="number" id="pw-iterations" min="1" max="10000000" step="1" value="600000" inputmode="numeric">
+              </div>
+            </div>
+            <div id="pw-param-warning" class="callout callout-warn" role="status" hidden></div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="pw-salt">Salt</label>
+                <span class="meta">Leave empty to generate one</span>
+              </div>
+              <div class="input-with-button">
+                <input type="text" id="pw-salt" class="mono" spellcheck="false" autocomplete="off">
+                <button type="button" class="btn" id="pw-salt-generate">Generate salt</button>
+              </div>
+            </div>
+            <div class="grid-3">
+              <div class="field">
+                <label for="pw-salt-format">Salt format</label>
+                <select id="pw-salt-format">
+                  <option value="hex" selected>Hex</option>
+                  <option value="base64">Base64</option>
+                  <option value="utf8">Plain text</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pw-salt-length">New salt length</label>
+                <select id="pw-salt-length">
+                  <option value="8">8 bytes (weak)</option>
+                  <option value="16" selected>16 bytes</option>
+                  <option value="32">32 bytes</option>
+                  <option value="64">64 bytes</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pw-length">Output length</label>
+                <select id="pw-length">
+                  <option value="16">16 bytes</option>
+                  <option value="32" selected>32 bytes</option>
+                  <option value="64">64 bytes</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="pw-encoding">Output encoding</label>
+              <select id="pw-encoding">
+                <option value="hex" selected>Hex</option>
+                <option value="base64">Base64</option>
+              </select>
+            </div>
+
+            <div class="actions">
+              <button type="button" class="btn btn-primary" id="pw-run">Hash password</button>
+              <button type="button" class="btn btn-ghost" data-clear="#pw-password,#pw-salt,#pw-output,#pw-phc,#pw-params" data-status="#pw-status">Clear</button>
+            </div>
+          </div>
+
+          <div class="io-out">
+            <div class="field">
+              <div class="label-row">
+                <span class="label" id="pw-output-label">Derived hash</span>
+                <span class="meta" id="pw-output-meta"></span>
+              </div>
+              <output id="pw-output" class="hexview" aria-labelledby="pw-output-label" data-empty="The derived hash appears here."></output>
+            </div>
+            <dl id="pw-params" class="params" aria-label="Parameters used"></dl>
+            <div class="field">
+              <label for="pw-phc">Storage string (PHC format)</label>
+              <input type="text" id="pw-phc" class="mono" readonly>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn" data-copy="#pw-output">Copy hash</button>
+              <button type="button" class="btn" data-copy="#pw-phc">Copy storage string</button>
+              <button type="button" class="btn" id="pw-export">Export JSON</button>
+            </div>
+
+            <div class="subsection">
+              <h3>Check a password</h3>
+              <p class="hint">Paste a storage string from above and the password to test.</p>
+              <div class="field">
+                <label for="pw-verify-encoded">Storage string</label>
+                <input type="text" id="pw-verify-encoded" class="mono" spellcheck="false" autocomplete="off" placeholder="$pbkdf2-sha256$i=600000$…">
+              </div>
+              <div class="field">
+                <label for="pw-verify-password">Password to check</label>
+                <div class="input-with-button">
+                  <input type="password" id="pw-verify-password" autocomplete="off" spellcheck="false">
+                  <button type="button" class="btn btn-ghost" data-toggle-visibility="#pw-verify-password" aria-pressed="false">Show</button>
+                </div>
+              </div>
+              <div class="actions">
+                <button type="button" class="btn" id="pw-verify-run">Check password</button>
+              </div>
+              <p id="pw-verify-result" class="result" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+        <p id="pw-status" class="status" role="status" aria-live="polite"></p>
+      </div>
+
+      <aside class="sb-aside" aria-label="About PBKDF2 and salts">
+        <h3>PBKDF2</h3>
+        <p>PBKDF2 runs HMAC thousands of times so that each password guess is expensive. The defaults follow current OWASP guidance: 600,000 iterations for SHA-256 and 210,000 for SHA-512.</p>
+        <h3>Salt</h3>
+        <p>A salt is not a secret key. It is stored next to the hash and makes two users with the same password get different hashes, which defeats precomputed tables. Use a new random salt of 16 bytes or more for every password.</p>
+        <p class="aside-warning">Adding a salt to a fast hash like SHA-256 does not make it safe for passwords. For new server-side systems, Argon2id, scrypt or bcrypt are also good choices; browsers don't provide them natively.</p>
+      </aside>
+    </section>
+
+    <!-- ============================================================= ENCRYPT -->
+    <section class="sb-tool" data-panel="encrypt" hidden>
+      <div class="sb-main">
+        <header class="sb-header">
+          <h2>Encrypt / decrypt</h2>
+          <p>Encrypt text with AES-256-GCM. The result is a JSON block containing everything needed to decrypt it except your password or key.</p>
+        </header>
+
+        <div class="controls">
+          <fieldset class="field segmented">
+            <legend>Operation</legend>
+            <label><input type="radio" name="enc-mode" value="encrypt" checked> Encrypt</label>
+            <label><input type="radio" name="enc-mode" value="decrypt"> Decrypt</label>
+          </fieldset>
+          <fieldset class="field segmented">
+            <legend>Secret</legend>
+            <label><input type="radio" name="enc-keysource" value="password" checked> Password</label>
+            <label><input type="radio" name="enc-keysource" value="key"> Raw key</label>
+          </fieldset>
+        </div>
+
+        <div class="io">
+          <div class="io-in">
+            <div id="enc-password-group">
+              <div class="field">
+                <label for="enc-password">Password</label>
+                <div class="input-with-button">
+                  <input type="password" id="enc-password" autocomplete="off" spellcheck="false">
+                  <button type="button" class="btn btn-ghost" data-toggle-visibility="#enc-password" aria-pressed="false">Show</button>
+                </div>
+              </div>
+              <details class="advanced encrypt-only">
+                <summary>Key derivation settings</summary>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="enc-kdf-hash">PBKDF2 hash</label>
+                    <select id="enc-kdf-hash">
+                      <option value="SHA-256" selected>SHA-256</option>
+                      <option value="SHA-512">SHA-512</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="enc-iterations">Iterations</label>
+                    <input type="number" id="enc-iterations" min="1" max="10000000" step="1" value="600000" inputmode="numeric">
+                  </div>
+                </div>
+              </details>
+              <div id="enc-param-warning" class="callout callout-warn encrypt-only" role="status" hidden></div>
+            </div>
+
+            <div id="enc-key-group" hidden>
+              <div class="field">
+                <div class="label-row">
+                  <label for="enc-key">Key (hex or Base64)</label>
+                  <span class="meta" id="enc-key-meta"></span>
+                </div>
+                <div class="input-with-button">
+                  <input type="password" id="enc-key" class="mono" autocomplete="off" spellcheck="false">
+                  <button type="button" class="btn btn-ghost" data-toggle-visibility="#enc-key" aria-pressed="false">Show</button>
+                </div>
+              </div>
+              <div class="actions encrypt-only">
+                <button type="button" class="btn" id="enc-key-generate">Generate 256-bit key</button>
+                <button type="button" class="btn" data-copy="#enc-key">Copy key</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="enc-input" id="enc-input-label">Plain text</label>
+                <span class="meta" id="enc-input-meta"></span>
+              </div>
+              <textarea id="enc-input" rows="7" spellcheck="false" autocomplete="off"></textarea>
+            </div>
+            <div class="field encrypt-only">
+              <label for="enc-encoding">Binary encoding in the output</label>
+              <select id="enc-encoding">
+                <option value="base64" selected>Base64</option>
+                <option value="hex">Hex</option>
+              </select>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn btn-primary" id="enc-run">Encrypt</button>
+              <button type="button" class="btn" data-import="#enc-input">Import file</button>
+              <button type="button" class="btn btn-ghost" data-clear="#enc-input,#enc-output,#enc-password,#enc-key" data-status="#enc-status">Clear</button>
+            </div>
+          </div>
+
+          <div class="io-out">
+            <div class="field">
+              <label for="enc-output" id="enc-output-label">Encrypted data</label>
+              <textarea id="enc-output" rows="12" class="mono" readonly></textarea>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn" data-copy="#enc-output">Copy</button>
+              <button type="button" class="btn" data-download="#enc-output" data-filename="encrypted.json" id="enc-download">Download</button>
+              <button type="button" class="btn" id="enc-swap">Use as input and switch to Decrypt</button>
+            </div>
+          </div>
+        </div>
+        <p id="enc-status" class="status" role="status" aria-live="polite"></p>
+      </div>
+
+      <aside class="sb-aside" aria-label="About AES-GCM">
+        <h3>AES-GCM</h3>
+        <p>AES in Galois/Counter Mode encrypts and authenticates in one step. A 128-bit tag is appended to the ciphertext; if a single bit of the data or its metadata changes, decryption fails instead of returning corrupted text.</p>
+        <h3>IV and salt</h3>
+        <p>Every encryption uses a new random 12-byte IV, and password mode also uses a new 16-byte salt. Both are stored in the output. They are not secret, but an IV must never be reused with the same key.</p>
+        <p class="aside-warning">Your data is only as safe as your password. A short or reused password can be guessed offline no matter how strong the cipher is.</p>
+      </aside>
+    </section>
+
+    <!-- ========================================================== KEY CIPHER -->
+    <section class="sb-tool" data-panel="keycipher" hidden>
+      <div class="sb-main">
+        <header class="sb-header">
+          <h2>Encrypt / decrypt with key</h2>
+          <p>Quick AES encryption with a text key, compatible with CryptoJS <code>AES.encrypt(text, key)</code> and OpenSSL. Output is a single Base64 string.</p>
+        </header>
+
+        <div class="callout callout-warn">
+          <strong>Legacy format.</strong> It has no tamper detection and derives the AES key with one round of MD5, so a short key can be guessed offline. Use it to interoperate with existing CryptoJS data; use Encrypt / decrypt for anything new.
+        </div>
+
+        <div class="controls">
+          <fieldset class="field segmented">
+            <legend>Operation</legend>
+            <label><input type="radio" name="kc-mode" value="encrypt" checked> Encrypt</label>
+            <label><input type="radio" name="kc-mode" value="decrypt"> Decrypt</label>
+          </fieldset>
+        </div>
+
+        <div class="io">
+          <div class="io-in">
+            <div class="field">
+              <div class="label-row">
+                <label for="kc-input" id="kc-input-label">Plain text</label>
+                <span class="meta" id="kc-input-meta"></span>
+              </div>
+              <textarea id="kc-input" rows="7" spellcheck="false" autocomplete="off"></textarea>
+            </div>
+            <div class="field">
+              <label for="kc-key">Key</label>
+              <div class="input-with-button">
+                <input type="password" id="kc-key" autocomplete="off" spellcheck="false">
+                <button type="button" class="btn btn-ghost" data-toggle-visibility="#kc-key" aria-pressed="false">Show</button>
+              </div>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn btn-primary" id="kc-run">Encrypt</button>
+              <button type="button" class="btn" data-import="#kc-input">Import file</button>
+              <button type="button" class="btn btn-ghost" data-clear="#kc-input,#kc-output,#kc-key" data-status="#kc-status">Clear</button>
+            </div>
+          </div>
+
+          <div class="io-out">
+            <div class="field">
+              <label for="kc-output" id="kc-output-label">Encrypted text</label>
+              <textarea id="kc-output" rows="9" class="mono" readonly></textarea>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn" data-copy="#kc-output">Copy</button>
+              <button type="button" class="btn" data-download="#kc-output" data-filename="encrypted.txt" id="kc-download">Download</button>
+              <button type="button" class="btn" id="kc-swap">Use as input and switch to Decrypt</button>
+            </div>
+          </div>
+        </div>
+        <p id="kc-status" class="status" role="status" aria-live="polite"></p>
+      </div>
+
+      <aside class="sb-aside" aria-label="About the CryptoJS format">
+        <h3>Format</h3>
+        <p>AES-256-CBC with PKCS#7 padding. The result is Base64 of <code>Salted__</code>, an 8-byte random salt, then the ciphertext, so the same text and key give a different result each time.</p>
+        <h3>Interoperability</h3>
+        <p>Decrypts with <code>CryptoJS.AES.decrypt(text, key)</code> and <code>openssl enc -d -aes-256-cbc -md md5 -a -A</code>.</p>
+        <p class="aside-warning">A wrong key usually fails with an error, but CBC cannot always tell, so check that decrypted text looks right.</p>
+      </aside>
+    </section>
+
+    <!-- =========================================================== GENERATOR -->
+    <section class="sb-tool" data-panel="generator" hidden>
+      <div class="sb-main">
+        <header class="sb-header">
+          <h2>Key &amp; salt generator</h2>
+          <p>Create random values with the browser's cryptographically secure generator.</p>
+        </header>
+
+        <div class="io">
+          <div class="io-in">
+            <div class="field">
+              <label for="gen-type">Generate</label>
+              <select id="gen-type">
+                <option value="salt" selected>Salt</option>
+                <option value="key">AES encryption key</option>
+                <option value="iv">AES-GCM IV</option>
+                <option value="hex">Hex string</option>
+                <option value="base64">Base64 string</option>
+                <option value="password">Password</option>
+                <option value="token">URL-safe token</option>
+              </select>
+            </div>
+            <div class="grid-2">
+              <div class="field" id="gen-length-group">
+                <label for="gen-length" id="gen-length-label">Length (bytes)</label>
+                <input type="number" id="gen-length" min="1" step="1" value="16" inputmode="numeric">
+              </div>
+              <div class="field" id="gen-length-select-group" hidden>
+                <label for="gen-length-select" id="gen-length-select-label">Size</label>
+                <select id="gen-length-select"></select>
+              </div>
+              <div class="field">
+                <label for="gen-count">How many</label>
+                <input type="number" id="gen-count" min="1" max="50" step="1" value="1" inputmode="numeric">
+              </div>
+            </div>
+            <div class="field" id="gen-encoding-group">
+              <label for="gen-encoding">Encoding</label>
+              <select id="gen-encoding">
+                <option value="hex" selected>Hex</option>
+                <option value="base64">Base64</option>
+                <option value="base64url">Base64URL</option>
+              </select>
+            </div>
+            <div class="field checkbox" id="gen-symbols-group" hidden>
+              <label><input type="checkbox" id="gen-symbols"> Include symbols</label>
+            </div>
+            <p class="hint" id="gen-length-hint"></p>
+            <div class="actions">
+              <button type="button" class="btn btn-primary" id="gen-run">Generate</button>
+              <button type="button" class="btn btn-ghost" data-clear="#gen-output" data-status="#gen-status">Clear</button>
+            </div>
+          </div>
+          <div class="io-out">
+            <div class="field">
+              <div class="label-row">
+                <label for="gen-output">Result</label>
+                <span class="meta" id="gen-output-meta"></span>
+              </div>
+              <textarea id="gen-output" rows="10" class="mono" readonly></textarea>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn" data-copy="#gen-output">Copy</button>
+              <button type="button" class="btn" data-download="#gen-output" data-filename="random.txt">Download</button>
+            </div>
+          </div>
+        </div>
+        <p id="gen-status" class="status" role="status" aria-live="polite"></p>
+      </div>
+
+      <aside class="sb-aside" aria-label="About the selected value">
+        <h3 id="gen-note-title">Salt</h3>
+        <p id="gen-note"></p>
+        <p>Values come from <code>crypto.getRandomValues()</code>. They are shown once and not saved anywhere.</p>
+      </aside>
+    </section>
+
+    <!-- ============================================================== ENCODE -->
+    <section class="sb-tool" data-panel="encode" hidden>
+      <div class="sb-main">
+        <header class="sb-header">
+          <h2>Encode / decode</h2>
+          <p>Convert text between representations. Text is treated as UTF-8.</p>
+        </header>
+
+        <div class="callout callout-info">
+          <strong>Encoding is not encryption.</strong> Anyone can decode Base64, hex or URL encoding without a key. Use Encrypt / decrypt to keep something private.
+        </div>
+
+        <div class="controls">
+          <div class="field">
+            <label for="code-format">Format</label>
+            <select id="code-format">
+              <option value="base64" selected>Base64</option>
+              <option value="base64url">Base64URL</option>
+              <option value="hex">Hexadecimal</option>
+              <option value="url">URL (percent-encoding)</option>
+              <option value="binary">Binary (8-bit groups)</option>
+              <option value="bytes">UTF-8 bytes (decimal)</option>
+            </select>
+          </div>
+          <fieldset class="field segmented">
+            <legend>Direction</legend>
+            <label><input type="radio" name="code-direction" value="encode" checked> Encode</label>
+            <label><input type="radio" name="code-direction" value="decode"> Decode</label>
+          </fieldset>
+        </div>
+
+        <div class="io">
+          <div class="io-in">
+            <div class="field">
+              <div class="label-row">
+                <label for="code-input" id="code-input-label">Text</label>
+                <span class="meta" id="code-input-meta"></span>
+              </div>
+              <textarea id="code-input" rows="8" spellcheck="false" autocomplete="off"></textarea>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn btn-primary" id="code-run">Encode</button>
+              <button type="button" class="btn" data-import="#code-input">Import file</button>
+              <button type="button" class="btn btn-ghost" data-clear="#code-input,#code-output" data-status="#code-status">Clear</button>
+            </div>
+          </div>
+          <div class="io-out">
+            <div class="field">
+              <label for="code-output" id="code-output-label">Encoded</label>
+              <textarea id="code-output" rows="8" class="mono" readonly></textarea>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn" data-copy="#code-output">Copy</button>
+              <button type="button" class="btn" data-download="#code-output" data-filename="converted.txt">Download</button>
+              <button type="button" class="btn" id="code-swap">Swap input and output</button>
+            </div>
+          </div>
+        </div>
+        <p id="code-status" class="status" role="status" aria-live="polite"></p>
+      </div>
+
+      <aside class="sb-aside" aria-label="About the selected format">
+        <h3 id="code-note-title">Base64</h3>
+        <p id="code-note"></p>
+      </aside>
+    </section>
+<p class="hint sb-foot"><strong>What this tool can't protect against.</strong> Everything runs in this browser tab and nothing you enter is stored or sent anywhere. But a compromised device, a malicious browser extension, or a tampered copy of this page can still read what you type. This tool does not guarantee secure password storage.</p>
+<input type="file" class="sb-import-picker" accept=".txt,.json,.csv,.md,.log,text/*,application/json" hidden>
+</div>
