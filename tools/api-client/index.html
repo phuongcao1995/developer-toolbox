@@ -1,0 +1,71 @@
+<div class="ac-layout">
+  <div class="ac-main stack">
+    <div class="ac-urlbar">
+      <select class="select ac-method" id="ac-method" aria-label="HTTP method">
+        <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+      </select>
+      <input class="input mono ac-url" id="ac-url" type="url" placeholder="https://api.example.com/resource" spellcheck="false" autocomplete="off" aria-label="Request URL">
+      <button class="btn btn-primary" id="ac-send"><i data-lucide="send"></i> Send</button>
+      <button class="btn btn-danger" id="ac-cancel" hidden><i data-lucide="x"></i> Cancel</button>
+      <button class="btn" id="ac-example" title="Fill in a public CORS-enabled API"><i data-lucide="sparkles"></i> Try example</button>
+    </div>
+    <div id="ac-error" hidden></div>
+
+    <div class="panel">
+      <div class="tabs ac-tabs">
+        <button class="tab active" data-tab="params">Params <span class="badge" id="ac-params-count">0</span></button>
+        <button class="tab" data-tab="headers">Headers <span class="badge" id="ac-headers-count">0</span></button>
+        <button class="tab" data-tab="body">Body</button>
+      </div>
+      <div class="panel-body" data-panel="params">
+        <div class="ac-rows" id="ac-params-rows"></div>
+        <button class="btn btn-sm" data-action="add-param"><i data-lucide="plus"></i> Add param</button>
+        <p class="hint">Enabled params are appended to the URL when sent.</p>
+      </div>
+      <div class="panel-body" data-panel="headers" hidden>
+        <div class="ac-rows" id="ac-headers-rows"></div>
+        <button class="btn btn-sm" data-action="add-header"><i data-lucide="plus"></i> Add header</button>
+        <p class="hint">Some headers (Host, Origin, Cookie…) are forbidden and set by the browser.</p>
+      </div>
+      <div class="panel-body" data-panel="body" hidden>
+        <div class="toolbar">
+          <button class="btn btn-sm" data-action="prettify"><i data-lucide="wand-2"></i> Prettify</button>
+          <button class="btn btn-sm" data-action="validate"><i data-lucide="check"></i> Validate</button>
+          <span class="hint" id="ac-body-note"></span>
+        </div>
+        <textarea class="textarea code" id="ac-body" spellcheck="false" placeholder='{"title": "hello"}'></textarea>
+        <div id="ac-body-msg" hidden></div>
+      </div>
+    </div>
+
+    <div class="panel" id="ac-response">
+      <div class="panel-head">
+        <h3>Response</h3>
+        <span class="badge" id="ac-status" hidden></span>
+        <span class="hint" id="ac-meta"></span>
+        <button class="btn btn-sm" data-action="copy-res"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn btn-sm" data-action="download-res"><i data-lucide="download"></i> Download</button>
+      </div>
+      <div class="tabs ac-tabs">
+        <button class="tab active" data-rtab="body">Body</button>
+        <button class="tab" data-rtab="headers">Headers <span class="badge" id="ac-rheaders-count">0</span></button>
+      </div>
+      <div class="panel-body flush" data-rpanel="body">
+        <div class="ac-loading" id="ac-loading" hidden><span class="spinner"></span> Sending request…</div>
+        <pre class="code-block ac-output" id="ac-output">Send a request to see the response here.</pre>
+      </div>
+      <div class="panel-body flush" data-rpanel="headers" hidden>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Value</th></tr></thead><tbody id="ac-rheaders"></tbody></table></div>
+        <p class="hint ac-pad">Only CORS-safelisted response headers (and any listed in Access-Control-Expose-Headers) are readable from the browser.</p>
+      </div>
+    </div>
+  </div>
+
+  <aside class="panel ac-history">
+    <div class="panel-head">
+      <h3>History</h3>
+      <button class="btn btn-sm btn-danger" data-action="clear-history"><i data-lucide="trash-2"></i> Clear</button>
+    </div>
+    <div class="ac-history-list" id="ac-history"></div>
+  </aside>
+</div>

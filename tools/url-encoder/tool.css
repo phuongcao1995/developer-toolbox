@@ -1,0 +1,20 @@
+.tool-url-encoder .urlenc-mode { min-width: 260px; }
+.tool-url-encoder .urlenc-help { margin-top: 14px; }
+.tool-url-encoder .urlenc-help h3 { font-size: 14px; margin-bottom: 6px; }
+.tool-url-encoder .urlenc-help p { font-size: 13px; color: var(--text-muted); margin: 6px 0; }
+.tool-url-encoder .urlenc-help code, .tool-url-encoder .table code { font-family: var(--mono); font-size: 12px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+.tool-url-encoder .urlenc-url-row .input { flex: 1; min-width: 200px; }
+.tool-url-encoder .urlenc-gap { margin-top: 14px; }
+.tool-url-encoder .urlenc-pad { padding: 8px 12px; }
+.tool-url-encoder .urlenc-built { white-space: pre-wrap; word-break: break-all; }
+.tool-url-encoder #urlenc-msg:not([hidden]), .tool-url-encoder #urlenc-url-msg:not([hidden]) { margin-bottom: 12px; }
+.tool-url-encoder td.urlenc-val { word-break: break-all; font-family: var(--mono); font-size: 12px; }
+.tool-url-encoder td.urlenc-empty { color: var(--text-muted); font-style: italic; font-family: var(--font); }
+.tool-url-encoder td.urlenc-act { white-space: nowrap; width: 1%; }
+.tool-url-encoder #urlenc-params .input { height: 30px; font-family: var(--mono); font-size: 12px; min-width: 90px; }
+.tool-url-encoder #urlenc-params tr.urlenc-bad .input { border-color: var(--danger); }
+@media (max-width: 760px) {
+  .tool-url-encoder .grid-2 { grid-template-columns: 1fr; }
+  .tool-url-encoder .urlenc-mode { min-width: 0; width: 100%; }
+  .tool-url-encoder .panel .textarea { min-height: 160px; }
+}

@@ -1,0 +1,36 @@
+<div class="toolbar">
+  <button class="btn btn-primary" data-action="open"><i data-lucide="folder-open"></i> Open Markdown file</button>
+  <button class="btn" data-action="toggle-paste" id="mv-paste-btn"><i data-lucide="clipboard-paste"></i> Paste Markdown</button>
+  <span class="spacer"></span>
+  <span class="mv-fileinfo" id="mv-fileinfo" hidden></span>
+  <button class="btn" data-action="copy" disabled id="mv-copy"><i data-lucide="copy"></i> Copy source</button>
+  <button class="btn" data-action="download" disabled id="mv-download"><i data-lucide="download"></i> Download .md</button>
+</div>
+
+<div id="mv-msg" hidden></div>
+
+<div class="panel mv-paste" id="mv-paste" hidden>
+  <div class="panel-head">
+    <h3>Paste Markdown</h3>
+    <button class="btn btn-sm btn-primary" data-action="render-paste"><i data-lucide="eye"></i> Render</button>
+    <button class="btn btn-sm" data-action="clear-paste"><i data-lucide="eraser"></i> Clear</button>
+  </div>
+  <textarea class="textarea code" id="mv-paste-input" spellcheck="false" placeholder="Paste Markdown here, then press Render…"></textarea>
+</div>
+
+<div class="dropzone mv-empty" id="mv-empty">
+  <i data-lucide="file-text" style="width:36px;height:36px"></i>
+  <h3>Drop a Markdown file here</h3>
+  <p>or use “Open Markdown file” — .md, .markdown or .txt up to 5 MB. Nothing is uploaded; files are read in your browser.</p>
+</div>
+
+<div class="mv-layout" id="mv-layout" hidden>
+  <nav class="mv-toc panel" id="mv-toc-wrap" aria-label="Table of contents">
+    <div class="panel-head">
+      <h3>Contents</h3>
+      <button class="btn btn-sm btn-ghost mv-toc-toggle" data-action="toggle-toc" aria-label="Toggle contents"><i data-lucide="chevrons-up-down"></i></button>
+    </div>
+    <ul class="mv-toc-list" id="mv-toc"></ul>
+  </nav>
+  <article class="md-body mv-article" id="mv-article"></article>
+</div>

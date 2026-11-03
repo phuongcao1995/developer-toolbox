@@ -1,0 +1,48 @@
+<div class="jwt-layout">
+  <div class="alert alert-warn jwt-notice"><i data-lucide="shield-alert"></i>
+    <span><strong>Decoding does NOT verify the signature.</strong> Anyone can create a token with any contents. Never trust the claims below until the signature has been verified with the correct key on your server. Tokens are decoded locally and never sent anywhere.</span></div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>Encoded token</h3>
+      <button class="btn btn-sm" data-action="sample"><i data-lucide="sparkles"></i>Load sample</button>
+      <button class="btn btn-sm" data-action="paste"><i data-lucide="clipboard-paste"></i>Paste</button>
+      <button class="btn btn-sm" data-action="clear"><i data-lucide="trash-2"></i>Clear</button>
+    </div>
+    <textarea class="textarea code jwt-input" data-el="input" spellcheck="false" placeholder="eyJhbGciOiJIUzI1NiIs…  (a leading “Bearer ” is fine)" aria-label="JWT"></textarea>
+  </div>
+
+  <div class="alert" data-el="msg" hidden></div>
+
+  <div data-el="result" hidden class="stack">
+    <div class="card jwt-status">
+      <span class="badge jwt-state" data-el="state"></span>
+      <span data-el="statetext"></span>
+      <span class="spacer"></span>
+      <span class="hint">Algorithm: <strong data-el="alg">—</strong></span>
+    </div>
+
+    <div class="grid-2 jwt-grid">
+      <div class="panel">
+        <div class="panel-head"><h3>Header</h3><button class="btn btn-sm" data-action="copy-header"><i data-lucide="copy"></i>Copy</button></div>
+        <pre class="code-block jwt-json" data-el="header"></pre>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Payload</h3><button class="btn btn-sm" data-action="copy-payload"><i data-lucide="copy"></i>Copy</button></div>
+        <pre class="code-block jwt-json" data-el="payload"></pre>
+      </div>
+    </div>
+
+    <div class="panel" data-el="timespanel" hidden>
+      <div class="panel-head"><h3>Time claims</h3><span class="hint">Updates live</span></div>
+      <div class="table-wrap"><table class="table jwt-times">
+        <thead><tr><th>Claim</th><th>UTC</th><th>Local</th><th>Relative</th></tr></thead>
+        <tbody data-el="times"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>Signature (raw, unverified)</h3><button class="btn btn-sm" data-action="copy-sig"><i data-lucide="copy"></i>Copy</button></div>
+      <pre class="code-block jwt-sig" data-el="sig"></pre>
+    </div>
+  </div>
+</div>

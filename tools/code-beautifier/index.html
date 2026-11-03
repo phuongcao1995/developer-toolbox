@@ -1,0 +1,41 @@
+<div class="cb">
+  <div class="toolbar cb-options">
+    <div class="field"><label for="cb-lang">Language</label>
+      <select id="cb-lang" class="select">
+        <option value="html">HTML</option><option value="css">CSS</option>
+        <option value="js" selected>JavaScript</option><option value="json">JSON</option>
+      </select></div>
+    <div class="field"><label for="cb-indent">Indentation</label>
+      <select id="cb-indent" class="select">
+        <option value="2">2 spaces</option><option value="4">4 spaces</option>
+        <option value="8">8 spaces</option><option value="tab">Tab</option>
+      </select></div>
+    <label class="check cb-check"><input type="checkbox" id="cb-preserve" checked> Keep blank lines</label>
+    <span class="spacer"></span>
+    <button class="btn btn-primary" id="cb-beautify" type="button"><i data-lucide="wand-2"></i> Beautify</button>
+    <button class="btn" id="cb-minify" type="button"><i data-lucide="minimize-2"></i> Minify</button>
+  </div>
+  <p class="hint" id="cb-note"></p>
+  <div id="cb-msg" class="alert" hidden></div>
+
+  <div class="grid-2 cb-panels">
+    <section class="panel" id="cb-drop">
+      <div class="panel-head">
+        <h3>Input</h3>
+        <button class="btn btn-sm" id="cb-upload" type="button"><i data-lucide="upload"></i> Upload</button>
+        <button class="btn btn-sm" id="cb-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+      </div>
+      <textarea class="textarea code" id="cb-input" spellcheck="false" placeholder="Paste or drop a file here…" aria-label="Input code"></textarea>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Output</h3>
+        <button class="btn btn-sm" id="cb-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn btn-sm" id="cb-download" type="button"><i data-lucide="download"></i> Download</button>
+        <button class="btn btn-sm" id="cb-swap" type="button" title="Move the output into the input"><i data-lucide="arrow-left"></i> Use as input</button>
+      </div>
+      <textarea class="textarea code" id="cb-output" spellcheck="false" readonly placeholder="Result appears here" aria-label="Output code"></textarea>
+    </section>
+  </div>
+  <div class="cb-stats" id="cb-stats" aria-live="polite"></div>
+</div>

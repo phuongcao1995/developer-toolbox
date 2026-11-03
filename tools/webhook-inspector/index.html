@@ -1,0 +1,95 @@
+<div class="alert alert-info wh-banner" role="note">
+  <strong>A static web page cannot receive real webhooks.</strong>
+  There is no server behind this tool, so nothing on the internet can send requests to it.
+  <strong>Demo mode</strong> lets you compose requests and record them locally as <em>simulated</em> ones (great for learning what webhook payloads look like).
+  <strong>External service mode</strong> reads real requests captured by a third-party inspector such as webhook.site.
+</div>
+
+<div class="tabs wh-modes" role="tablist" aria-label="Mode">
+  <button class="tab active" type="button" role="tab" data-mode="demo"><i data-lucide="flask-conical"></i> Demo mode (simulated)</button>
+  <button class="tab" type="button" role="tab" data-mode="external"><i data-lucide="cloud"></i> External service (real requests)</button>
+</div>
+
+<!-- ============ Demo mode ============ -->
+<section data-mode-panel="demo" class="stack">
+  <div class="panel">
+    <div class="panel-head"><h3>Demo endpoint <span class="badge badge-warn">SIMULATED</span></h3></div>
+    <div class="panel-body stack">
+      <div class="row wh-url-row">
+        <input id="wh-endpoint" class="input mono" readonly aria-label="Simulated demo endpoint URL">
+        <button class="btn" id="wh-copy-endpoint" type="button"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn" id="wh-new-endpoint" type="button"><i data-lucide="refresh-cw"></i> New URL</button>
+      </div>
+      <p class="hint">This URL is fake: <code>webhook.demo.local</code> does not exist, and no real request can reach it. It only gives your simulated requests a realistic address.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>Simulate a request</h3>
+      <select id="wh-template" class="select wh-template" aria-label="Sample template"><option value="">Sample templates…</option></select>
+    </div>
+    <div class="panel-body stack">
+      <div class="wh-compose-row">
+        <div class="field"><label for="wh-method">Method</label>
+          <select id="wh-method" class="select"></select></div>
+        <div class="field wh-grow"><label for="wh-path">Path and query</label>
+          <input id="wh-path" class="input mono" value="/" spellcheck="false" placeholder="/hooks/github?debug=1"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label for="wh-headers">Headers (one "Name: value" per line)</label>
+          <textarea id="wh-headers" class="textarea code wh-small" spellcheck="false" placeholder="Content-Type: application/json"></textarea></div>
+        <div class="field"><label for="wh-body">Body</label>
+          <textarea id="wh-body" class="textarea code wh-small" spellcheck="false" placeholder='{"hello":"world"}'></textarea></div>
+      </div>
+      <div id="wh-sim-msg" hidden></div>
+      <div class="row">
+        <button class="btn btn-primary" id="wh-simulate" type="button"><i data-lucide="send"></i> Simulate request</button>
+        <button class="btn" id="wh-compose-clear" type="button"><i data-lucide="eraser"></i> Reset form</button>
+        <span class="hint">The request is processed locally and added to the list below.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ External mode ============ -->
+<section data-mode-panel="external" class="stack" hidden>
+  <div class="alert alert-warn">Requires an external third-party service. Requests are fetched from that service by your browser; the service (not this tool) stores them. Create an endpoint on webhook.site, point your webhook sender at it, and paste the URL here.</div>
+  <div class="panel">
+    <div class="panel-head"><h3>External inspection service</h3>
+      <a class="btn btn-sm" href="https://webhook.site" target="_blank" rel="noopener noreferrer"><i data-lucide="external-link"></i> Open webhook.site</a>
+    </div>
+    <div class="panel-body stack">
+      <div class="field"><label for="wh-ext-url">Your inspection URL</label>
+        <input id="wh-ext-url" class="input mono" spellcheck="false" autocomplete="off" placeholder="https://webhook.site/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+      <div class="field"><label for="wh-api-url">API URL (optional)</label>
+        <input id="wh-api-url" class="input mono" spellcheck="false" autocomplete="off" placeholder="Leave empty for webhook.site, or a URL returning { &quot;data&quot;: [ ... ] }">
+        <span class="hint">For webhook.site the API URL is derived automatically: <code>https://webhook.site/token/&lt;uuid&gt;/requests</code></span></div>
+      <div id="wh-ext-msg" hidden></div>
+      <div class="row">
+        <button class="btn btn-primary" id="wh-poll-start" type="button"><i data-lucide="play"></i> Start polling (every 5s)</button>
+        <button class="btn" id="wh-poll-stop" type="button" disabled><i data-lucide="square"></i> Stop</button>
+        <button class="btn" id="wh-poll-once" type="button"><i data-lucide="download-cloud"></i> Fetch once</button>
+        <span class="badge" id="wh-poll-status">Not polling</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Requests ============ -->
+<div class="toolbar wh-filter">
+  <h3 class="wh-h">Received requests <span class="badge" id="wh-count">0</span></h3>
+  <span class="spacer"></span>
+  <select id="wh-filter-method" class="select wh-w-sm" aria-label="Filter by method"><option value="ALL">All methods</option></select>
+  <input id="wh-search" class="input wh-w-md" type="search" placeholder="Search URL, headers, body…" aria-label="Search requests">
+  <button class="btn" id="wh-export" type="button"><i data-lucide="download"></i> Export JSON</button>
+  <button class="btn btn-danger" id="wh-clear-all" type="button"><i data-lucide="trash-2"></i> Clear all</button>
+</div>
+
+<div class="wh-split">
+  <div class="panel wh-list-panel">
+    <div id="wh-list" class="wh-list" role="listbox" aria-label="Requests"></div>
+  </div>
+  <div class="panel wh-detail-panel">
+    <div id="wh-detail" class="wh-detail"></div>
+  </div>
+</div>

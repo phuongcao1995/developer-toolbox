@@ -1,0 +1,47 @@
+<div class="toolbar">
+  <div class="chips me-modes" style="margin:0">
+    <button class="chip" data-mode="editor">Editor</button>
+    <button class="chip active" data-mode="split">Split</button>
+    <button class="chip" data-mode="preview">Preview</button>
+  </div>
+  <span class="spacer"></span>
+  <span class="hint" id="me-stats"></span>
+  <span class="hint" id="me-saved"></span>
+</div>
+
+<div class="toolbar me-files">
+  <button class="btn btn-sm" data-action="open"><i data-lucide="folder-open"></i> Open</button>
+  <button class="btn btn-sm" data-action="export-md"><i data-lucide="download"></i> Export .md</button>
+  <button class="btn btn-sm" data-action="export-html"><i data-lucide="file-code"></i> Export HTML</button>
+  <button class="btn btn-sm" data-action="copy-md"><i data-lucide="copy"></i> Copy Markdown</button>
+  <button class="btn btn-sm" data-action="copy-html"><i data-lucide="code"></i> Copy HTML</button>
+  <button class="btn btn-sm btn-danger" data-action="clear"><i data-lucide="trash-2"></i> Clear</button>
+</div>
+
+<div id="me-msg" hidden></div>
+
+<div class="me-panes" id="me-panes" data-mode="split">
+  <div class="panel me-editor-pane">
+    <div class="panel-head me-format" role="toolbar" aria-label="Formatting">
+      <button class="btn btn-sm btn-icon" data-fmt="bold" title="Bold (Ctrl+B)" aria-label="Bold"><i data-lucide="bold"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="italic" title="Italic (Ctrl+I)" aria-label="Italic"><i data-lucide="italic"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="strike" title="Strikethrough" aria-label="Strikethrough"><i data-lucide="strikethrough"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="heading" title="Heading (click to cycle level)" aria-label="Heading"><i data-lucide="heading"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="link" title="Link" aria-label="Link"><i data-lucide="link"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="image" title="Image" aria-label="Image"><i data-lucide="image"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="code" title="Inline code" aria-label="Inline code"><i data-lucide="code"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="codeblock" title="Code block" aria-label="Code block"><i data-lucide="square-code"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="ul" title="Bullet list" aria-label="Bullet list"><i data-lucide="list"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="ol" title="Numbered list" aria-label="Numbered list"><i data-lucide="list-ordered"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="task" title="Task list" aria-label="Task list"><i data-lucide="list-checks"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="quote" title="Quote" aria-label="Quote"><i data-lucide="quote"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="table" title="Table" aria-label="Table"><i data-lucide="table"></i></button>
+      <button class="btn btn-sm btn-icon" data-fmt="hr" title="Horizontal rule" aria-label="Horizontal rule"><i data-lucide="minus"></i></button>
+    </div>
+    <textarea class="textarea code me-input" id="me-input" spellcheck="false" placeholder="Write Markdown here… (drop a .md file to open it)"></textarea>
+  </div>
+  <div class="panel me-preview-pane">
+    <div class="panel-head"><h3>Preview</h3></div>
+    <div class="md-body me-preview" id="me-preview"></div>
+  </div>
+</div>

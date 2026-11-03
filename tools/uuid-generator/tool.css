@@ -1,0 +1,18 @@
+.tool-uuid-generator .uuid-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 520px; }
+.tool-uuid-generator .uuid-checks { gap: 16px; }
+.tool-uuid-generator .uuid-gap { margin-top: 14px; }
+.tool-uuid-generator .uuid-pad { padding: 12px; }
+.tool-uuid-generator .uuid-list { max-height: 440px; overflow: auto; }
+.tool-uuid-generator .uuid-item { display: flex; align-items: center; gap: 8px; padding: 4px 12px; border-bottom: 1px solid var(--border); }
+.tool-uuid-generator .uuid-item:last-child { border-bottom: 0; }
+.tool-uuid-generator .uuid-item code { flex: 1; min-width: 0; font-family: var(--mono); font-size: var(--editor-font-size); word-break: break-all; }
+.tool-uuid-generator .uuid-idx { color: var(--text-muted); font-size: 11px; min-width: 32px; text-align: right; }
+.tool-uuid-generator .uuid-check-row .input { flex: 1; min-width: 200px; }
+.tool-uuid-generator #uuid-msg:not([hidden]) { margin: 0; }
+.tool-uuid-generator .uuid-kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 13px; margin-top: 8px; }
+.tool-uuid-generator .uuid-kv dt { color: var(--text-muted); }
+.tool-uuid-generator .uuid-kv dd { margin: 0; word-break: break-all; }
+@media (max-width: 520px) {
+  .tool-uuid-generator .uuid-opts { grid-template-columns: 1fr; }
+  .tool-uuid-generator .uuid-kv { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,93 @@
+<div class="ts-wrap">
+  <!-- Live clock -->
+  <div class="panel">
+    <div class="panel-head"><h3>Current Unix time</h3>
+      <button class="btn btn-sm" data-action="toggle-live" id="ts-toggle"><i data-lucide="pause"></i> <span>Pause</span></button></div>
+    <div class="panel-body ts-live">
+      <div class="ts-live-item"><span class="label">Seconds</span>
+        <div class="ts-big" id="ts-now-s">-</div>
+        <button class="btn btn-sm" data-action="copy-now-s"><i data-lucide="copy"></i> Copy</button></div>
+      <div class="ts-live-item"><span class="label">Milliseconds</span>
+        <div class="ts-big" id="ts-now-ms">-</div>
+        <button class="btn btn-sm" data-action="copy-now-ms"><i data-lucide="copy"></i> Copy</button></div>
+      <div class="ts-live-item"><span class="label">ISO 8601 (UTC)</span>
+        <div class="ts-big ts-small" id="ts-now-iso">-</div>
+        <button class="btn btn-sm" data-action="copy-now-iso"><i data-lucide="copy"></i> Copy</button></div>
+    </div>
+  </div>
+
+  <!-- Shared time zone -->
+  <div class="toolbar ts-tzbar">
+    <div class="field ts-tz">
+      <label for="ts-tz">Selected time zone</label>
+      <select class="select" id="ts-tz"></select>
+    </div>
+    <span class="hint" id="ts-tz-hint"></span>
+  </div>
+
+  <div class="grid-2">
+    <!-- Unix -> date -->
+    <div class="panel">
+      <div class="panel-head"><h3>Unix timestamp to date</h3></div>
+      <div class="panel-body stack">
+        <div class="row">
+          <input class="input mono ts-grow" id="ts-unix" inputmode="numeric" spellcheck="false" placeholder="e.g. 1700000000 or 1700000000000" aria-label="Unix timestamp">
+          <select class="select ts-unit" id="ts-unit" aria-label="Unit">
+            <option value="auto">Auto-detect</option><option value="s">Seconds</option><option value="ms">Milliseconds</option>
+            <option value="us">Microseconds</option><option value="ns">Nanoseconds</option>
+          </select>
+        </div>
+        <div class="row">
+          <button class="btn" data-action="unix-now"><i data-lucide="clock"></i> Use now</button>
+          <button class="btn" data-action="unix-clear"><i data-lucide="eraser"></i> Clear</button>
+          <button class="btn" data-action="unix-copy-all"><i data-lucide="copy"></i> Copy all</button>
+          <span class="badge" id="ts-unit-badge" hidden></span>
+        </div>
+        <div id="ts-unix-msg" hidden></div>
+        <div class="table-wrap"><table class="table ts-table"><tbody id="ts-unix-out"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Date -> unix -->
+    <div class="panel">
+      <div class="panel-head"><h3>Date to Unix timestamp</h3></div>
+      <div class="panel-body stack">
+        <div class="field"><label for="ts-interp">Interpret the date as</label>
+          <select class="select" id="ts-interp">
+            <option value="local">Local time (browser)</option><option value="utc">UTC</option><option value="zone">Selected time zone</option>
+          </select></div>
+        <div class="field"><label for="ts-dtl">Date and time</label>
+          <input class="input" type="datetime-local" step="1" id="ts-dtl"></div>
+        <div class="ts-fields">
+          <div class="field"><label for="ts-f-year">Year</label><input class="input" id="ts-f-year" type="number" min="1" max="9999"></div>
+          <div class="field"><label for="ts-f-month">Month</label><input class="input" id="ts-f-month" type="number" min="1" max="12"></div>
+          <div class="field"><label for="ts-f-day">Day</label><input class="input" id="ts-f-day" type="number" min="1" max="31"></div>
+          <div class="field"><label for="ts-f-hour">Hour</label><input class="input" id="ts-f-hour" type="number" min="0" max="23"></div>
+          <div class="field"><label for="ts-f-minute">Min</label><input class="input" id="ts-f-minute" type="number" min="0" max="59"></div>
+          <div class="field"><label for="ts-f-second">Sec</label><input class="input" id="ts-f-second" type="number" min="0" max="59"></div>
+          <div class="field"><label for="ts-f-ms">Ms</label><input class="input" id="ts-f-ms" type="number" min="0" max="999"></div>
+        </div>
+        <div class="row">
+          <button class="btn" data-action="date-now"><i data-lucide="clock"></i> Use now</button>
+          <button class="btn" data-action="date-clear"><i data-lucide="eraser"></i> Clear</button>
+        </div>
+        <div id="ts-date-msg" hidden></div>
+        <div class="table-wrap"><table class="table ts-table"><tbody id="ts-date-out"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ISO parse -->
+  <div class="panel ts-gap">
+    <div class="panel-head"><h3>ISO 8601 parser</h3></div>
+    <div class="panel-body stack">
+      <div class="row">
+        <input class="input mono ts-grow" id="ts-iso" spellcheck="false" placeholder="2023-11-14T22:13:20Z, 2023-11-14T17:13:20-05:00 or 2023-11-14" aria-label="ISO 8601 date">
+        <button class="btn" data-action="iso-clear"><i data-lucide="eraser"></i> Clear</button>
+      </div>
+      <p class="hint">Values with Z or an offset are absolute; date-only values are UTC midnight; date-times without an offset use the zone chosen in "Interpret the date as".</p>
+      <div id="ts-iso-msg" hidden></div>
+      <div class="table-wrap"><table class="table ts-table"><tbody id="ts-iso-out"></tbody></table></div>
+    </div>
+  </div>
+</div>

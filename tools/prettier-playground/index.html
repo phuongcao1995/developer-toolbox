@@ -1,0 +1,53 @@
+<div class="pp">
+  <div class="toolbar pp-top">
+    <div class="field"><label for="pp-lang">Language</label>
+      <select id="pp-lang" class="select"></select></div>
+    <span class="spacer"></span>
+    <button class="btn" id="pp-sample" type="button"><i data-lucide="file-code"></i> Sample</button>
+    <button class="btn btn-primary" id="pp-format" type="button"><i data-lucide="sparkles"></i> Format</button>
+  </div>
+
+  <details class="card pp-options" open>
+    <summary>Options</summary>
+    <div class="pp-grid">
+      <div class="field"><label for="pp-tabwidth">Tab width</label>
+        <select id="pp-tabwidth" class="select"><option value="2">2</option><option value="4">4</option><option value="8">8</option></select></div>
+      <div class="field"><label for="pp-printwidth">Print width</label>
+        <input id="pp-printwidth" class="input" type="number" min="20" max="400" step="1"></div>
+      <div class="field"><label for="pp-trailing">Trailing commas</label>
+        <select id="pp-trailing" class="select"><option value="none">none</option><option value="es5">es5</option><option value="all">all</option></select></div>
+      <div class="field"><label for="pp-arrow">Arrow parens</label>
+        <select id="pp-arrow" class="select"><option value="always">always: (x) =&gt; x</option><option value="avoid">avoid: x =&gt; x</option></select></div>
+      <label class="check"><input type="checkbox" id="pp-usetabs"> Use tabs</label>
+      <label class="check"><input type="checkbox" id="pp-semi"> Semicolons</label>
+      <label class="check"><input type="checkbox" id="pp-single"> Single quotes</label>
+      <label class="check"><input type="checkbox" id="pp-bracket"> Bracket spacing</label>
+      <label class="check"><input type="checkbox" id="pp-live"> Format as I type</label>
+      <button class="btn btn-sm" id="pp-reset" type="button"><i data-lucide="rotate-ccw"></i> Reset options</button>
+    </div>
+    <p class="hint">Not every option applies to every language (for example quotes and semicolons are ignored for CSS and Markdown). Prettier is loaded from a CDN on first use.</p>
+  </details>
+
+  <div id="pp-msg" class="alert" hidden></div>
+
+  <div class="grid-2 pp-panels">
+    <section class="panel" id="pp-drop">
+      <div class="panel-head">
+        <h3>Input</h3>
+        <button class="btn btn-sm" id="pp-upload" type="button"><i data-lucide="upload"></i> Upload</button>
+        <button class="btn btn-sm" id="pp-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+      </div>
+      <textarea class="textarea code" id="pp-input" spellcheck="false" placeholder="Paste code or drop a file here…" aria-label="Input code"></textarea>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Prettier output</h3>
+        <button class="btn btn-sm" id="pp-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn btn-sm" id="pp-download" type="button"><i data-lucide="download"></i> Download</button>
+        <button class="btn btn-sm" id="pp-swap" type="button" title="Move the output into the input"><i data-lucide="arrow-left"></i> Use as input</button>
+      </div>
+      <textarea class="textarea code" id="pp-output" spellcheck="false" readonly placeholder="Formatted code appears here" aria-label="Formatted output"></textarea>
+    </section>
+  </div>
+  <div class="pp-status hint" id="pp-status" aria-live="polite"></div>
+</div>

@@ -1,0 +1,51 @@
+.tool-markdown-viewer .mv-fileinfo { font-size: 13px; color: var(--text-muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tool-markdown-viewer .mv-fileinfo b { color: var(--text); font-weight: 600; }
+.tool-markdown-viewer #mv-msg { margin-bottom: 12px; }
+.tool-markdown-viewer .mv-paste { margin-bottom: 14px; }
+.tool-markdown-viewer .mv-paste .textarea { min-height: 180px; max-height: 360px; border-radius: 0; }
+.tool-markdown-viewer .mv-empty { padding: 48px 20px; }
+.tool-markdown-viewer .mv-empty h3 { margin: 8px 0 4px; color: var(--text); }
+.tool-markdown-viewer .mv-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 22px; align-items: start; }
+.tool-markdown-viewer .mv-toc { position: sticky; top: 8px; max-height: calc(100vh - 120px); }
+.tool-markdown-viewer .mv-toc-list { list-style: none; margin: 0; padding: 6px; overflow: auto; }
+.tool-markdown-viewer .mv-toc-list a { display: block; padding: 4px 8px; border-radius: 6px; color: var(--text-muted); font-size: 13px; line-height: 1.35; border-left: 2px solid transparent; word-break: break-word; cursor: pointer; text-decoration: none; }
+.tool-markdown-viewer .mv-toc-list a:hover { background: var(--surface-2); color: var(--text); }
+.tool-markdown-viewer .mv-toc-list a.active { color: var(--primary); background: var(--primary-soft); border-left-color: var(--primary); font-weight: 600; }
+.tool-markdown-viewer .mv-toc-empty { padding: 10px; color: var(--text-muted); font-size: 13px; }
+.tool-markdown-viewer .mv-toc-toggle { display: none; }
+
+/* Reading view */
+.tool-markdown-viewer .mv-article { max-width: 780px; width: 100%; margin: 0 auto; padding: 8px 4px 80px; font-size: 16.5px; line-height: 1.75; word-wrap: break-word; min-width: 0; }
+.tool-markdown-viewer .md-body > :first-child { margin-top: 0; }
+.tool-markdown-viewer .md-body h1, .tool-markdown-viewer .md-body h2, .tool-markdown-viewer .md-body h3,
+.tool-markdown-viewer .md-body h4, .tool-markdown-viewer .md-body h5, .tool-markdown-viewer .md-body h6 { margin: 1.6em 0 .55em; line-height: 1.25; scroll-margin-top: 16px; }
+.tool-markdown-viewer .md-body h1 { font-size: 2em; } .tool-markdown-viewer .md-body h2 { font-size: 1.5em; }
+.tool-markdown-viewer .md-body h1, .tool-markdown-viewer .md-body h2 { padding-bottom: .3em; border-bottom: 1px solid var(--border); }
+.tool-markdown-viewer .md-body h3 { font-size: 1.22em; } .tool-markdown-viewer .md-body h4 { font-size: 1.05em; }
+.tool-markdown-viewer .md-body h5, .tool-markdown-viewer .md-body h6 { font-size: .95em; color: var(--text-muted); }
+.tool-markdown-viewer .md-body p, .tool-markdown-viewer .md-body ul, .tool-markdown-viewer .md-body ol,
+.tool-markdown-viewer .md-body blockquote, .tool-markdown-viewer .md-body table, .tool-markdown-viewer .md-body pre { margin: 0 0 1.1em; }
+.tool-markdown-viewer .md-body ul, .tool-markdown-viewer .md-body ol { padding-left: 1.7em; }
+.tool-markdown-viewer .md-body li > ul, .tool-markdown-viewer .md-body li > ol { margin: .25em 0; }
+.tool-markdown-viewer .md-body li input[type="checkbox"] { margin: 0 .4em 0 -1.3em; vertical-align: middle; }
+.tool-markdown-viewer .md-body a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.tool-markdown-viewer .md-body code { font-family: var(--mono); font-size: .88em; background: var(--code-bg); border: 1px solid var(--border); padding: .1em .35em; border-radius: 4px; }
+.tool-markdown-viewer .md-body pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow: auto; }
+.tool-markdown-viewer .md-body pre code, .tool-markdown-viewer .md-body pre code.hljs { background: transparent; border: 0; padding: 0; font-size: .86em; }
+.tool-markdown-viewer .md-body blockquote { padding: .1em 1.1em; border-left: 4px solid var(--border-strong); color: var(--text-muted); }
+.tool-markdown-viewer .md-body table { border-collapse: collapse; display: block; overflow: auto; max-width: 100%; }
+.tool-markdown-viewer .md-body th, .tool-markdown-viewer .md-body td { border: 1px solid var(--border-strong); padding: 6px 12px; }
+.tool-markdown-viewer .md-body th { background: var(--surface-2); }
+.tool-markdown-viewer .md-body img { max-width: 100%; height: auto; }
+.tool-markdown-viewer .md-body hr { border: 0; border-top: 1px solid var(--border); margin: 1.8em 0; }
+
+@media (max-width: 900px) {
+  .tool-markdown-viewer .mv-layout { grid-template-columns: 1fr; gap: 14px; }
+  .tool-markdown-viewer .mv-toc { position: static; max-height: none; }
+  .tool-markdown-viewer .mv-toc-toggle { display: inline-flex; margin-left: auto; }
+  .tool-markdown-viewer .mv-toc.collapsed .mv-toc-list { display: none; }
+  .tool-markdown-viewer .mv-toc-list { max-height: 260px; }
+}
+@media (max-width: 480px) {
+  .tool-markdown-viewer .mv-article { font-size: 15.5px; }
+}

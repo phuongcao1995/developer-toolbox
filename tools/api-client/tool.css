@@ -1,0 +1,34 @@
+.tool-api-client .ac-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 14px; align-items: start; }
+.tool-api-client .ac-main { min-width: 0; }
+.tool-api-client .ac-urlbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.tool-api-client .ac-method { width: 110px; flex: none; font-weight: 600; }
+.tool-api-client .ac-url { flex: 1 1 220px; }
+.tool-api-client .ac-tabs { margin: 0; padding: 0 8px; }
+.tool-api-client .ac-tabs .badge { margin-left: 4px; }
+.tool-api-client .ac-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.tool-api-client .ac-row { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 6px; align-items: center; }
+.tool-api-client .ac-row.off .input { opacity: .5; }
+.tool-api-client [data-panel] .textarea { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); min-height: 180px; }
+.tool-api-client .ac-pad { padding: 8px 12px; margin: 0; }
+.tool-api-client .ac-output { border: 0; border-radius: 0; max-height: 520px; min-height: 140px; white-space: pre-wrap; word-break: break-word; }
+.tool-api-client .ac-loading { display: flex; align-items: center; gap: 8px; padding: 12px; color: var(--text-muted); }
+.tool-api-client #ac-meta { margin-right: 4px; }
+.tool-api-client .ac-history { position: sticky; top: 0; max-height: 80vh; }
+.tool-api-client .ac-history-list { overflow: auto; display: flex; flex-direction: column; }
+.tool-api-client .ac-hist-item { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.tool-api-client .ac-hist-item:hover { background: var(--surface-2); }
+.tool-api-client .ac-hist-main { flex: 1; min-width: 0; font-size: 12px; }
+.tool-api-client .ac-hist-main b { display: inline-block; min-width: 46px; color: var(--primary); }
+.tool-api-client .ac-hist-url { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); }
+.tool-api-client .ac-hist-empty { padding: 16px; color: var(--text-muted); font-size: 13px; text-align: center; }
+.tool-api-client .ac-hdr-name { font-family: var(--mono); font-weight: 600; white-space: nowrap; }
+.tool-api-client .ac-hdr-val { font-family: var(--mono); word-break: break-all; }
+@media (max-width: 960px) {
+  .tool-api-client .ac-layout { grid-template-columns: 1fr; }
+  .tool-api-client .ac-history { position: static; max-height: 360px; }
+}
+@media (max-width: 480px) {
+  .tool-api-client .ac-method { width: 100%; }
+  .tool-api-client .ac-row { grid-template-columns: auto 1fr auto; }
+  .tool-api-client .ac-row .ac-val { grid-column: 1 / -1; grid-row: 2; }
+}

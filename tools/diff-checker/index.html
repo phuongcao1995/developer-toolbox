@@ -1,0 +1,46 @@
+<div class="toolbar">
+  <button class="btn btn-primary" data-action="compare"><i data-lucide="git-compare"></i> Compare</button>
+  <button class="btn" data-action="swap"><i data-lucide="arrow-left-right"></i> Swap</button>
+  <button class="btn btn-danger" data-action="clear"><i data-lucide="trash-2"></i> Clear both</button>
+  <span class="spacer"></span>
+  <label class="check"><input type="checkbox" id="df-ws"> Ignore whitespace</label>
+  <label class="check"><input type="checkbox" id="df-case"> Ignore case</label>
+  <label class="check"><input type="checkbox" id="df-auto" checked> Auto-compare</label>
+</div>
+
+<div class="grid-2 df-inputs">
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Original</h3>
+      <span class="hint" id="df-a-count"></span>
+      <button class="btn btn-sm" data-action="upload-a"><i data-lucide="upload"></i> Open file</button>
+    </div>
+    <textarea class="textarea code" id="df-a" spellcheck="false" wrap="off" placeholder="Paste original text here, or drop a file…"></textarea>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Modified</h3>
+      <span class="hint" id="df-b-count"></span>
+      <button class="btn btn-sm" data-action="upload-b"><i data-lucide="upload"></i> Open file</button>
+    </div>
+    <textarea class="textarea code" id="df-b" spellcheck="false" wrap="off" placeholder="Paste modified text here, or drop a file…"></textarea>
+  </div>
+</div>
+
+<div id="df-msg" hidden></div>
+
+<div class="panel df-result">
+  <div class="panel-head">
+    <h3>Differences</h3>
+    <span class="badge badge-success" id="df-added">+0</span>
+    <span class="badge badge-danger" id="df-removed">−0</span>
+    <span class="spacer"></span>
+    <div class="chips df-views">
+      <button class="chip active" data-view="side">Side by side</button>
+      <button class="chip" data-view="unified">Unified</button>
+    </div>
+    <button class="btn btn-sm" data-action="copy"><i data-lucide="copy"></i> Copy diff</button>
+    <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i> Download .diff</button>
+  </div>
+  <div class="df-output" id="df-output"><div class="empty">Enter text on both sides to see the differences.</div></div>
+</div>

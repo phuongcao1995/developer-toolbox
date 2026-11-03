@@ -1,0 +1,21 @@
+.tool-diff-checker .df-inputs { margin-bottom: 14px; }
+.tool-diff-checker .df-inputs .textarea { min-height: 200px; max-height: 360px; }
+.tool-diff-checker #df-msg { margin-bottom: 12px; }
+.tool-diff-checker .df-views { margin: 0; }
+.tool-diff-checker .df-output { overflow: auto; max-height: 70vh; background: var(--surface); }
+.tool-diff-checker .df-output .empty { border: 0; }
+.tool-diff-checker table.df { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: var(--editor-font-size); table-layout: fixed; }
+.tool-diff-checker table.df td { padding: 0 8px; vertical-align: top; white-space: pre-wrap; word-break: break-all; line-height: 1.5; }
+.tool-diff-checker table.df td.no { width: 46px; text-align: right; color: var(--text-faint); user-select: none; padding: 0 6px; border-right: 1px solid var(--border); background: var(--surface-2); }
+.tool-diff-checker table.df td.sign { width: 18px; padding: 0 2px; text-align: center; color: var(--text-faint); user-select: none; }
+.tool-diff-checker table.df.side td.txt + td.no { border-left: 1px solid var(--border); }
+.tool-diff-checker .add td.txt, .tool-diff-checker .add td.sign, .tool-diff-checker td.add-c { background: var(--add-bg); }
+.tool-diff-checker .del td.txt, .tool-diff-checker .del td.sign, .tool-diff-checker td.del-c { background: var(--del-bg); }
+.tool-diff-checker td.empty-cell { background: repeating-linear-gradient(135deg, transparent 0 6px, var(--surface-2) 6px 12px); }
+.tool-diff-checker .add .w, .tool-diff-checker .add-c .w { background: color-mix(in srgb, var(--success) 38%, transparent); border-radius: 2px; }
+.tool-diff-checker .del .w, .tool-diff-checker .del-c .w { background: color-mix(in srgb, var(--danger) 38%, transparent); border-radius: 2px; }
+.tool-diff-checker .eof { color: var(--text-faint); font-style: italic; font-size: 11px; }
+@media (max-width: 700px) {
+  .tool-diff-checker table.df td.no { width: 34px; }
+  .tool-diff-checker table.df.side { min-width: 640px; }
+}

@@ -1,0 +1,14 @@
+<div class="hs-search row">
+  <div class="hs-search-box">
+    <i data-lucide="search"></i>
+    <input id="hs-q" class="input" type="search" placeholder="Search by code, title or keyword (try 404, 4xx, 40, redirect)…  press / to focus" autocomplete="off" aria-label="Search status codes">
+  </div>
+  <span class="hint" id="hs-count"></span>
+</div>
+<div class="chips" id="hs-chips" role="group" aria-label="Filter by category"></div>
+<div id="hs-list" class="hs-list"></div>
+<div id="hs-empty" class="empty" hidden>
+  <i data-lucide="search-x"></i>
+  <p>No status codes match your search.</p>
+  <button class="btn btn-sm" id="hs-reset" type="button">Reset filters</button>
+</div>

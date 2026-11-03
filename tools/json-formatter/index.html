@@ -1,0 +1,48 @@
+<div class="jf-layout">
+  <div class="toolbar">
+    <button class="btn btn-primary" data-action="format"><i data-lucide="align-left"></i>Format</button>
+    <button class="btn" data-action="minify"><i data-lucide="minimize-2"></i>Minify</button>
+    <button class="btn" data-action="validate"><i data-lucide="check-circle-2"></i>Validate</button>
+    <div class="field jf-inline">
+      <select class="select" data-el="indent" aria-label="Indentation">
+        <option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab</option>
+      </select>
+    </div>
+    <label class="check"><input type="checkbox" data-el="sort"> Sort keys</label>
+    <span class="spacer"></span>
+    <span class="label">Convert to</span>
+    <button class="btn" data-action="xml">XML</button>
+    <button class="btn" data-action="csv">CSV</button>
+    <button class="btn" data-action="yaml">YAML</button>
+  </div>
+  <div class="alert" data-el="msg" hidden></div>
+  <div class="grid-2 jf-panels">
+    <div class="panel" data-el="inpanel">
+      <div class="panel-head"><h3>Input</h3>
+        <button class="btn btn-sm" data-action="sample"><i data-lucide="sparkles"></i>Sample</button>
+        <button class="btn btn-sm" data-action="upload"><i data-lucide="upload"></i>Upload</button>
+        <button class="btn btn-sm" data-action="clear"><i data-lucide="trash-2"></i>Clear</button>
+      </div>
+      <textarea class="textarea code" data-el="input" spellcheck="false" placeholder="Paste JSON here, or drop a .json file…" aria-label="JSON input"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="tabs jf-tabs">
+          <button class="tab active" data-tab="text">Output <span class="badge" data-el="fmt">JSON</span></button>
+          <button class="tab" data-tab="tree">Tree view</button>
+        </div>
+        <span class="spacer"></span>
+        <span data-el="treetools" hidden>
+          <button class="btn btn-sm" data-action="expand">Expand all</button>
+          <button class="btn btn-sm" data-action="collapse">Collapse all</button>
+        </span>
+        <button class="btn btn-sm" data-action="use"><i data-lucide="arrow-left"></i>Use as input</button>
+        <button class="btn btn-sm" data-action="copy"><i data-lucide="copy"></i>Copy</button>
+        <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i>Download</button>
+      </div>
+      <div data-panel="text" class="jf-pane"><textarea class="textarea code" data-el="output" readonly spellcheck="false" placeholder="Result appears here" aria-label="Output"></textarea></div>
+      <div data-panel="tree" class="jf-pane jf-treewrap" hidden><div class="jf-tree" data-el="tree"></div></div>
+    </div>
+  </div>
+  <p class="hint">Everything runs locally in your browser. Tab inserts your default indentation in the input.</p>
+</div>

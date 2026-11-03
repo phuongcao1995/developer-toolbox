@@ -1,0 +1,54 @@
+.tool-regex-tester .rt-layout { display: flex; flex-direction: column; gap: 14px; }
+.tool-regex-tester .rt-pattern-box { display: flex; flex-direction: column; gap: 10px; }
+.tool-regex-tester .rt-pattern-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tool-regex-tester .rt-slash { font: 600 18px var(--mono); color: var(--text-faint); }
+.tool-regex-tester .rt-pattern { flex: 1 1 220px; width: auto; }
+.tool-regex-tester .rt-flags { display: inline-flex; gap: 4px; }
+.tool-regex-tester .rt-flags .btn { width: 30px; padding: 0; font-family: var(--mono); }
+.tool-regex-tester .rt-risk { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.tool-regex-tester .rt-risk[hidden], .tool-regex-tester .alert[hidden] { display: none; }
+.tool-regex-tester .rt-main { align-items: start; }
+.tool-regex-tester .panel.dragover { border-color: var(--primary); }
+
+/* Overlay editor: a highlighted <pre> mirror sits under a transparent textarea. Both share identical
+   font, padding, wrapping and (auto-grown) height, so they never need scroll syncing. */
+.tool-regex-tester .rt-editor { position: relative; min-height: 220px; background: var(--surface); }
+.tool-regex-tester .rt-mirror, .tool-regex-tester .rt-input {
+  margin: 0; padding: 10px; border: 0; width: 100%; box-sizing: border-box;
+  font: var(--editor-font-size, 13px)/1.6 var(--mono); letter-spacing: 0; tab-size: 2;
+  white-space: pre-wrap; overflow-wrap: break-word; word-break: normal;
+}
+.tool-regex-tester .rt-mirror { position: relative; min-height: 220px; color: var(--text); pointer-events: none; overflow: hidden; }
+.tool-regex-tester .rt-input { position: absolute; inset: 0; height: 100%; resize: none; overflow: hidden; background: transparent; color: transparent; caret-color: var(--text); outline: none; }
+.tool-regex-tester .rt-input::placeholder { color: var(--text-faint); }
+.tool-regex-tester .rt-input::selection { background: color-mix(in srgb, var(--primary) 35%, transparent); color: transparent; }
+.tool-regex-tester .rt-m { border-radius: 2px; background: var(--mark); box-shadow: 0 0 0 1px color-mix(in srgb, var(--warn) 40%, transparent); color: inherit; }
+.tool-regex-tester .rt-m1 { background: var(--info-soft); box-shadow: 0 0 0 1px color-mix(in srgb, var(--info) 45%, transparent); }
+.tool-regex-tester .rt-zero { position: relative; display: inline-block; width: 0; height: 1em; }
+.tool-regex-tester .rt-zero::after { content: ""; position: absolute; left: -1px; top: 0; bottom: -2px; width: 2px; background: var(--danger); }
+.tool-regex-tester [data-el="limit"] { margin: 0 12px 12px; }
+
+.tool-regex-tester .rt-tabs { margin: 0; border: 0; }
+.tool-regex-tester .rt-tabs .tab { padding: 4px 10px; }
+.tool-regex-tester .rt-tabpane { padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; max-height: 640px; overflow: auto; }
+.tool-regex-tester .rt-tabpane[hidden] { display: none; }
+.tool-regex-tester .rt-empty { padding: 8px 0; }
+.tool-regex-tester .rt-table td { font-family: var(--mono); font-size: 12px; word-break: break-all; white-space: pre-wrap; }
+.tool-regex-tester .rt-table .faint { color: var(--text-faint); font-style: italic; }
+.tool-regex-tester .rt-g { display: block; }
+.tool-regex-tester .rt-g b { color: var(--primary); font-weight: 600; }
+.tool-regex-tester .rt-result { min-height: 100px; white-space: pre-wrap; word-break: break-word; max-height: 360px; }
+.tool-regex-tester .rt-explain { display: flex; flex-direction: column; gap: 4px; }
+.tool-regex-tester .rt-x { display: flex; gap: 10px; align-items: baseline; padding: 4px 6px; border-radius: var(--radius-sm); }
+.tool-regex-tester .rt-x:hover { background: var(--surface-2); }
+.tool-regex-tester .rt-x code { flex: none; max-width: 45%; font: 600 12px var(--mono); padding: 1px 6px; border-radius: 4px; background: var(--code-bg); border: 1px solid var(--border); word-break: break-all; color: var(--primary); }
+.tool-regex-tester .rt-x span { font-size: 13px; min-width: 0; }
+.tool-regex-tester .rt-x.k-quantifier code { color: var(--warn); }
+.tool-regex-tester .rt-x.k-anchor code, .tool-regex-tester .rt-x.k-look code { color: var(--success); }
+.tool-regex-tester .rt-x.k-error code, .tool-regex-tester .rt-x.k-error span { color: var(--danger); }
+.tool-regex-tester .rt-examples { display: flex; flex-direction: column; gap: 6px; }
+.tool-regex-tester .rt-ex { text-align: left; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; font: 13px var(--font); }
+.tool-regex-tester .rt-ex:hover { border-color: var(--primary); background: var(--primary-soft); }
+.tool-regex-tester .rt-ex strong { font-weight: 600; }
+.tool-regex-tester .rt-ex code { font: 12px var(--mono); color: var(--text-muted); word-break: break-all; }
+@media (max-width: 800px) { .tool-regex-tester .grid-2 { grid-template-columns: 1fr; } .tool-regex-tester .rt-tabpane { max-height: none; } }

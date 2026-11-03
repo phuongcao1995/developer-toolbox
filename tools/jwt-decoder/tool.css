@@ -1,0 +1,13 @@
+.tool-jwt-decoder .jwt-layout { display: flex; flex-direction: column; gap: 14px; }
+.tool-jwt-decoder .jwt-notice { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+.tool-jwt-decoder .jwt-notice svg { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+.tool-jwt-decoder .jwt-input { min-height: 120px; word-break: break-all; white-space: pre-wrap; }
+.tool-jwt-decoder .jwt-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; }
+.tool-jwt-decoder .jwt-state { font-size: 13px; padding: 3px 12px; }
+.tool-jwt-decoder .jwt-json { border: 0; border-radius: 0; min-height: 140px; max-height: 420px; margin: 0; }
+.tool-jwt-decoder .jwt-sig { border: 0; border-radius: 0; white-space: pre-wrap; word-break: break-all; }
+.tool-jwt-decoder .jwt-times td { font-family: var(--mono); font-size: 12px; word-break: break-word; }
+.tool-jwt-decoder .jwt-times td:first-child { font-weight: 600; }
+.tool-jwt-decoder .jwt-times .bad { color: var(--danger); }
+.tool-jwt-decoder .jwt-times .rel { font-family: var(--font); white-space: nowrap; }
+@media (max-width: 800px) { .tool-jwt-decoder .jwt-grid { grid-template-columns: 1fr; } }

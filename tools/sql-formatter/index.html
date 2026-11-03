@@ -1,0 +1,40 @@
+<div class="sf">
+  <div class="toolbar sf-options">
+    <div class="field"><label for="sf-indent">Indentation</label>
+      <select id="sf-indent" class="select">
+        <option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab</option>
+      </select></div>
+    <div class="field"><label for="sf-case">Keyword case</label>
+      <select id="sf-case" class="select">
+        <option value="upper">UPPER</option><option value="lower">lower</option><option value="preserve">Preserve</option>
+      </select></div>
+    <div class="field"><label for="sf-example">Example</label>
+      <select id="sf-example" class="select"><option value="">Load an example…</option></select></div>
+    <span class="spacer"></span>
+    <button class="btn btn-primary" id="sf-format" type="button"><i data-lucide="align-left"></i> Format</button>
+    <button class="btn" id="sf-minify" type="button"><i data-lucide="minimize-2"></i> Minify</button>
+  </div>
+  <p class="hint">Format never changes string literals or quoted identifiers. Minify removes comments (except <code>/*! */</code> and <code>/*+ */</code> hints) and collapses whitespace.</p>
+  <div id="sf-msg" class="alert" hidden></div>
+
+  <div class="grid-2 sf-panels">
+    <section class="panel" id="sf-drop">
+      <div class="panel-head">
+        <h3>SQL input</h3>
+        <button class="btn btn-sm" id="sf-upload" type="button"><i data-lucide="upload"></i> Upload .sql</button>
+        <button class="btn btn-sm" id="sf-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+      </div>
+      <textarea class="textarea code" id="sf-input" spellcheck="false" placeholder="Paste SQL here or drop a .sql file…" aria-label="SQL input"></textarea>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Result</h3>
+        <button class="btn btn-sm" id="sf-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn btn-sm" id="sf-download" type="button"><i data-lucide="download"></i> Download .sql</button>
+        <button class="btn btn-sm" id="sf-swap" type="button" title="Move the result into the input"><i data-lucide="arrow-left"></i> Use as input</button>
+      </div>
+      <textarea class="textarea code" id="sf-output" spellcheck="false" readonly placeholder="Formatted SQL appears here" aria-label="SQL result"></textarea>
+    </section>
+  </div>
+  <div class="sf-stats" id="sf-stats" aria-live="polite"></div>
+</div>

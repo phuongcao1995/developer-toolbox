@@ -1,0 +1,61 @@
+<div class="cc">
+  <div class="cc-layout">
+    <aside class="cc-controls">
+      <section class="panel" id="cc-drop">
+        <div class="panel-head">
+          <h3>Code</h3>
+          <button class="btn btn-sm" id="cc-sample" type="button"><i data-lucide="file-code"></i> Sample</button>
+          <button class="btn btn-sm" id="cc-upload" type="button"><i data-lucide="upload"></i> Upload</button>
+          <button class="btn btn-sm" id="cc-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+        </div>
+        <textarea class="textarea code" id="cc-code" spellcheck="false" placeholder="Paste or type code, or drop a file…" aria-label="Code"></textarea>
+      </section>
+
+      <section class="card cc-opts">
+        <div class="cc-grid">
+          <div class="field"><label for="cc-lang">Language</label><select id="cc-lang" class="select"></select></div>
+          <div class="field"><label for="cc-theme">Theme</label><select id="cc-theme" class="select"></select></div>
+          <div class="field"><label for="cc-winstyle">Window</label>
+            <select id="cc-winstyle" class="select"><option value="mac">macOS dots</option><option value="none">None</option></select></div>
+          <div class="field"><label for="cc-title">Window title</label><input id="cc-title" class="input" type="text" maxlength="80" placeholder="untitled"></div>
+        </div>
+
+        <div class="field cc-bg">
+          <span class="label">Background</span>
+          <div class="chips cc-bgmodes" role="group" aria-label="Background type">
+            <button class="chip" type="button" data-bg="gradient">Gradient</button>
+            <button class="chip" type="button" data-bg="solid">Solid</button>
+            <button class="chip" type="button" data-bg="none">Transparent</button>
+          </div>
+          <div id="cc-gradients" class="cc-swatches" role="group" aria-label="Gradient presets"></div>
+          <div id="cc-solid" class="row"><input id="cc-bgcolor" type="color" value="#abb8c3" aria-label="Background colour"><span class="hint" id="cc-bgcolor-hex"></span></div>
+        </div>
+
+        <div class="cc-grid">
+          <div class="field"><label for="cc-padding">Padding <output id="cc-padding-v"></output></label><input id="cc-padding" type="range" min="16" max="128" step="4"></div>
+          <div class="field"><label for="cc-fontsize">Font size <output id="cc-fontsize-v"></output></label><input id="cc-fontsize" type="range" min="10" max="28" step="1"></div>
+          <div class="field"><label for="cc-radius">Corner radius <output id="cc-radius-v"></output></label><input id="cc-radius" type="range" min="0" max="32" step="1"></div>
+          <div class="field"><label for="cc-width">Width <output id="cc-width-v"></output></label><input id="cc-width" type="range" min="320" max="1400" step="10"></div>
+        </div>
+        <div class="row cc-checks">
+          <label class="check"><input type="checkbox" id="cc-autowidth"> Auto width</label>
+          <label class="check"><input type="checkbox" id="cc-linenums"> Line numbers</label>
+          <label class="check"><input type="checkbox" id="cc-shadow"> Drop shadow</label>
+        </div>
+      </section>
+    </aside>
+
+    <section class="cc-preview-col">
+      <div class="toolbar cc-export">
+        <div class="field"><label for="cc-scale">Export scale</label>
+          <select id="cc-scale" class="select"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select></div>
+        <span class="spacer"></span>
+        <button class="btn" id="cc-copyimg" type="button"><i data-lucide="clipboard"></i> Copy image</button>
+        <button class="btn btn-primary" id="cc-download" type="button"><i data-lucide="download"></i> Download PNG</button>
+      </div>
+      <div id="cc-msg" class="alert" hidden></div>
+      <div class="cc-viewport" id="cc-viewport"><div class="cc-fit" id="cc-fit"><div class="cc-stage" id="cc-stage"></div></div></div>
+      <p class="hint" id="cc-info"></p>
+    </section>
+  </div>
+</div>

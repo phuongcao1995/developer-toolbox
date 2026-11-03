@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Developer Toolbox</title>
+  <meta name="description" content="20 everyday developer utilities that run entirely in your browser.">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <script>
+    // Apply the saved theme before first paint to avoid a flash.
+    try {
+      const s = JSON.parse(localStorage.getItem('devtoolbox:settings') || '{}');
+      const t = s.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/themes.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Primary">
+      <a class="logo" href="#/"><span class="logo-mark"><i data-lucide="wrench"></i></span><span>Developer<b>Toolbox</b></span></a>
+      <nav class="nav" id="nav"></nav>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+    <div class="content">
+      <header class="topbar">
+        <button class="btn btn-ghost btn-icon menu-toggle" id="menu-toggle" aria-label="Toggle navigation"><i data-lucide="menu"></i></button>
+        <button class="search-trigger" id="open-search" aria-label="Search tools"><i data-lucide="search"></i><span>Search tools…</span><kbd>Ctrl K</kbd></button>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-icon" id="theme-toggle" aria-label="Toggle theme"><i data-lucide="moon"></i></button>
+          <button class="btn btn-ghost btn-icon" id="open-settings" aria-label="Settings"><i data-lucide="settings"></i></button>
+          <span class="avatar" title="User (placeholder)">DT</span>
+        </div>
+      </header>
+      <main class="main" id="main" tabindex="-1"></main>
+    </div>
+  </div>
+  <noscript><p style="padding:2rem">Developer Toolbox requires JavaScript.</p></noscript>
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

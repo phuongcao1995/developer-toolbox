@@ -1,0 +1,21 @@
+.tool-timestamp-converter .ts-live { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.tool-timestamp-converter .ts-live-item { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; min-width: 0; }
+.tool-timestamp-converter .ts-big { font-family: var(--mono); font-size: 26px; font-weight: 600; color: var(--primary); word-break: break-all; }
+.tool-timestamp-converter .ts-big.ts-small { font-size: 17px; padding-top: 7px; }
+.tool-timestamp-converter .ts-tzbar { margin: 14px 0 12px; }
+.tool-timestamp-converter .ts-tz { min-width: 280px; max-width: 100%; }
+.tool-timestamp-converter .ts-grow { flex: 1; min-width: 160px; }
+.tool-timestamp-converter .ts-unit { width: auto; min-width: 140px; }
+.tool-timestamp-converter .ts-gap { margin-top: 14px; }
+.tool-timestamp-converter .ts-fields { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.tool-timestamp-converter .ts-fields .input { padding: 0 6px; }
+.tool-timestamp-converter .ts-table td:first-child { width: 1%; white-space: nowrap; color: var(--text-muted); font-weight: 600; font-size: 12px; }
+.tool-timestamp-converter .ts-table td.ts-val { font-family: var(--mono); font-size: 12px; word-break: break-word; }
+.tool-timestamp-converter .ts-table td.ts-act { width: 1%; white-space: nowrap; }
+.tool-timestamp-converter #ts-unix-msg:not([hidden]), .tool-timestamp-converter #ts-date-msg:not([hidden]), .tool-timestamp-converter #ts-iso-msg:not([hidden]) { margin: 0; }
+@media (max-width: 760px) {
+  .tool-timestamp-converter .grid-2 { grid-template-columns: 1fr; }
+  .tool-timestamp-converter .ts-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .tool-timestamp-converter .ts-tz { min-width: 0; width: 100%; }
+  .tool-timestamp-converter .ts-big { font-size: 21px; }
+}

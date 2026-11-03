@@ -1,0 +1,45 @@
+.tool-markdown-editor .me-files { margin-bottom: 10px; }
+.tool-markdown-editor #me-msg { margin-bottom: 10px; }
+.tool-markdown-editor .me-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
+.tool-markdown-editor .me-panes[data-mode="editor"] .me-preview-pane,
+.tool-markdown-editor .me-panes[data-mode="preview"] .me-editor-pane { display: none; }
+.tool-markdown-editor .me-panes[data-mode="editor"],
+.tool-markdown-editor .me-panes[data-mode="preview"] { grid-template-columns: 1fr; }
+.tool-markdown-editor .me-format { gap: 2px; padding: 6px 8px; }
+.tool-markdown-editor .me-input { min-height: 480px; height: 70vh; max-height: 800px; border-radius: 0; resize: none; white-space: pre-wrap; word-break: break-word; tab-size: 2; }
+.tool-markdown-editor .me-input.dragover { background: var(--primary-soft); }
+.tool-markdown-editor .me-preview { padding: 16px 20px; overflow: auto; height: 70vh; min-height: 480px; max-height: 800px; }
+
+/* Rendered Markdown typography */
+.tool-markdown-editor .md-body { line-height: 1.65; word-wrap: break-word; }
+.tool-markdown-editor .md-body > :first-child { margin-top: 0; }
+.tool-markdown-editor .md-body h1, .tool-markdown-editor .md-body h2, .tool-markdown-editor .md-body h3,
+.tool-markdown-editor .md-body h4, .tool-markdown-editor .md-body h5, .tool-markdown-editor .md-body h6 { margin: 1.4em 0 .5em; line-height: 1.25; }
+.tool-markdown-editor .md-body h1 { font-size: 1.8em; } .tool-markdown-editor .md-body h2 { font-size: 1.45em; }
+.tool-markdown-editor .md-body h1, .tool-markdown-editor .md-body h2 { padding-bottom: .3em; border-bottom: 1px solid var(--border); }
+.tool-markdown-editor .md-body h3 { font-size: 1.2em; } .tool-markdown-editor .md-body h4 { font-size: 1.05em; }
+.tool-markdown-editor .md-body h5, .tool-markdown-editor .md-body h6 { font-size: .95em; color: var(--text-muted); }
+.tool-markdown-editor .md-body p, .tool-markdown-editor .md-body ul, .tool-markdown-editor .md-body ol,
+.tool-markdown-editor .md-body blockquote, .tool-markdown-editor .md-body table, .tool-markdown-editor .md-body pre { margin: 0 0 1em; }
+.tool-markdown-editor .md-body ul, .tool-markdown-editor .md-body ol { padding-left: 1.6em; }
+.tool-markdown-editor .md-body li > ul, .tool-markdown-editor .md-body li > ol { margin: .2em 0; }
+.tool-markdown-editor .md-body li input[type="checkbox"] { margin: 0 .4em 0 -1.2em; vertical-align: middle; }
+.tool-markdown-editor .md-body a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.tool-markdown-editor .md-body code { font-family: var(--mono); font-size: .88em; background: var(--code-bg); border: 1px solid var(--border); padding: .1em .35em; border-radius: 4px; }
+.tool-markdown-editor .md-body pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; overflow: auto; }
+.tool-markdown-editor .md-body pre code, .tool-markdown-editor .md-body pre code.hljs { background: transparent; border: 0; padding: 0; font-size: .85em; }
+.tool-markdown-editor .md-body blockquote { padding: .1em 1em; border-left: 4px solid var(--border-strong); color: var(--text-muted); }
+.tool-markdown-editor .md-body table { border-collapse: collapse; display: block; overflow: auto; max-width: 100%; }
+.tool-markdown-editor .md-body th, .tool-markdown-editor .md-body td { border: 1px solid var(--border-strong); padding: 6px 12px; }
+.tool-markdown-editor .md-body th { background: var(--surface-2); }
+.tool-markdown-editor .md-body img { max-width: 100%; }
+.tool-markdown-editor .md-body hr { border: 0; border-top: 1px solid var(--border); margin: 1.6em 0; }
+
+@media (max-width: 900px) {
+  .tool-markdown-editor .me-panes[data-mode="split"] { grid-template-columns: 1fr; }
+  .tool-markdown-editor .me-panes[data-mode="split"] .me-input,
+  .tool-markdown-editor .me-panes[data-mode="split"] .me-preview { height: 48vh; min-height: 280px; }
+}
+@media (max-width: 480px) {
+  .tool-markdown-editor .me-preview { padding: 12px; }
+}

@@ -1,0 +1,50 @@
+.tool-carbon-code-image .cc-layout { display: grid; grid-template-columns: minmax(280px, 380px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.tool-carbon-code-image .cc-controls { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.tool-carbon-code-image .cc-controls .textarea { min-height: 240px; }
+.tool-carbon-code-image .cc-opts { display: flex; flex-direction: column; gap: 14px; padding: 14px; }
+.tool-carbon-code-image .cc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tool-carbon-code-image .cc-grid output { font-weight: 400; color: var(--text-faint); margin-left: 4px; }
+.tool-carbon-code-image input[type="range"] { width: 100%; accent-color: var(--primary); }
+.tool-carbon-code-image input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
+.tool-carbon-code-image .cc-bgmodes { margin: 0 0 8px; }
+.tool-carbon-code-image .cc-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.tool-carbon-code-image .cc-swatch { width: 34px; height: 34px; border-radius: 8px; border: 2px solid transparent; outline: 1px solid var(--border-strong); cursor: pointer; padding: 0; }
+.tool-carbon-code-image .cc-swatch.active { border-color: var(--surface); outline: 2px solid var(--primary); }
+.tool-carbon-code-image .cc-checks { gap: 14px; }
+.tool-carbon-code-image .cc-preview-col { min-width: 0; }
+.tool-carbon-code-image .cc-export { align-items: flex-end; }
+.tool-carbon-code-image .cc-export .field { min-width: 110px; }
+.tool-carbon-code-image #cc-msg { margin-bottom: 12px; }
+.tool-carbon-code-image .cc-info, .tool-carbon-code-image #cc-info { margin: 8px 0 0; }
+
+/* Preview. The stage is sized in px by tool.js (same numbers the PNG renderer uses) and scaled down to fit. */
+.tool-carbon-code-image .cc-viewport { overflow: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); padding: 12px; }
+.tool-carbon-code-image .cc-fit { position: relative; margin: 0 auto; }
+.tool-carbon-code-image .cc-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; }
+.tool-carbon-code-image .cc-stage.cc-transparent {
+  background-color: #fff;
+  background-image: linear-gradient(45deg, #d8d8d8 25%, transparent 25%, transparent 75%, #d8d8d8 75%), linear-gradient(45deg, #d8d8d8 25%, transparent 25%, transparent 75%, #d8d8d8 75%);
+  background-size: 16px 16px; background-position: 0 0, 8px 8px;
+}
+.tool-carbon-code-image .cc-win { position: absolute; overflow: hidden; }
+.tool-carbon-code-image .cc-dot { position: absolute; top: 16px; width: 12px; height: 12px; border-radius: 50%; }
+.tool-carbon-code-image .cc-title { position: absolute; left: 80px; right: 80px; top: 0; height: 44px; line-height: 44px; text-align: center; font-size: 13px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tool-carbon-code-image .cc-code { position: absolute; font-variant-ligatures: none; font-kerning: none; letter-spacing: 0; white-space: pre; tab-size: 4; }
+.tool-carbon-code-image .cc-line { white-space: pre; }
+/* token colours come from CSS variables set on .cc-win by tool.js (own palettes, no external theme) */
+.tool-carbon-code-image .cc-win { color: var(--c-fg); }
+.tool-carbon-code-image .cc-t-kw { color: var(--c-kw); } .tool-carbon-code-image .cc-t-str { color: var(--c-str); }
+.tool-carbon-code-image .cc-t-com { color: var(--c-com); } .tool-carbon-code-image .cc-t-num { color: var(--c-num); }
+.tool-carbon-code-image .cc-t-fn { color: var(--c-fn); } .tool-carbon-code-image .cc-t-type { color: var(--c-type); }
+.tool-carbon-code-image .cc-t-lit { color: var(--c-lit); } .tool-carbon-code-image .cc-t-attr { color: var(--c-attr); }
+.tool-carbon-code-image .cc-t-tag { color: var(--c-tag); } .tool-carbon-code-image .cc-t-var { color: var(--c-var); }
+.tool-carbon-code-image .cc-t-prop { color: var(--c-prop); } .tool-carbon-code-image .cc-t-op { color: var(--c-op); }
+.tool-carbon-code-image .cc-ln { color: var(--c-ln); }
+
+@media (max-width: 1000px) {
+  .tool-carbon-code-image .cc-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .tool-carbon-code-image .cc-grid { grid-template-columns: 1fr 1fr; }
+  .tool-carbon-code-image .cc-export .btn { flex: 1 1 auto; }
+}

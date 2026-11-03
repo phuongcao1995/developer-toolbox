@@ -1,0 +1,80 @@
+<div class="rt-layout">
+  <div class="panel">
+    <div class="panel-body rt-pattern-box">
+      <div class="field">
+        <label for="rt-pattern">Regular expression (JavaScript)</label>
+        <div class="rt-pattern-row">
+          <span class="rt-slash">/</span>
+          <input id="rt-pattern" class="input mono rt-pattern" data-el="pattern" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="pattern" aria-label="Regular expression pattern">
+          <span class="rt-slash">/</span>
+          <div class="rt-flags" role="group" aria-label="Flags">
+            <button class="btn btn-sm" data-flag="g" aria-pressed="false" title="global — find all matches">g</button>
+            <button class="btn btn-sm" data-flag="i" aria-pressed="false" title="ignore case">i</button>
+            <button class="btn btn-sm" data-flag="m" aria-pressed="false" title="multiline — ^ and $ match at line breaks">m</button>
+            <button class="btn btn-sm" data-flag="s" aria-pressed="false" title="dotAll — . matches newlines">s</button>
+            <button class="btn btn-sm" data-flag="u" aria-pressed="false" title="unicode — full Unicode support">u</button>
+          </div>
+          <button class="btn btn-sm" data-action="copy-literal" title="Copy as /pattern/flags"><i data-lucide="copy"></i>Copy /…/</button>
+          <button class="btn btn-sm" data-action="clear"><i data-lucide="trash-2"></i>Clear</button>
+        </div>
+      </div>
+      <div class="alert alert-error" data-el="error" hidden></div>
+      <div class="alert alert-warn rt-risk" data-el="risk" hidden>
+        <span data-el="risktext"></span>
+        <button class="btn btn-sm" data-action="run-anyway">Run anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2 rt-main">
+    <div class="panel">
+      <div class="panel-head"><h3>Test string</h3><span class="badge" data-el="summary">0 matches</span>
+        <button class="btn btn-sm" data-action="upload"><i data-lucide="upload"></i>Upload</button>
+        <button class="btn btn-sm" data-action="clear-text"><i data-lucide="eraser"></i>Clear</button>
+      </div>
+      <div class="rt-editor" data-el="editor">
+        <pre class="rt-mirror" data-el="mirror" aria-hidden="true"></pre>
+        <textarea class="rt-input" data-el="text" spellcheck="false" placeholder="Type or paste the text to test…" aria-label="Test string"></textarea>
+      </div>
+      <div class="alert alert-info rt-limit" data-el="limit" hidden></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="tabs rt-tabs">
+          <button class="tab active" data-tab="matches">Matches</button>
+          <button class="tab" data-tab="replace">Replace</button>
+          <button class="tab" data-tab="explain">Explain</button>
+          <button class="tab" data-tab="examples">Examples</button>
+        </div>
+      </div>
+      <div class="rt-tabpane" data-panel="matches">
+        <div class="hint rt-empty" data-el="nomatch">No matches yet.</div>
+        <div class="table-wrap" data-el="matchwrap" hidden>
+          <table class="table rt-table">
+            <thead><tr><th>#</th><th>Position</th><th>Match</th><th>Groups</th></tr></thead>
+            <tbody data-el="matchbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="rt-tabpane" data-panel="replace" hidden>
+        <div class="field">
+          <label for="rt-repl">Replacement</label>
+          <input id="rt-repl" class="input mono" data-el="repl" spellcheck="false" placeholder="e.g. $2 at $1, $&lt;name&gt;, $&amp; (whole match), $$ (dollar)" aria-label="Replacement string">
+        </div>
+        <div class="row rt-replhead"><span class="label">Result</span><span class="spacer"></span>
+          <button class="btn btn-sm" data-action="copy-result"><i data-lucide="copy"></i>Copy result</button></div>
+        <pre class="code-block rt-result" data-el="result"></pre>
+        <div class="alert alert-error" data-el="replerr" hidden></div>
+      </div>
+      <div class="rt-tabpane" data-panel="explain" hidden>
+        <div class="hint rt-empty" data-el="noexplain">Enter a pattern to see an explanation.</div>
+        <div class="rt-explain" data-el="explain"></div>
+      </div>
+      <div class="rt-tabpane" data-panel="examples" hidden>
+        <p class="hint">Click an example to load its pattern, flags and sample text.</p>
+        <div class="rt-examples" data-el="examples"></div>
+      </div>
+    </div>
+  </div>
+</div>

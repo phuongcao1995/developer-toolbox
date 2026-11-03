@@ -1,0 +1,44 @@
+<div class="cc-layout">
+  <div class="alert alert-info cc-note"><i data-lucide="info"></i>
+    <span><strong>Hashing is not encryption.</strong> SHA-256 and MD5 are one-way fingerprints and cannot be reversed; Base64, hex and URL encoding are reversible encodings, not security. This tool does not offer encryption.</span></div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>Input</h3>
+      <button class="btn btn-sm" data-action="upload"><i data-lucide="upload"></i>Upload text file</button>
+      <button class="btn btn-sm" data-action="clear"><i data-lucide="trash-2"></i>Clear</button>
+    </div>
+    <textarea class="textarea code cc-input" data-el="input" spellcheck="false" placeholder="Type, paste, or drop a text file here…" aria-label="Input"></textarea>
+    <div class="cc-meta hint" data-el="inmeta"></div>
+  </div>
+
+  <div class="stack">
+    <div>
+      <div class="label cc-label">Example recipes</div>
+      <div class="chips" data-el="recipes"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Pipeline <span class="badge" data-el="count">0 steps</span></h3>
+        <label class="check"><input type="checkbox" data-el="auto" checked> Auto-run</label>
+        <button class="btn btn-sm btn-primary" data-action="run"><i data-lucide="play"></i>Run</button>
+        <button class="btn btn-sm" data-action="reset"><i data-lucide="rotate-ccw"></i>Clear steps</button>
+      </div>
+      <div class="panel-body">
+        <div class="cc-steps" data-el="steps"></div>
+        <div class="row cc-add">
+          <select class="select cc-opselect" data-el="opselect" aria-label="Operation to add"></select>
+          <button class="btn" data-action="add"><i data-lucide="plus"></i>Add step</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>Output <span class="badge" data-el="outbadge"></span></h3>
+      <button class="btn btn-sm" data-action="copy"><i data-lucide="copy"></i>Copy</button>
+      <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i>Download</button>
+      <button class="btn btn-sm" data-action="use"><i data-lucide="arrow-up"></i>Use as input</button>
+    </div>
+    <div class="alert alert-error cc-err" data-el="err" hidden></div>
+    <textarea class="textarea code cc-output" data-el="output" readonly spellcheck="false" placeholder="Output appears here" aria-label="Output"></textarea>
+  </div>
+</div>

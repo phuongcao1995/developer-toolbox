@@ -1,0 +1,25 @@
+/* Design tokens per theme. Tools should use these variables only so they follow the theme. */
+:root, :root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f1f3f6; --surface-3: #e8ebf0;
+  --border: #dfe3ea; --border-strong: #c7cdd8;
+  --text: #1a2030; --text-muted: #5b6577; --text-faint: #8a93a3;
+  --primary: #4261ee; --primary-hover: #3450d6; --primary-soft: #e8edff; --on-primary: #fff;
+  --success: #12805c; --success-soft: #e1f5ec; --warn: #a66200; --warn-soft: #fff3dc;
+  --danger: #c62d3d; --danger-soft: #fde9ec; --info: #1d6fb8; --info-soft: #e3f0fb;
+  --code-bg: #f4f6fa; --mark: #fff0a8; --add-bg: #dff5e6; --del-bg: #fde3e6;
+  --shadow: 0 1px 2px rgba(20,30,50,.06), 0 4px 14px rgba(20,30,50,.06);
+  --overlay: rgba(15,20,35,.45);
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1118; --surface: #151a24; --surface-2: #1b212d; --surface-3: #242c3b;
+  --border: #272f3f; --border-strong: #38425a;
+  --text: #e6e9f0; --text-muted: #9aa4b8; --text-faint: #6c768b;
+  --primary: #6f8bff; --primary-hover: #8aa0ff; --primary-soft: #1f2a52; --on-primary: #0b1020;
+  --success: #3dd29b; --success-soft: #11332a; --warn: #f0b24a; --warn-soft: #3a2c10;
+  --danger: #ff7080; --danger-soft: #3d1a20; --info: #6bb6f5; --info-soft: #14304a;
+  --code-bg: #10141c; --mark: #5b4b0a; --add-bg: #12351f; --del-bg: #411a20;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+  --overlay: rgba(0,0,0,.6);
+}

@@ -1,0 +1,15 @@
+.tool-prettier-playground .pp-top { align-items: flex-end; }
+.tool-prettier-playground .pp-top .field { min-width: 180px; }
+.tool-prettier-playground .pp-options { margin-bottom: 12px; padding: 10px 14px; }
+.tool-prettier-playground .pp-options summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+.tool-prettier-playground .pp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; align-items: end; margin-top: 12px; }
+.tool-prettier-playground .pp-grid .check { min-height: 34px; }
+.tool-prettier-playground .pp-options .hint { margin: 10px 0 0; }
+.tool-prettier-playground #pp-msg { margin-bottom: 12px; font-family: var(--mono); font-size: 12px; }
+.tool-prettier-playground .pp-panels .textarea { min-height: 380px; }
+.tool-prettier-playground .pp-status { margin-top: 10px; min-height: 18px; }
+@media (max-width: 560px) {
+  .tool-prettier-playground .pp-top .field { flex: 1 1 140px; }
+  .tool-prettier-playground .pp-grid { grid-template-columns: 1fr 1fr; }
+  .tool-prettier-playground .pp-panels .textarea { min-height: 240px; }
+}

@@ -1,0 +1,82 @@
+<div class="urlenc-wrap">
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="encode" role="tab"><i data-lucide="percent"></i> Encode / Decode</button>
+    <button class="tab" data-tab="parse" role="tab"><i data-lucide="link"></i> URL Parser</button>
+  </div>
+
+  <section data-panel="encode">
+    <div class="toolbar">
+      <div class="field urlenc-mode">
+        <label for="urlenc-mode">Mode</label>
+        <select class="select" id="urlenc-mode">
+          <option value="component">Component - encodeURIComponent</option>
+          <option value="full">Full URL - encodeURI</option>
+        </select>
+      </div>
+      <label class="check" id="urlenc-form-wrap"><input type="checkbox" id="urlenc-form"> Form encoding (space as +)</label>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" data-action="encode"><i data-lucide="arrow-right"></i> Encode</button>
+      <button class="btn btn-primary" data-action="decode"><i data-lucide="arrow-left"></i> Decode</button>
+      <button class="btn" data-action="swap"><i data-lucide="arrow-left-right"></i> Swap</button>
+      <button class="btn" data-action="clear"><i data-lucide="eraser"></i> Clear</button>
+    </div>
+    <div id="urlenc-msg" hidden></div>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-head"><h3>Input</h3>
+          <button class="btn btn-sm" data-action="open"><i data-lucide="upload"></i> Open file</button>
+          <button class="btn btn-sm" data-action="copy-in"><i data-lucide="copy"></i> Copy</button></div>
+        <textarea class="textarea code" id="urlenc-in" spellcheck="false" placeholder="Text or URL, e.g. https://example.com/search?q=caf&eacute; &amp; cr&egrave;me"></textarea>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Output</h3>
+          <button class="btn btn-sm" data-action="copy-out"><i data-lucide="copy"></i> Copy</button>
+          <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i> Download</button></div>
+        <textarea class="textarea code" id="urlenc-out" spellcheck="false" placeholder="Result"></textarea>
+      </div>
+    </div>
+    <div class="card urlenc-help">
+      <h3>Which one should I use?</h3>
+      <p><strong>Component (encodeURIComponent)</strong> encodes everything except <code>A-Z a-z 0-9 - _ . ! ~ * ' ( )</code>.
+        Use it for a single query value, path segment or key: <code>a&amp;b=c</code> becomes <code>a%26b%3Dc</code>.</p>
+      <p><strong>Full URL (encodeURI)</strong> keeps URL structure characters <code>: / ? # [ ] @ ! $ &amp; ' ( ) * + , ; =</code>
+        untouched and only escapes unsafe ones such as spaces and non-ASCII. Use it on a whole URL, never on a value.</p>
+      <p><strong>Form encoding</strong> is the <code>application/x-www-form-urlencoded</code> flavour used by HTML forms: spaces become <code>+</code> instead of <code>%20</code>.</p>
+    </div>
+  </section>
+
+  <section data-panel="parse" hidden>
+    <div class="row urlenc-url-row">
+      <input class="input mono" id="urlenc-url" spellcheck="false" placeholder="https://user:pass@example.com:8080/path/to?x=1&amp;x=2&amp;empty=#section">
+      <button class="btn btn-primary" data-action="parse"><i data-lucide="search"></i> Parse</button>
+      <button class="btn" data-action="url-sample"><i data-lucide="sparkles"></i> Sample</button>
+      <button class="btn" data-action="url-clear"><i data-lucide="eraser"></i> Clear</button>
+    </div>
+    <div id="urlenc-url-msg" hidden></div>
+    <div id="urlenc-parsed" hidden>
+      <div class="grid-2 urlenc-gap">
+        <div class="panel">
+          <div class="panel-head"><h3>Components</h3></div>
+          <div class="table-wrap" style="border:0;border-radius:0">
+            <table class="table"><thead><tr><th>Field</th><th>Value</th><th></th></tr></thead><tbody id="urlenc-fields"></tbody></table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Query parameters <span class="badge" id="urlenc-count">0</span></h3>
+            <label class="check"><input type="checkbox" id="urlenc-plus"> space as +</label>
+            <button class="btn btn-sm" data-action="add-param"><i data-lucide="plus"></i> Add</button></div>
+          <div class="table-wrap" style="border:0;border-radius:0">
+            <table class="table"><thead><tr><th>Key</th><th>Value</th><th></th></tr></thead><tbody id="urlenc-params"></tbody></table>
+          </div>
+          <p class="hint urlenc-pad" id="urlenc-params-empty" hidden>No query parameters. Use Add to create one.</p>
+        </div>
+      </div>
+      <div class="panel urlenc-gap">
+        <div class="panel-head"><h3>Rebuilt URL</h3>
+          <button class="btn btn-sm" data-action="copy-built"><i data-lucide="copy"></i> Copy</button>
+          <button class="btn btn-sm" data-action="use-built"><i data-lucide="corner-up-left"></i> Update URL input</button></div>
+        <pre class="code-block urlenc-built" id="urlenc-built"></pre>
+      </div>
+    </div>
+  </section>
+</div>

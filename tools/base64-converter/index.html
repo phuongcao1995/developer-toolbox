@@ -1,0 +1,113 @@
+<div class="b64-wrap">
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="text" role="tab"><i data-lucide="type"></i> Text</button>
+    <button class="tab" data-tab="image" role="tab"><i data-lucide="image"></i> Image</button>
+    <button class="tab" data-tab="file" role="tab"><i data-lucide="file"></i> File</button>
+  </div>
+
+  <!-- TEXT -->
+  <section data-panel="text">
+    <div class="toolbar">
+      <button class="btn btn-primary" data-action="text-encode"><i data-lucide="arrow-right"></i> Encode</button>
+      <button class="btn btn-primary" data-action="text-decode"><i data-lucide="arrow-left"></i> Decode</button>
+      <button class="btn" data-action="text-swap"><i data-lucide="arrow-left-right"></i> Swap</button>
+      <label class="check"><input type="checkbox" id="b64-urlsafe"> URL-safe (base64url, no padding)</label>
+      <label class="check">Wrap
+        <select class="select b64-narrow" id="b64-wrap"><option value="0">None</option><option value="76">76 cols</option><option value="64">64 cols</option></select>
+      </label>
+      <span class="spacer"></span>
+      <button class="btn" data-action="text-sample"><i data-lucide="sparkles"></i> Sample</button>
+      <button class="btn" data-action="text-clear"><i data-lucide="eraser"></i> Clear</button>
+    </div>
+    <div id="b64-text-msg" hidden></div>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-head"><h3>Text</h3>
+          <button class="btn btn-sm" data-action="text-open"><i data-lucide="upload"></i> Open .txt</button>
+          <button class="btn btn-sm" data-action="text-copy-in"><i data-lucide="copy"></i> Copy</button></div>
+        <textarea class="textarea code" id="b64-text-in" spellcheck="false" placeholder="Type or paste text (UTF-8, emoji OK)..."></textarea>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Base64</h3>
+          <button class="btn btn-sm" data-action="text-copy-out"><i data-lucide="copy"></i> Copy</button>
+          <button class="btn btn-sm" data-action="text-download"><i data-lucide="download"></i> Download</button></div>
+        <textarea class="textarea code" id="b64-text-out" spellcheck="false" placeholder="Base64 (accepts whitespace, missing padding, data: prefix)..."></textarea>
+      </div>
+    </div>
+    <p class="hint" id="b64-text-stats"></p>
+  </section>
+
+  <!-- IMAGE -->
+  <section data-panel="image" hidden>
+    <div class="grid-2">
+      <div class="stack">
+        <div class="dropzone" id="b64-img-drop">
+          <p>Drop an image here or</p>
+          <button class="btn btn-primary" data-action="img-pick"><i data-lucide="image-plus"></i> Choose image</button>
+        </div>
+        <div class="field"><label for="b64-img-paste">...or paste a Base64 string / data URI</label>
+          <textarea class="textarea code b64-short" id="b64-img-paste" spellcheck="false" placeholder="data:image/png;base64,iVBOR..."></textarea></div>
+        <div class="row">
+          <button class="btn btn-primary" data-action="img-load"><i data-lucide="eye"></i> Preview</button>
+          <button class="btn" data-action="img-clear"><i data-lucide="eraser"></i> Clear</button>
+        </div>
+        <div id="b64-img-msg" hidden></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Preview</h3><span class="badge" id="b64-img-info" hidden></span>
+          <button class="btn btn-sm" data-action="img-download"><i data-lucide="download"></i> Download image</button></div>
+        <div class="panel-body b64-preview" id="b64-img-preview"><span class="hint">No image yet.</span></div>
+      </div>
+    </div>
+    <div class="panel b64-gap" id="b64-img-out" hidden>
+      <div class="panel-head"><h3>Output</h3>
+        <label class="check"><input type="checkbox" id="b64-img-raw"> Raw Base64 (no data: prefix)</label>
+        <button class="btn btn-sm" data-action="img-copy"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn btn-sm" data-action="img-download-txt"><i data-lucide="download"></i> .txt</button></div>
+      <textarea class="textarea code b64-short" id="b64-img-result" readonly spellcheck="false"></textarea>
+    </div>
+    <div class="grid-2 b64-gap" id="b64-img-snips" hidden>
+      <div class="panel"><div class="panel-head"><h3>&lt;img&gt; tag</h3><button class="btn btn-sm" data-action="img-copy-img"><i data-lucide="copy"></i> Copy</button></div>
+        <pre class="code-block b64-snip" id="b64-snip-img"></pre></div>
+      <div class="panel"><div class="panel-head"><h3>CSS url()</h3><button class="btn btn-sm" data-action="img-copy-css"><i data-lucide="copy"></i> Copy</button></div>
+        <pre class="code-block b64-snip" id="b64-snip-css"></pre></div>
+    </div>
+  </section>
+
+  <!-- FILE -->
+  <section data-panel="file" hidden>
+    <div class="grid-2">
+      <div class="stack">
+        <h3>File to Base64</h3>
+        <div class="dropzone" id="b64-file-drop">
+          <p>Drop any file here or</p>
+          <button class="btn btn-primary" data-action="file-pick"><i data-lucide="file-up"></i> Choose file</button>
+        </div>
+        <label class="check"><input type="checkbox" id="b64-file-uri"> Include data: URI prefix</label>
+        <div id="b64-file-msg" hidden></div>
+        <div class="panel">
+          <div class="panel-head"><h3>Base64 <span class="badge" id="b64-file-info" hidden></span></h3>
+            <button class="btn btn-sm" data-action="file-copy"><i data-lucide="copy"></i> Copy</button>
+            <button class="btn btn-sm" data-action="file-download-txt"><i data-lucide="download"></i> .txt</button>
+            <button class="btn btn-sm" data-action="file-clear"><i data-lucide="eraser"></i> Clear</button></div>
+          <textarea class="textarea code b64-short" id="b64-file-out" readonly spellcheck="false" placeholder="Result appears here"></textarea>
+        </div>
+      </div>
+      <div class="stack">
+        <h3>Base64 to File</h3>
+        <div class="field"><label for="b64-file-in">Base64 or data URI</label>
+          <textarea class="textarea code b64-short" id="b64-file-in" spellcheck="false" placeholder="Paste Base64..."></textarea></div>
+        <div class="grid-2">
+          <div class="field"><label for="b64-file-name">Filename</label><input class="input" id="b64-file-name" value="download.bin"></div>
+          <div class="field"><label for="b64-file-mime">MIME type</label><input class="input" id="b64-file-mime" placeholder="application/octet-stream"></div>
+        </div>
+        <div class="row">
+          <button class="btn btn-primary" data-action="file-save"><i data-lucide="download"></i> Decode &amp; download</button>
+          <button class="btn" data-action="file-in-clear"><i data-lucide="eraser"></i> Clear</button>
+        </div>
+        <p class="hint" id="b64-file-in-info"></p>
+        <div id="b64-file-in-msg" hidden></div>
+      </div>
+    </div>
+  </section>
+</div>

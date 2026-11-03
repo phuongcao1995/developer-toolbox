@@ -1,0 +1,79 @@
+<div class="toolbar tc-top">
+  <div class="field"><label for="tc-from">From</label>
+    <select id="tc-from" class="select">
+      <option value="json">JSON</option>
+      <option value="csv">CSV</option>
+      <option value="markdown">Markdown table</option>
+    </select></div>
+  <button class="btn btn-icon tc-swap" id="tc-swap" type="button" title="Swap input and output" aria-label="Swap input and output"><i data-lucide="arrow-left-right"></i></button>
+  <div class="field"><label for="tc-to">To</label>
+    <select id="tc-to" class="select">
+      <option value="csv">CSV</option>
+      <option value="json">JSON</option>
+      <option value="markdown">Markdown table</option>
+      <option value="sql">SQL INSERT</option>
+    </select></div>
+  <button class="btn btn-primary" id="tc-convert" type="button"><i data-lucide="play"></i> Convert</button>
+  <label class="check"><input type="checkbox" id="tc-auto" checked> Auto-convert</label>
+  <span class="spacer"></span>
+  <button class="btn" id="tc-sample" type="button"><i data-lucide="file-text"></i> Sample</button>
+  <button class="btn" id="tc-upload" type="button"><i data-lucide="upload"></i> Upload</button>
+  <button class="btn btn-danger" id="tc-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+</div>
+
+<div class="panel tc-options">
+  <div class="panel-body tc-opts-grid">
+    <div class="field" data-for="csv-in csv-out"><label for="tc-delim">CSV delimiter</label>
+      <select id="tc-delim" class="select">
+        <option value="comma">Comma ( , )</option>
+        <option value="semicolon">Semicolon ( ; )</option>
+        <option value="tab">Tab</option>
+        <option value="pipe">Pipe ( | )</option>
+        <option value="auto">Auto-detect (input)</option>
+      </select></div>
+    <label class="check" data-for="csv-in csv-out json-in"><input type="checkbox" id="tc-header" checked> First row is header</label>
+    <label class="check" data-for="csv-in markdown-in"><input type="checkbox" id="tc-infer"> Infer numbers / booleans</label>
+    <label class="check" data-for="json-out sql-out"><input type="checkbox" id="tc-null"> Empty string as NULL</label>
+    <div class="field" data-for="json-out"><label for="tc-shape">JSON shape</label>
+      <select id="tc-shape" class="select"><option value="objects">Array of objects</option><option value="arrays">Array of arrays</option></select></div>
+    <div class="field" data-for="markdown-out"><label for="tc-align">Markdown alignment</label>
+      <select id="tc-align" class="select">
+        <option value="auto">Auto (numbers right)</option><option value="left">Left</option>
+        <option value="center">Center</option><option value="right">Right</option><option value="none">None</option>
+      </select></div>
+    <div class="field" data-for="sql-out"><label for="tc-table">Table name</label>
+      <input id="tc-table" class="input" value="my_table" spellcheck="false" autocomplete="off"></div>
+    <div class="field" data-for="sql-out"><label for="tc-dialect">SQL dialect</label>
+      <select id="tc-dialect" class="select">
+        <option value="ansi">ANSI / PostgreSQL / SQLite ("x")</option>
+        <option value="mysql">MySQL / MariaDB (`x`)</option>
+        <option value="sqlserver">SQL Server ([x])</option>
+      </select></div>
+    <label class="check" data-for="sql-out"><input type="checkbox" id="tc-multi" checked> Single multi-row INSERT</label>
+  </div>
+</div>
+
+<div id="tc-msg" class="tc-msg" hidden></div>
+<div id="tc-warn" class="tc-msg" hidden></div>
+
+<div class="grid-2 tc-main">
+  <div class="panel" id="tc-in-panel">
+    <div class="panel-head"><h3>Input</h3><span class="hint" id="tc-in-stats"></span></div>
+    <textarea id="tc-in" class="textarea code" spellcheck="false" placeholder="Paste data here, drop a .csv / .json / .md / .txt file, or click Sample…"></textarea>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Output</h3><span class="hint" id="tc-out-stats"></span>
+      <button class="btn btn-sm" id="tc-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+      <button class="btn btn-sm" id="tc-download" type="button"><i data-lucide="download"></i> Download</button>
+    </div>
+    <div class="tabs tc-tabs">
+      <button class="tab active" data-tab="text" type="button">Text</button>
+      <button class="tab" data-tab="preview" type="button">Preview table</button>
+    </div>
+    <div data-panel="text"><textarea id="tc-out" class="textarea code" readonly spellcheck="false" placeholder="Converted output appears here"></textarea></div>
+    <div data-panel="preview" hidden>
+      <div id="tc-preview" class="tc-preview"></div>
+    </div>
+  </div>
+</div>

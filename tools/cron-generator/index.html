@@ -1,0 +1,40 @@
+<div class="cron-wrap">
+  <div class="panel">
+    <div class="panel-head"><h3>Cron expression</h3>
+      <span class="hint">minute hour day-of-month month day-of-week</span></div>
+    <div class="panel-body stack">
+      <div class="row cron-input-row">
+        <input class="input mono cron-input" id="cron-expr" spellcheck="false" autocomplete="off" placeholder="*/15 * * * *  or  @daily" aria-label="Cron expression">
+        <button class="btn btn-primary" data-action="copy"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn" data-action="clear"><i data-lucide="eraser"></i> Clear</button>
+      </div>
+      <div class="cron-labels mono" aria-hidden="true">
+        <span>minute</span><span>hour</span><span>day (month)</span><span>month</span><span>day (week)</span>
+      </div>
+      <div id="cron-msg" hidden></div>
+      <div class="cron-explain" id="cron-explain" aria-live="polite"></div>
+      <p class="hint">Supports <code>*</code>, lists <code>1,2</code>, ranges <code>1-5</code>, steps <code>*/5</code> and <code>1-10/2</code>, names JAN-DEC and SUN-SAT, and aliases @yearly @monthly @weekly @daily @hourly.
+        When both day-of-month and day-of-week are restricted, the job runs when <em>either</em> matches (standard cron).</p>
+    </div>
+  </div>
+
+  <h3 class="cron-h">Presets</h3>
+  <div class="chips" id="cron-presets"></div>
+
+  <h3 class="cron-h">Builder</h3>
+  <div class="cron-builder" id="cron-builder"></div>
+
+  <div class="panel cron-runs">
+    <div class="panel-head"><h3>Next <span id="cron-count">10</span> runs</h3>
+      <div class="row" role="radiogroup" aria-label="Time zone">
+        <label class="check"><input type="radio" name="cron-tz" value="local" checked> Local</label>
+        <label class="check"><input type="radio" name="cron-tz" value="utc"> UTC</label>
+      </div>
+      <button class="btn btn-sm" data-action="copy-runs"><i data-lucide="copy"></i> Copy list</button>
+    </div>
+    <div class="table-wrap" style="border:0;border-radius:0">
+      <table class="table"><thead><tr><th>#</th><th>Run time</th><th>Relative</th></tr></thead><tbody id="cron-runs"></tbody></table>
+    </div>
+    <p class="hint cron-note" id="cron-runs-note" hidden></p>
+  </div>
+</div>

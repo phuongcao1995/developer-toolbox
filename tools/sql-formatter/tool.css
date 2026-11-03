@@ -1,0 +1,11 @@
+.tool-sql-formatter .sf-options { align-items: flex-end; }
+.tool-sql-formatter .sf-options .field { min-width: 140px; }
+.tool-sql-formatter .hint { margin: 0 0 10px; }
+.tool-sql-formatter #sf-msg { margin-bottom: 12px; }
+.tool-sql-formatter .sf-panels .textarea { min-height: 360px; }
+.tool-sql-formatter .sf-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; min-height: 22px; }
+@media (max-width: 560px) {
+  .tool-sql-formatter .sf-options .field { flex: 1 1 130px; }
+  .tool-sql-formatter .sf-options .btn { flex: 1 1 auto; }
+  .tool-sql-formatter .sf-panels .textarea { min-height: 220px; }
+}

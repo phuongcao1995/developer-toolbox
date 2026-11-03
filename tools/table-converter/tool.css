@@ -1,0 +1,23 @@
+.tool-table-converter .tc-top { align-items: flex-end; }
+.tool-table-converter .tc-top .field { min-width: 150px; }
+.tool-table-converter .tc-top .check { align-self: center; }
+.tool-table-converter .tc-top .tc-swap { align-self: flex-end; }
+.tool-table-converter .tc-options { margin-bottom: 12px; }
+.tool-table-converter .tc-opts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 16px; align-items: end; }
+.tool-table-converter [data-for][hidden] { display: none; }
+.tool-table-converter .tc-msg { margin-bottom: 10px; }
+.tool-table-converter .tc-main { align-items: stretch; }
+.tool-table-converter .tc-main .panel { min-height: 360px; }
+.tool-table-converter #tc-in-panel.dragover { border-color: var(--primary); background: var(--primary-soft); }
+.tool-table-converter .tc-tabs { margin: 0; padding: 0 8px; }
+.tool-table-converter [data-panel] { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.tool-table-converter [data-panel][hidden] { display: none; }
+.tool-table-converter .tc-preview { flex: 1; overflow: auto; max-height: 520px; padding: 10px; }
+.tool-table-converter .tc-preview .table td, .tool-table-converter .tc-preview .table th { white-space: pre-wrap; word-break: break-word; max-width: 320px; }
+.tool-table-converter .tc-null { color: var(--text-faint); font-style: italic; }
+.tool-table-converter .tc-rownum { color: var(--text-faint); width: 1%; text-align: right !important; }
+.tool-table-converter .tc-notice { margin-top: 8px; }
+@media (max-width: 800px) {
+  .tool-table-converter .tc-main { grid-template-columns: 1fr; }
+  .tool-table-converter .tc-top .field { flex: 1 1 130px; }
+}
