@@ -13,15 +13,26 @@
             <button class="btn btn-sm" data-flag="m" aria-pressed="false" title="multiline — ^ and $ match at line breaks">m</button>
             <button class="btn btn-sm" data-flag="s" aria-pressed="false" title="dotAll — . matches newlines">s</button>
             <button class="btn btn-sm" data-flag="u" aria-pressed="false" title="unicode — full Unicode support">u</button>
+            <button class="btn btn-sm" data-flag="y" aria-pressed="false" title="sticky — match only at lastIndex">y</button>
+            <button class="btn btn-sm" data-flag="d" aria-pressed="false" title="hasIndices — record match indices">d</button>
+            <button class="btn btn-sm" data-flag="v" aria-pressed="false" title="unicodeSets — extended character classes (cannot be combined with u)">v</button>
           </div>
           <button class="btn btn-sm" data-action="copy-literal" title="Copy as /pattern/flags"><i data-lucide="copy"></i>Copy /…/</button>
           <button class="btn btn-sm" data-action="clear"><i data-lucide="trash-2"></i>Clear</button>
         </div>
       </div>
+      <div class="rt-export-row">
+        <label for="rt-export" class="label">Copy as…</label>
+        <select id="rt-export" class="select rt-export-select" data-el="exportsel" aria-label="Copy pattern as code"></select>
+        <button class="btn btn-sm" data-action="copy-export"><i data-lucide="copy"></i>Copy code</button>
+        <span class="hint rt-export-caveat">Regex engines differ. Only JavaScript semantics are tested here; check the generated code in your own language.</span>
+      </div>
+      <pre class="code-block rt-export-code" data-el="exportcode" tabindex="0" aria-label="Generated code"></pre>
+      <div class="alert alert-warn" data-el="exportwarn" hidden></div>
       <div class="alert alert-error" data-el="error" hidden></div>
-      <div class="alert alert-warn rt-risk" data-el="risk" hidden>
+      <div class="alert alert-warn rt-risk" data-el="risk" role="status" hidden>
         <span data-el="risktext"></span>
-        <button class="btn btn-sm" data-action="run-anyway">Run anyway</button>
+        <button class="btn btn-sm" data-el="dismissrisk" data-action="dismiss-risk">Dismiss</button>
       </div>
     </div>
   </div>
@@ -41,10 +52,15 @@
 
     <div class="panel">
       <div class="panel-head">
-        <div class="tabs rt-tabs">
+        <div class="tabs rt-tabs" aria-label="Result views">
           <button class="tab active" data-tab="matches">Matches</button>
           <button class="tab" data-tab="replace">Replace</button>
+          <button class="tab" data-tab="split">Split</button>
+          <button class="tab" data-tab="json">JSON</button>
           <button class="tab" data-tab="explain">Explain</button>
+          <button class="tab" data-tab="mistakes" data-el="mistakestab">Mistakes</button>
+          <button class="tab" data-tab="library">Library</button>
+          <button class="tab" data-tab="cheatsheet">Cheat sheet</button>
           <button class="tab" data-tab="examples">Examples</button>
         </div>
       </div>
@@ -66,10 +82,68 @@
           <button class="btn btn-sm" data-action="copy-result"><i data-lucide="copy"></i>Copy result</button></div>
         <pre class="code-block rt-result" data-el="result"></pre>
         <div class="alert alert-error" data-el="replerr" hidden></div>
+        <details class="rt-details"><summary>Per-match replacements</summary>
+          <div class="hint" data-el="repldetail-empty">No matches to replace.</div>
+          <div class="table-wrap" data-el="repldetail-wrap" hidden>
+            <table class="table rt-table"><thead><tr><th>#</th><th>At</th><th>Original</th><th>Replacement</th></tr></thead><tbody data-el="repldetail"></tbody></table>
+          </div>
+          <div class="hint" data-el="repldetail-more" hidden></div>
+        </details>
+      </div>
+      <div class="rt-tabpane" data-panel="split" hidden>
+        <div class="field">
+          <label for="rt-splitlimit">Limit (optional, maximum number of pieces)</label>
+          <input id="rt-splitlimit" type="number" min="0" step="1" class="input mono" data-el="splitlimit" placeholder="no limit">
+        </div>
+        <div class="row rt-replhead"><span class="label" data-el="splitcount">0 pieces</span><span class="spacer"></span>
+          <button class="btn btn-sm" data-action="copy-split"><i data-lucide="copy"></i>Copy as JSON array</button></div>
+        <div class="alert alert-error" data-el="spliterr" hidden></div>
+        <div class="hint">Like String.split(regex): capture groups are included in the result and the g flag is ignored.</div>
+        <ol class="rt-splitlist" data-el="splitlist"></ol>
+      </div>
+      <div class="rt-tabpane" data-panel="json" hidden>
+        <div class="row rt-replhead"><span class="label">Matches as JSON</span><span class="spacer"></span>
+          <button class="btn btn-sm" data-action="copy-json"><i data-lucide="copy"></i>Copy JSON</button>
+          <button class="btn btn-sm" data-action="download-json"><i data-lucide="download"></i>Download</button></div>
+        <pre class="code-block rt-result" data-el="jsonout"></pre>
       </div>
       <div class="rt-tabpane" data-panel="explain" hidden>
         <div class="hint rt-empty" data-el="noexplain">Enter a pattern to see an explanation.</div>
+        <div class="hint">Hover or click a token to highlight and select that part of the pattern.</div>
+        <div class="rt-ruler" data-el="ruler" aria-label="Pattern with token highlighting"></div>
         <div class="rt-explain" data-el="explain"></div>
+        <div class="rt-groups" data-el="groups"></div>
+      </div>
+      <div class="rt-tabpane" data-panel="mistakes" hidden>
+        <p class="hint">Common regex mistakes found in the current pattern. Click a finding to select the related part of the pattern.</p>
+        <div class="hint rt-empty" data-el="nomistakes">No problems found.</div>
+        <ul class="rt-findings" data-el="findings"></ul>
+      </div>
+      <div class="rt-tabpane" data-panel="library" hidden>
+        <div class="rt-filter">
+          <input class="input" data-el="libsearch" type="search" placeholder="Search patterns…" aria-label="Search the pattern library">
+          <select class="select" data-el="libcat" aria-label="Filter by category"></select>
+        </div>
+        <div class="hint" data-el="libcount"></div>
+        <div class="rt-library" data-el="library"></div>
+        <h4 class="rt-h">My patterns</h4>
+        <div class="rt-save">
+          <input class="input" data-el="savename" maxlength="80" placeholder="Name" aria-label="Name for the saved pattern">
+          <input class="input" data-el="savenotes" maxlength="2000" placeholder="Notes (optional)" aria-label="Notes for the saved pattern">
+          <button class="btn btn-sm btn-primary" data-action="save-pattern"><i data-lucide="save"></i>Save my pattern</button>
+        </div>
+        <div class="row rt-savetools">
+          <button class="btn btn-sm" data-action="export-saved"><i data-lucide="download"></i>Export JSON</button>
+          <button class="btn btn-sm" data-action="import-saved"><i data-lucide="upload"></i>Import JSON</button>
+          <span class="hint">Saved only in this browser. Pattern, flags and the current test text are stored.</span>
+        </div>
+        <div class="alert alert-info" data-el="savedmsg" hidden></div>
+        <div class="rt-library" data-el="saved"></div>
+      </div>
+      <div class="rt-tabpane" data-panel="cheatsheet" hidden>
+        <input class="input" data-el="chsearch" type="search" placeholder="Search the cheat sheet…" aria-label="Search the cheat sheet">
+        <p class="hint">Click an entry to insert it at the cursor in the pattern (flags toggle, replacement tokens go to the Replace field).</p>
+        <div data-el="cheat"></div>
       </div>
       <div class="rt-tabpane" data-panel="examples" hidden>
         <p class="hint">Click an example to load its pattern, flags and sample text.</p>

@@ -1,6 +1,7 @@
 // Pure UUID helpers (no DOM). Randomness always comes from a CSPRNG (Web Crypto).
 
 export const NIL_UUID = '00000000-0000-0000-0000-000000000000';
+export const MAX_UUID = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 export const MAX_COUNT = 1000;
 
 const hex = bytes => [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -24,6 +25,48 @@ export function generateV4(cryptoObj = globalThis.crypto) {
   return uuidFromRandomBytes(cryptoObj.getRandomValues(new Uint8Array(16)));
 }
 
+// ---------- UUID v7 (RFC 9562 section 5.7) ----------
+// Layout: 48-bit big-endian unix_ts_ms | 4-bit version (0111) | 12-bit rand_a | 2-bit variant (10) | 62-bit rand_b.
+// Ordering within one millisecond uses the "fixed-length dedicated counter" method (section 6.2, method 1): rand_a is a
+// counter that starts at a random value with its top bit clear (headroom) and is incremented for every UUID in that ms.
+
+/** Pure layout function: ms (0..2^48-1), 12-bit counter/rand_a and 8 random bytes (only 62 bits used) -> v7 UUID string. */
+export function uuidV7FromParts(ms, randA, randB) {
+  if (!Number.isInteger(ms) || ms < 0 || ms > 0xffffffffffff) throw new Error('Timestamp must fit in 48 bits.');
+  if (!Number.isInteger(randA) || randA < 0 || randA > 0xfff) throw new Error('rand_a must be a 12-bit integer.');
+  if (!randB || randB.length !== 8) throw new Error('Need exactly 8 bytes for rand_b.');
+  const b = new Uint8Array(16);
+  const hi = Math.floor(ms / 0x10000), lo = ms % 0x10000; // 32 + 16 bits
+  b[0] = (hi >>> 24) & 0xff; b[1] = (hi >>> 16) & 0xff; b[2] = (hi >>> 8) & 0xff; b[3] = hi & 0xff;
+  b[4] = (lo >>> 8) & 0xff; b[5] = lo & 0xff;
+  b[6] = 0x70 | (randA >>> 8); b[7] = randA & 0xff;
+  b.set(randB, 8);
+  b[8] = (b[8] & 0x3f) | 0x80;
+  return hyphenate(hex(b));
+}
+
+/** Stateful generator: strictly increasing output even for many UUIDs in one millisecond or a backwards clock. */
+export function createV7Generator(cryptoObj = globalThis.crypto, now = () => Date.now()) {
+  if (!cryptoObj || typeof cryptoObj.getRandomValues !== 'function') {
+    throw new Error('Secure random number generator (Web Crypto) is not available in this browser.');
+  }
+  let lastMs = -1, counter = 0;
+  return function next() {
+    let ms = Math.max(0, Math.floor(now()));
+    const r = cryptoObj.getRandomValues(new Uint8Array(10));
+    if (ms > lastMs) {
+      lastMs = ms;
+      counter = (((r[8] << 8) | r[9]) & 0x7ff); // random start, top bit clear
+    } else {
+      // same millisecond (or clock went backwards): keep the last timestamp and bump the counter
+      counter++;
+      if (counter > 0xfff) { lastMs++; counter = (((r[8] << 8) | r[9]) & 0x7ff); }
+      ms = lastMs;
+    }
+    return uuidV7FromParts(ms, counter, r.subarray(0, 8));
+  };
+}
+
 /** Validate a user-entered count; returns an integer or throws a clear Error. */
 export function parseCount(value) {
   const s = String(value ?? '').trim();
@@ -45,9 +88,19 @@ export function formatUuid(uuid, { upper = false, hyphens = true, braces = false
 export const SEPARATORS = { newline: '\n', comma: ',', 'comma-space': ', ', space: ' ' };
 
 /** Generate `count` formatted UUIDs. Returns an array of strings. */
-export function generateMany(count, opts = {}, cryptoObj) {
+export function generateMany(count, opts = {}, cryptoObj, { version = 4, now } = {}) {
   const n = parseCount(count);
+  if (Number(version) === 7) {
+    const next = createV7Generator(cryptoObj, now);
+    return Array.from({ length: n }, () => formatUuid(next(), opts));
+  }
   return Array.from({ length: n }, () => formatUuid(generateV4(cryptoObj), opts));
+}
+
+/** Embedded Unix timestamp of a v7 UUID as { ms, iso }. */
+export function v7Timestamp(canonicalUuid) {
+  const ms = parseInt(canonicalUuid.replace(/-/g, '').slice(0, 12), 16);
+  return { ms, iso: new Date(ms).toISOString() };
 }
 
 const VARIANTS = [
@@ -83,8 +136,9 @@ export function inspectUuid(input) {
   const variant = VARIANTS.find(([mask, val]) => (bytes[8] & mask) === val)[2];
   const version = bytes[6] >> 4;
   const rfc = (bytes[8] & 0xc0) === 0x80;
+  const timestamp = rfc && version === 7 && !nil && !max ? v7Timestamp(canonical) : null;
   return {
-    valid: true, canonical, nil, max, variant,
+    valid: true, canonical, nil, max, variant, timestamp,
     version: nil || max ? null : version,
     versionName: nil ? 'nil UUID' : max ? 'max UUID' : (rfc ? VERSION_NAMES[version] : undefined),
   };

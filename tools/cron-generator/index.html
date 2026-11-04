@@ -13,7 +13,7 @@
       </div>
       <div id="cron-msg" hidden></div>
       <div class="cron-explain" id="cron-explain" aria-live="polite"></div>
-      <p class="hint">Supports <code>*</code>, lists <code>1,2</code>, ranges <code>1-5</code>, steps <code>*/5</code> and <code>1-10/2</code>, names JAN-DEC and SUN-SAT, and aliases @yearly @monthly @weekly @daily @hourly.
+      <p class="hint">Supports <code>*</code>, lists <code>1,2</code>, ranges <code>1-5</code>, steps <code>*/5</code> and <code>1-10/2</code>, names JAN-DEC and SUN-SAT, and aliases @yearly @monthly @weekly @daily @hourly. Day-of-week 7 is the same as 0 (Sunday). Quartz extensions (<code>L W ? #</code>) and 6/7-field expressions are not supported.
         When both day-of-month and day-of-week are restricted, the job runs when <em>either</em> matches (standard cron).</p>
     </div>
   </div>
@@ -36,5 +36,6 @@
       <table class="table"><thead><tr><th>#</th><th>Run time</th><th>Relative</th></tr></thead><tbody id="cron-runs"></tbody></table>
     </div>
     <p class="hint cron-note" id="cron-runs-note" hidden></p>
+    <p class="hint cron-note" id="cron-dst-note">Times are shown in the selected time zone. In local time this follows Vixie cron: when clocks go forward, a fixed-time job scheduled inside the skipped hour runs once at the first valid time after the gap (for example 30 2 * * * runs at 03:00); when clocks go back, a fixed-time job runs once in the repeated hour. Jobs with a wildcard minute or hour (such as */15) simply keep their real-time cadence.</p>
   </div>
 </div>

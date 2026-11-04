@@ -22,28 +22,61 @@ export function detectUnit(n) {
   if (a < 1e17) return 'us';
   return 'ns';
 }
-const DIV = { s: 1 / 1000, ms: 1, us: 1000, ns: 1e6 };
 export const UNIT_NAMES = { s: 'seconds', ms: 'milliseconds', us: 'microseconds', ns: 'nanoseconds' };
+/** Nanoseconds per unit, and the number of fractional digits that still matter (exact BigInt maths). */
+const NS_PER = { s: 1000000000n, ms: 1000000n, us: 1000n, ns: 1n };
+const FRAC_DIGITS = { s: 9, ms: 6, us: 3, ns: 0 };
+
+/** Floor division for BigInt (rounds toward negative infinity). */
+export const floorDiv = (a, b) => { const q = a / b; return (a % b !== 0n && (a < 0n) !== (b < 0n)) ? q - 1n : q; };
+
+/**
+ * Ambiguity hint: integers between 1e8 and 1e11 are valid both as seconds (1973-5138) and as milliseconds (Jan 1970-1973).
+ * Returns null or { assumed, alternative }.
+ */
+export function unitAmbiguity(text, unit = 'auto') {
+  if (unit !== 'auto') return null;
+  const m = /^[+-]?(\d+)(?:\.\d+)?$/.exec(String(text ?? '').trim());
+  if (!m) return null;
+  const a = Math.abs(Number(m[1]));
+  return a >= 1e8 && a < 1e11 ? { assumed: 's', alternative: 'ms' } : null;
+}
 
 /**
  * Convert text like "1700000000" or "-86400.5" to a Date.
- * unit: 'auto' | 's' | 'ms' | 'us' | 'ns'. Returns { ms, unit, date }; throws Error on invalid input.
+ * unit: 'auto' | 's' | 'ms' | 'us' | 'ns'. Returns { ms, ns (BigInt, exact, truncated toward zero at 1 ns), us (BigInt), unit, date, ambiguity };
+ * throws Error on invalid input. Big values never pass through floating point.
  */
 export function unixToDate(text, unit = 'auto') {
   const s = String(text ?? '').trim();
   if (!s) throw new Error('Enter a Unix timestamp.');
-  if (!/^[+-]?\d+(\.\d+)?$/.test(s)) throw new Error('Not a number: a Unix timestamp contains only digits (optionally a leading minus and a decimal point).');
-  const n = Number(s);
-  const u = unit === 'auto' ? detectUnit(n) : unit;
-  if (!DIV[u]) throw new Error(`Unknown unit "${unit}".`);
-  const ms = Math.round(n * (u === 's' ? 1000 : 1 / DIV[u]));
+  const m = /^([+-]?)(\d+)(?:\.(\d+))?$/.exec(s);
+  if (!m) throw new Error('Not a number: a Unix timestamp contains only digits (optionally a leading minus and a decimal point).');
+  const intPart = m[2].replace(/^0+(?=\d)/, '');
+  const u = unit === 'auto' ? detectUnit(Number(intPart)) : unit;
+  if (!NS_PER[u]) throw new Error(`Unknown unit "${unit}".`);
+  const fd = FRAC_DIGITS[u];
+  const frac = (m[3] || '').slice(0, fd).padEnd(fd, '0');
+  let ns = BigInt(intPart) * NS_PER[u] + (fd ? BigInt(frac) : 0n);
+  if (m[1] === '-') ns = -ns;
+  const msBig = floorDiv(ns, 1000000n);
+  if (msBig > BigInt(MAX_MS)) checkRange(Infinity);
+  if (msBig < BigInt(MIN_MS)) checkRange(-Infinity);
+  const ms = Number(msBig);
   checkRange(ms);
-  return { ms, unit: u, date: new Date(ms) };
+  return { ms, ns, us: floorDiv(ns, 1000n), unit: u, date: new Date(ms), ambiguity: unitAmbiguity(s, unit) };
+}
+
+/** ISO 8601 UTC string with nanosecond precision from exact nanoseconds. */
+export function isoFromNs(ns) {
+  const ms = Number(floorDiv(ns, 1000000n));
+  const sub = ((ns % 1000000000n) + 1000000000n) % 1000000000n;
+  return new Date(ms).toISOString().replace(/\.\d{3}Z$/, `.${String(sub).padStart(9, '0')}Z`);
 }
 
 function checkRange(ms) {
+  if (ms === -Infinity || ms < MIN_MS) throw new Error('Out of range: the date is before year 0001.');
   if (!Number.isFinite(ms) || ms > MAX_MS) throw new Error('Out of range: the date is after year 9999 (max 253402300799 seconds). Check the unit; this may be milliseconds or microseconds.');
-  if (ms < MIN_MS) throw new Error('Out of range: the date is before year 0001.');
 }
 
 // ------------------------------------------------------------------ time zones

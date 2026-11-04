@@ -250,6 +250,12 @@ export default {
 
     // Drop typed secrets when the page is hidden or put in the back/forward cache.
     const wipeSecrets = () => {
+      // Also clear plaintext, ciphertext and outputs, which can hold secrets or recoverable data.
+      ['#hash-input', '#enc-input', '#enc-output', '#kc-input', '#kc-output', '#gen-output', '#code-input', '#code-output'].forEach((sel) => {
+        const el = $(sel); if (el) el.value = '';
+      });
+      ['#hash-output', '#pw-output'].forEach((sel) => { const el = $(sel); if (el) clearOutput(el); });
+      const fileEl = $('#hash-file'); if (fileEl) fileEl.value = '';
       // Secret fields can be switched to type="text" by the Show button, so match them by their toggle too.
       $$('[data-toggle-visibility]').forEach((btn) => { const el = $(btn.dataset.toggleVisibility); if (el) el.value = ''; });
       $$('input[type="password"]').forEach((el) => { el.value = ''; });
@@ -288,6 +294,33 @@ export default {
       setStatus(compareResult, null, '');
     }
 
+    let hashAbort = null;
+    const isChunkedMd5 = () => radioValue('hash-source') === 'file' && alg.value === 'MD5';
+    /** MD5 of the chosen file in 8 MB slices with a progress bar and Cancel. */
+    async function md5OfFile() {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) throw new Error('Choose a file to hash.');
+      if (file.size > MAX_HASH_FILE_BYTES) throw new Error('Files over 512 MB are not supported in the browser.');
+      const bar = $('#hash-progress'), text = $('#hash-progress-text'), cancel = $('#hash-cancel');
+      hashAbort = new AbortController();
+      $('#hash-progress-wrap').hidden = false; cancel.hidden = false; bar.value = 0;
+      try {
+        const digest = await S.hash.md5Blob(file, {
+          signal: hashAbort.signal,
+          onProgress: (done, total) => {
+            const pct = total ? Math.round((done / total) * 100) : 100;
+            bar.value = pct; text.textContent = `${pct}% (${done.toLocaleString('en-US')} of ${total.toLocaleString('en-US')} bytes)`;
+          },
+        });
+        return { digest, label: file.name, size: file.size };
+      } catch (err) {
+        if (err && err.name === 'AbortError') throw new Error('Hashing cancelled.');
+        throw err;
+      } finally {
+        hashAbort = null; $('#hash-progress-wrap').hidden = true; cancel.hidden = true;
+      }
+    }
+
     async function getInputBytes() {
       if (radioValue('hash-source') === 'file') {
         const file = fileInput.files && fileInput.files[0];
@@ -303,11 +336,15 @@ export default {
       setStatus(compareResult, null, '');
       try {
         await withBusy(runButton, 'Hashing…', async () => {
-          const { bytes, label } = await getInputBytes();
-          const digest = await S.hash.hashBytes(alg.value, bytes);
+          let digest, label, size;
+          if (isChunkedMd5()) ({ digest, label, size } = await md5OfFile());
+          else {
+            const { bytes, label: l } = await getInputBytes();
+            digest = await S.hash.hashBytes(alg.value, bytes); label = l; size = bytes.length;
+          }
           renderHex(output, S.encoding.bytesToHex(digest));
           outputMeta.textContent = `${digest.length * 8} bits, ${digest.length * 2} hex characters`;
-          if (label) setStatus(status, 'ok', `Hashed ${label} (${bytes.length.toLocaleString('en-US')} bytes).`);
+          if (label) setStatus(status, 'ok', `Hashed ${label} (${size.toLocaleString('en-US')} bytes).`);
         });
       } catch (err) {
         clearOutput(output);
@@ -319,8 +356,9 @@ export default {
     async function compare() {
       setStatus(compareResult, null, '');
       try {
-        const { bytes } = await getInputBytes();
-        const r = await S.hash.compareDigest(alg.value, bytes, $('#hash-compare-input').value);
+        let r;
+        if (isChunkedMd5()) { const f = await md5OfFile(); r = S.hash.compareToActual('MD5', f.digest, $('#hash-compare-input').value); }
+        else { const { bytes } = await getInputBytes(); r = await S.hash.compareDigest(alg.value, bytes, $('#hash-compare-input').value); }
         renderHex(output, r.actualHex);
         outputMeta.textContent = `${r.algorithmBits} bits, ${r.algorithmBits / 4} hex characters`;
         if (r.match) {
@@ -358,6 +396,8 @@ export default {
       run();
     }));
     runButton.addEventListener('click', run);
+    $('#hash-cancel').addEventListener('click', () => { if (hashAbort) hashAbort.abort(); });
+    disposers.push(() => { if (hashAbort) hashAbort.abort(); });
     $('#hash-compare-run').addEventListener('click', compare);
     $('#hash-compare-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') compare(); });
 
@@ -402,6 +442,8 @@ export default {
         iterations: Number(iterations.value),
         saltLength: saltBytes,
       });
+      const slow = S.password.slowWarning(Number(iterations.value));
+      if (slow) warnings.push(slow);
       warning.hidden = warnings.length === 0;
       warning.textContent = warnings.join(' ');
     }
@@ -539,6 +581,8 @@ export default {
 
     function updateWarning() {
       const warnings = S.password.assessParams({ hash: kdfHash.value, iterations: Number(iterations.value), saltLength: null });
+      const slow = S.password.slowWarning(Number(iterations.value));
+      if (slow) warnings.push(slow);
       warning.hidden = !(isEncrypt() && usesPassword() && warnings.length);
       warning.textContent = warnings.join(' ');
     }
@@ -860,6 +904,14 @@ export default {
   function setupTabs() {
     const tabs = $$('[data-tab]');
     const panels = $$('[data-panel]');
+    const uid = Math.random().toString(36).slice(2, 7);
+    tabs.forEach((t) => { t.id = t.id || `sb-tab-${uid}-${t.dataset.tab}`; });
+    panels.forEach((p) => {
+      const t = tabs.find((x) => x.dataset.tab === p.dataset.panel);
+      p.setAttribute('role', 'tabpanel');
+      p.id = p.id || `sb-panel-${uid}-${p.dataset.panel}`;
+      if (t) { p.setAttribute('aria-labelledby', t.id); t.setAttribute('aria-controls', p.id); }
+    });
     function activate(tab, focus) {
       tabs.forEach((t) => {
         const on = t === tab;

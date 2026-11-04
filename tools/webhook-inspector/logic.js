@@ -84,12 +84,12 @@ export function buildSimulatedRequest({ endpoint, method, pathQuery, headersText
   const finalHeaders = { Host: host, ...headers };
   if (body !== '' && getHeader(finalHeaders, 'content-length') === undefined) finalHeaders['Content-Length'] = String(byteLength(body));
   const qs = query.length ? '?' + new URLSearchParams(query).toString() : '';
-  return {
+  return withCappedBody({
     id, source: 'simulated', method,
     url: `https://${host}${idPath}${path === '/' ? '' : path}${qs}`,
     path: idPath + (path === '/' ? '' : path), headers: finalHeaders, query, body,
     size: byteLength(body), time: now.toISOString(),
-  };
+  });
 }
 
 // ------------------------------------------------------------ sample templates
@@ -178,10 +178,90 @@ export function addToHistory(list, rec, cap = HISTORY_CAP) {
   return [rec, ...list.filter(r => r.id !== rec.id)].slice(0, cap);
 }
 
-/** Drop malformed items loaded from storage. */
-export function sanitizeHistory(list) {
+export const BODY_CAP = 64 * 1024; // bytes of body kept per request (memory and storage)
+export const REDACTED = '[redacted]';
+const SENSITIVE_HEADERS = ['authorization', 'proxy-authorization', 'cookie', 'set-cookie', 'x-api-key', 'x-auth-token'];
+export const isSensitiveHeader = name => SENSITIVE_HEADERS.includes(String(name).toLowerCase());
+export const hasSensitiveHeaders = headers => Object.keys(headers || {}).some(isSensitiveHeader);
+
+/** Replace the values of credential-bearing headers with "[redacted]" (returns a new object). */
+export function redactHeaders(headers) {
+  const out = {};
+  for (const [k, v] of Object.entries(headers || {})) out[k] = isSensitiveHeader(k) ? REDACTED : v;
+  return out;
+}
+
+/** Limit a body to `cap` UTF-8 bytes. Returns { body, truncated }. */
+export function capBody(body, cap = BODY_CAP) {
+  const text = String(body ?? '');
+  if (text.length * 3 <= cap) return { body: text, truncated: false }; // cheap path: cannot exceed the cap
+  const bytes = new TextEncoder().encode(text);
+  if (bytes.length <= cap) return { body: text, truncated: false };
+  return { body: new TextDecoder().decode(bytes.subarray(0, cap)).replace(/�+$/, ''), truncated: true };
+}
+
+/** Apply the body cap to a record; `size` keeps the original byte size. */
+export function withCappedBody(rec, cap = BODY_CAP) {
+  const { body, truncated } = capBody(rec.body, cap);
+  return truncated ? { ...rec, body, truncated: true } : rec;
+}
+
+/** Copy of a record that is safe to persist: credential headers redacted (flagged), body capped. */
+export function prepareForStorage(rec) {
+  const out = withCappedBody({ ...rec });
+  if (hasSensitiveHeaders(out.headers)) { out.headers = redactHeaders(out.headers); out.redacted = true; }
+  return out;
+}
+
+const plainObject = o => o !== null && typeof o === 'object' && !Array.isArray(o);
+const scalarString = v => (typeof v === 'string' ? v : ((typeof v === 'number' && Number.isFinite(v)) || typeof v === 'boolean') ? String(v) : null);
+
+function cleanHeaders(h) {
+  const out = {};
+  if (!plainObject(h)) return out;
+  for (const [k, v] of Object.entries(h)) { const sv = scalarString(v); if (sv !== null) out[k] = sv; }
+  return out;
+}
+function cleanQuery(q) {
+  if (!Array.isArray(q)) return [];
+  return q.filter(p => Array.isArray(p) && p.length >= 2 && scalarString(p[0]) !== null && scalarString(p[1]) !== null).map(p => [scalarString(p[0]), scalarString(p[1])]);
+}
+
+/** Validate one stored record; returns a clean record or null when unusable. */
+export function sanitizeRecord(r, now = new Date()) {
+  if (!plainObject(r)) return null;
+  const id = scalarString(r.id);
+  const method = typeof r.method === 'string' ? r.method.trim().toUpperCase() : '';
+  if (!id || !/^[A-Z]{1,20}$/.test(method)) return null;
+  if (r.source !== 'simulated' && r.source !== 'external') return null;
+  const body = r.body == null ? '' : (scalarString(r.body) ?? '');
+  const t = r.time == null ? new Date(NaN) : new Date(r.time);
+  const out = {
+    id, source: r.source, method,
+    url: scalarString(r.url) ?? '', path: scalarString(r.path) ?? '',
+    headers: cleanHeaders(r.headers), query: cleanQuery(r.query), body,
+    size: typeof r.size === 'number' && Number.isFinite(r.size) && r.size >= 0 ? r.size : byteLength(body),
+    time: Number.isNaN(t.getTime()) ? now.toISOString() : t.toISOString(),
+  };
+  if (!out.path) out.path = out.url;
+  if (typeof r.ip === 'string' && r.ip) out.ip = r.ip;
+  if (r.redacted === true) out.redacted = true;
+  if (r.truncated === true) out.truncated = true;
+  return out;
+}
+
+/** Validate shapes of items loaded from storage; unusable records are dropped (never throws). */
+export function sanitizeHistory(list, now = new Date()) {
   if (!Array.isArray(list)) return [];
-  return list.filter(r => r && typeof r === 'object' && r.id && r.method && typeof r.headers === 'object').slice(0, HISTORY_CAP);
+  const seen = new Set(), out = [];
+  for (const item of list) {
+    let rec = null;
+    try { rec = sanitizeRecord(item, now); } catch { rec = null; }
+    if (!rec || seen.has(rec.id)) continue;
+    seen.add(rec.id); out.push(withCappedBody(rec));
+    if (out.length >= HISTORY_CAP) break;
+  }
+  return out;
 }
 
 /** Filter by source, method and free text (url / headers / body). */
@@ -195,15 +275,76 @@ export function filterRequests(list, { source = null, method = 'ALL', text = '' 
   });
 }
 
-export function exportHistory(list, now = new Date()) {
-  return JSON.stringify({ exportedAt: now.toISOString(), count: list.length, requests: list }, null, 2);
+/**
+ * Export as JSON. Credential-bearing header values (Authorization, Cookie, API keys...) are replaced with "[redacted]"
+ * unless `includeSecrets` is true, so a shared export does not leak tokens. Bodies are exported as stored.
+ */
+export function exportHistory(list, now = new Date(), { includeSecrets = false } = {}) {
+  const requests = includeSecrets ? list : list.map(r => (hasSensitiveHeaders(r.headers) ? { ...r, headers: redactHeaders(r.headers), redacted: true } : r));
+  return JSON.stringify({ exportedAt: now.toISOString(), count: requests.length, includesSecrets: !!includeSecrets, requests }, null, 2);
+}
+
+/** True when the record's headers contain "[redacted]" placeholders (so a generated cURL command will not authenticate). */
+export const hasRedactedValues = rec => Object.values(rec?.headers || {}).some(v => v === REDACTED);
+
+/** Warning shown when copying cURL for a request whose credential headers were redacted, else ''. */
+export function curlRedactionWarning(rec) {
+  return hasRedactedValues(rec)
+    ? 'Credential header values are redacted ("[redacted]") in this saved request. Replace them with real values before running the command.'
+    : '';
 }
 
 export const methodBadgeClass = m => ({ GET: 'badge-info', POST: 'badge-success', PUT: 'badge-warn', PATCH: 'badge-warn', DELETE: 'badge-danger' }[m] || '');
 
 // ------------------------------------------------------------ external service (webhook.site)
 
-const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+/**
+ * Classify a hostname: 'loopback' (localhost, 127/8, ::1), 'private' (10/8, 172.16/12, 192.168/16, *.local, ULA),
+ * 'link-local' (169.254/16, fe80::/10) or null for ordinary hosts.
+ */
+export function privateHostKind(hostname) {
+  const h = String(hostname ?? '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+  if (h === 'localhost' || h.endsWith('.localhost') || h === '::1' || h === '::') return 'loopback';
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(h);
+  if (m) {
+    const [a, b] = [Number(m[1]), Number(m[2])];
+    if (a === 127 || a === 0) return 'loopback';
+    if (a === 169 && b === 254) return 'link-local';
+    if (a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)) return 'private';
+    return null;
+  }
+  if (h.endsWith('.local')) return 'private';
+  if (/^fe[89ab][0-9a-f]:/.test(h)) return 'link-local';
+  if (/^f[cd][0-9a-f]{2}:/.test(h)) return 'private';
+  if (h.startsWith('::ffff:')) return 'private'; // IPv4-mapped IPv6: cannot be judged reliably
+  return null;
+}
+
+/** Human-readable warning for a private/loopback/link-local API host, or '' when the host is public. */
+export function privateHostWarning(kind, host) {
+  if (!kind) return '';
+  const what = { loopback: 'a loopback address (this computer)', private: 'a private network address', 'link-local': 'a link-local address (often cloud metadata or LAN devices)' }[kind];
+  return `"${host}" is ${what}. Polling sends a request from your browser to that host every few seconds. Only continue if you trust it and meant to do this.`;
+}
+
+/** Parse a Retry-After header (delta-seconds or HTTP date) into milliseconds, or null. */
+export function parseRetryAfter(value, now = Date.now()) {
+  if (value == null) return null;
+  const v = String(value).trim();
+  if (/^\d+$/.test(v)) return Number(v) * 1000;
+  const t = Date.parse(v);
+  return Number.isNaN(t) ? null : Math.max(0, t - now);
+}
+
+export const POLL_BASE_MS = 5000, POLL_MAX_MS = 60000, POLL_MAX_FAILURES = 5, RETRY_AFTER_CAP_MS = 5 * 60 * 1000;
+
+/** Delay before the next attempt after `failures` consecutive failures: exponential (5s, 10s, 20s ... max 60s), at least Retry-After (capped at 5 min). */
+export function nextPollDelay(failures, retryAfterMs = null) {
+  const exp = Math.min(POLL_MAX_MS, POLL_BASE_MS * 2 ** Math.max(0, failures - 1));
+  return retryAfterMs == null ? exp : Math.max(exp, Math.min(retryAfterMs, RETRY_AFTER_CAP_MS));
+}
+
+const UUID =/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
 /**
  * Work out the polling URL. webhook.site's public API (documented): GET https://webhook.site/token/<uuid>/requests
@@ -216,7 +357,9 @@ export function resolveExternal(inspectionUrl, apiUrl = '') {
     let u;
     try { u = new URL(api); } catch { throw new WebhookError('API URL is not a valid URL.'); }
     if (!/^https?:$/.test(u.protocol)) throw new WebhookError('API URL must start with http:// or https://');
-    return { apiUrl: u.toString(), service: 'custom' };
+    const privateHost = privateHostKind(u.hostname);
+    if (u.protocol === 'http:' && privateHost !== 'loopback') throw new WebhookError('API URL must use https:// (plain http:// is only allowed for localhost / 127.0.0.1).');
+    return { apiUrl: u.toString(), service: 'custom', host: u.hostname, privateHost };
   }
   const input = String(inspectionUrl ?? '').trim();
   if (!input) throw new WebhookError('Paste your inspection URL from the external service first (e.g. https://webhook.site/<uuid>).');
@@ -250,25 +393,32 @@ function toPairs(q) {
 export function normalizeExternalRequest(r, now = new Date()) {
   if (!r || typeof r !== 'object' || !r.uuid) throw new WebhookError('Unexpected request object in response (missing "uuid").');
   const headers = {};
-  for (const [k, v] of Object.entries(r.headers || {})) headers[k] = Array.isArray(v) ? v.join(', ') : String(v);
-  const body = r.content == null ? '' : String(r.content);
+  if (plainObject(r.headers)) for (const [k, v] of Object.entries(r.headers)) headers[k] = Array.isArray(v) ? v.join(', ') : String(v);
+  const body = r.content == null ? '' : typeof r.content === 'object' ? JSON.stringify(r.content) : String(r.content);
   let url = String(r.url || '');
   let path = '/';
   try { const u = new URL(url); path = u.pathname + u.search; } catch { path = url; }
-  return {
+  return withCappedBody({
     id: `ext-${r.uuid}`, source: 'external', method: String(r.method || 'GET').toUpperCase(),
     url, path, headers, query: toPairs(r.query), body,
     size: Number.isFinite(Number(r.size)) ? Number(r.size) : byteLength(body),
-    time: parseExternalTime(r.created_at, now), ip: r.ip || undefined,
-  };
+    time: parseExternalTime(r.created_at, now), ip: typeof r.ip === 'string' && r.ip ? r.ip : undefined,
+  });
 }
 
-/** Validate an API response and return normalised records (throws a friendly error if the shape is wrong). */
+/**
+ * Validate an API response. Returns { records, skipped } where `skipped` counts malformed entries that were ignored.
+ * Throws a friendly error only if the overall shape is wrong.
+ */
 export function parseExternalResponse(json, now = new Date()) {
   if (!json || typeof json !== 'object' || !Array.isArray(json.data)) {
     throw new WebhookError('Unexpected response format: expected JSON like { "data": [ ... ] }. Check that the URL is the service\'s requests API.');
   }
-  return json.data.map(r => normalizeExternalRequest(r, now));
+  const records = []; let skipped = 0;
+  for (const r of json.data) {
+    try { records.push(normalizeExternalRequest(r, now)); } catch { skipped++; }
+  }
+  return { records, skipped };
 }
 
 /** Add only the records whose id is not already known. Returns { list, added }. */

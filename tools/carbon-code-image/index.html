@@ -32,16 +32,18 @@
         </div>
 
         <div class="cc-grid">
-          <div class="field"><label for="cc-padding">Padding <output id="cc-padding-v"></output></label><input id="cc-padding" type="range" min="16" max="128" step="4"></div>
-          <div class="field"><label for="cc-fontsize">Font size <output id="cc-fontsize-v"></output></label><input id="cc-fontsize" type="range" min="10" max="28" step="1"></div>
-          <div class="field"><label for="cc-radius">Corner radius <output id="cc-radius-v"></output></label><input id="cc-radius" type="range" min="0" max="32" step="1"></div>
-          <div class="field"><label for="cc-width">Width <output id="cc-width-v"></output></label><input id="cc-width" type="range" min="320" max="1400" step="10"></div>
+          <div class="field"><label for="cc-padding">Padding <output id="cc-padding-v" for="cc-padding" aria-live="polite"></output></label><input id="cc-padding" type="range" min="16" max="128" step="4"></div>
+          <div class="field"><label for="cc-fontsize">Font size <output id="cc-fontsize-v" for="cc-fontsize" aria-live="polite"></output></label><input id="cc-fontsize" type="range" min="10" max="28" step="1"></div>
+          <div class="field"><label for="cc-radius">Corner radius <output id="cc-radius-v" for="cc-radius" aria-live="polite"></output></label><input id="cc-radius" type="range" min="0" max="32" step="1"></div>
+          <div class="field"><label for="cc-width">Width <output id="cc-width-v" for="cc-width" aria-live="polite"></output></label><input id="cc-width" type="range" min="320" max="1400" step="10"></div>
         </div>
         <div class="row cc-checks">
           <label class="check"><input type="checkbox" id="cc-autowidth"> Auto width</label>
           <label class="check"><input type="checkbox" id="cc-linenums"> Line numbers</label>
           <label class="check"><input type="checkbox" id="cc-shadow"> Drop shadow</label>
+          <label class="check"><input type="checkbox" id="cc-remember" checked> Remember my code</label>
         </div>
+        <p class="hint" id="cc-remember-note">When on, your code is saved in this browser's local storage so it survives a reload; turning it off deletes the saved copy. Avoid pasting secrets.</p>
       </section>
     </aside>
 
@@ -53,7 +55,7 @@
         <button class="btn" id="cc-copyimg" type="button"><i data-lucide="clipboard"></i> Copy image</button>
         <button class="btn btn-primary" id="cc-download" type="button"><i data-lucide="download"></i> Download PNG</button>
       </div>
-      <div id="cc-msg" class="alert" hidden></div>
+      <div id="cc-msg" class="alert" role="status" aria-live="polite" hidden></div>
       <div class="cc-viewport" id="cc-viewport"><div class="cc-fit" id="cc-fit"><div class="cc-stage" id="cc-stage"></div></div></div>
       <p class="hint" id="cc-info"></p>
     </section>

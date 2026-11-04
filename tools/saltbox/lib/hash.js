@@ -47,6 +47,25 @@
     return new Uint8Array(digest);
   }
 
+  const MD5_CHUNK = 8 * 1024 * 1024; // read files in 8 MB slices
+
+  /**
+   * MD5 of a Blob/File read in slices (never holds the whole file in memory).
+   * options: { chunkSize, onProgress(doneBytes, totalBytes), signal (AbortSignal) }. Rejects with name "AbortError" when cancelled.
+   * @returns {Promise<Uint8Array>}
+   */
+  async function md5Blob(blob, { chunkSize = MD5_CHUNK, onProgress, signal } = {}) {
+    const h = Saltbox.md5Stream();
+    for (let pos = 0; pos < blob.size; pos += chunkSize) {
+      if (signal && signal.aborted) throw Object.assign(new Error('Cancelled.'), { name: 'AbortError' });
+      const buf = await blob.slice(pos, Math.min(pos + chunkSize, blob.size)).arrayBuffer();
+      h.update(new Uint8Array(buf));
+      if (onProgress) onProgress(Math.min(pos + chunkSize, blob.size), blob.size);
+    }
+    if (signal && signal.aborted) throw Object.assign(new Error('Cancelled.'), { name: 'AbortError' });
+    return h.digest();
+  }
+
   function hashText(algorithm, text) {
     return hashBytes(algorithm, enc.utf8Encode(text));
   }
@@ -79,8 +98,12 @@
    * Uses a constant-time byte comparison.
    */
   async function compareDigest(algorithm, bytes, expected) {
+    return compareToActual(algorithm, await hashBytes(algorithm, bytes), expected);
+  }
+
+  /** Like compareDigest but takes an already computed digest (used for chunked file hashing). */
+  function compareToActual(algorithm, actual, expected) {
     const expectedBytes = parseDigest(expected);
-    const actual = await hashBytes(algorithm, bytes);
     const info = getAlgorithm(algorithm);
     const lengthMatches = expectedBytes.length === actual.length;
     return {
@@ -94,7 +117,7 @@
   }
 
   Saltbox.hash = {
-    ALGORITHMS, getAlgorithm, hashBytes, hashText,
-    compareDigest, algorithmsForHexLength, parseDigest,
+    ALGORITHMS, getAlgorithm, hashBytes, hashText, md5Blob, MD5_CHUNK,
+    compareDigest, compareToActual, algorithmsForHexLength, parseDigest,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

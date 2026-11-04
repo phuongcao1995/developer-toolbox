@@ -18,17 +18,31 @@
         <select id="pp-trailing" class="select"><option value="none">none</option><option value="es5">es5</option><option value="all">all</option></select></div>
       <div class="field"><label for="pp-arrow">Arrow parens</label>
         <select id="pp-arrow" class="select"><option value="always">always: (x) =&gt; x</option><option value="avoid">avoid: x =&gt; x</option></select></div>
+      <div class="field"><label for="pp-quoteprops">Quote props</label>
+        <select id="pp-quoteprops" class="select"><option value="as-needed">as-needed</option><option value="consistent">consistent</option><option value="preserve">preserve</option></select></div>
+      <div class="field"><label for="pp-eol">End of line</label>
+        <select id="pp-eol" class="select"><option value="lf">lf</option><option value="crlf">crlf</option><option value="cr">cr</option><option value="auto">auto</option></select></div>
+      <div class="field"><label for="pp-prose">Prose wrap (Markdown)</label>
+        <select id="pp-prose" class="select"><option value="preserve">preserve</option><option value="always">always</option><option value="never">never</option></select></div>
+      <div class="field"><label for="pp-htmlws">HTML whitespace sensitivity</label>
+        <select id="pp-htmlws" class="select"><option value="css">css</option><option value="strict">strict</option><option value="ignore">ignore</option></select></div>
+      <div class="field"><label for="pp-embedded">Embedded language formatting</label>
+        <select id="pp-embedded" class="select"><option value="auto">auto</option><option value="off">off</option></select></div>
       <label class="check"><input type="checkbox" id="pp-usetabs"> Use tabs</label>
+      <label class="check"><input type="checkbox" id="pp-bracketsame"> Bracket same line</label>
+      <label class="check"><input type="checkbox" id="pp-jsxsingle"> JSX single quotes</label>
       <label class="check"><input type="checkbox" id="pp-semi"> Semicolons</label>
       <label class="check"><input type="checkbox" id="pp-single"> Single quotes</label>
       <label class="check"><input type="checkbox" id="pp-bracket"> Bracket spacing</label>
       <label class="check"><input type="checkbox" id="pp-live"> Format as I type</label>
+      <button class="btn btn-sm" id="pp-import-rc" type="button"><i data-lucide="upload"></i> Import .prettierrc</button>
+      <button class="btn btn-sm" id="pp-export-rc" type="button"><i data-lucide="download"></i> Export .prettierrc</button>
       <button class="btn btn-sm" id="pp-reset" type="button"><i data-lucide="rotate-ccw"></i> Reset options</button>
     </div>
     <p class="hint">Not every option applies to every language (for example quotes and semicolons are ignored for CSS and Markdown). Prettier is loaded from a CDN on first use.</p>
   </details>
 
-  <div id="pp-msg" class="alert" hidden></div>
+  <div id="pp-msg" class="alert" role="status" aria-live="polite" style="white-space:pre-wrap" hidden></div>
 
   <div class="grid-2 pp-panels">
     <section class="panel" id="pp-drop">

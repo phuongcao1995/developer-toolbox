@@ -1,5 +1,16 @@
 <div class="sf">
   <div class="toolbar sf-options">
+    <div class="field"><label for="sf-dialect">Dialect</label>
+      <select id="sf-dialect" class="select" title="Drives formatting, analysis, explanation and JSON conversion: string and identifier quoting rules (backslash escapes, [brackets], backticks, $$ quoting)"></select></div>
+    <div class="field"><label for="sf-example">Example</label>
+      <select id="sf-example" class="select"><option value="">Load an example…</option></select></div>
+    <span class="spacer"></span>
+    <button class="btn btn-primary" id="sf-format" type="button"><i data-lucide="align-left"></i> Format</button>
+    <button class="btn" id="sf-minify" type="button"><i data-lucide="minimize-2"></i> Minify</button>
+    <button class="btn btn-primary" id="sf-run" type="button" hidden><i data-lucide="play"></i> <span id="sf-run-label">Analyze</span></button>
+  </div>
+
+  <div class="toolbar sf-options" id="sf-fmt-options">
     <div class="field"><label for="sf-indent">Indentation</label>
       <select id="sf-indent" class="select">
         <option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab</option>
@@ -8,32 +19,54 @@
       <select id="sf-case" class="select">
         <option value="upper">UPPER</option><option value="lower">lower</option><option value="preserve">Preserve</option>
       </select></div>
-    <div class="field"><label for="sf-example">Example</label>
-      <select id="sf-example" class="select"><option value="">Load an example…</option></select></div>
-    <span class="spacer"></span>
-    <button class="btn btn-primary" id="sf-format" type="button"><i data-lucide="align-left"></i> Format</button>
-    <button class="btn" id="sf-minify" type="button"><i data-lucide="minimize-2"></i> Minify</button>
+    <div class="field"><label for="sf-fncase">Function names</label>
+      <select id="sf-fncase" class="select" title="Case of function names such as COUNT( or count(">
+        <option value="auto">Same as keywords</option><option value="upper">UPPER</option><option value="lower">lower</option><option value="preserve">Preserve</option>
+      </select></div>
+    <div class="field"><label for="sf-width">Max line width</label>
+      <select id="sf-width" class="select" title="Wrap long IN lists and function arguments (and plain comma lists such as GROUP BY) at this width">
+        <option value="0">Off</option><option value="80">80</option><option value="100">100</option><option value="120">120</option>
+      </select></div>
+    <label class="sf-check"><input type="checkbox" id="sf-commafirst"> Comma-first lists</label>
   </div>
-  <p class="hint">Format never changes string literals or quoted identifiers. Minify removes comments (except <code>/*! */</code> and <code>/*+ */</code> hints) and collapses whitespace.</p>
-  <div id="sf-msg" class="alert" hidden></div>
+
+  <div class="tabs sf-tabs" role="tablist" aria-label="SQL tools">
+    <button class="tab active" role="tab" type="button" id="sf-tab-format" data-tab="format" aria-selected="true" aria-controls="sf-result">Format</button>
+    <button class="tab" role="tab" type="button" id="sf-tab-analyze" data-tab="analyze" aria-selected="false" tabindex="-1" aria-controls="sf-result">Analyze</button>
+    <button class="tab" role="tab" type="button" id="sf-tab-explain" data-tab="explain" aria-selected="false" tabindex="-1" aria-controls="sf-result">Explain</button>
+    <button class="tab" role="tab" type="button" id="sf-tab-json" data-tab="json" aria-selected="false" tabindex="-1" aria-controls="sf-result">To JSON</button>
+  </div>
+
+  <p class="hint" id="sf-hint-format">Format never changes string literals or quoted identifiers. Pick the dialect that matches your SQL: backslash escapes in strings apply to MySQL/MariaDB and BigQuery only. Minify removes comments (except <code>/*! */</code> and <code>/*+ */</code> hints) and collapses whitespace.</p>
+  <p class="hint sf-heuristic" id="sf-hint-heuristic" role="note" hidden><strong>Heuristic static analysis — not a database execution plan; use EXPLAIN on your database for real plans.</strong></p>
+  <p class="hint" id="sf-hint-json" hidden>Converts <code>INSERT INTO t (a, b) VALUES (...), (...)</code> statements into JSON row objects. Several INSERTs into the same table are merged; with more than one table the result is an object keyed by table name. Expressions such as <code>NOW()</code> are kept as text, not evaluated.</p>
+  <div id="sf-msg" class="alert" role="status" hidden></div>
 
   <div class="grid-2 sf-panels">
     <section class="panel" id="sf-drop">
       <div class="panel-head">
-        <h3>SQL input</h3>
+        <h3 id="sf-in-title">SQL input</h3>
         <button class="btn btn-sm" id="sf-upload" type="button"><i data-lucide="upload"></i> Upload .sql</button>
         <button class="btn btn-sm" id="sf-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
       </div>
-      <textarea class="textarea code" id="sf-input" spellcheck="false" placeholder="Paste SQL here or drop a .sql file…" aria-label="SQL input"></textarea>
+      <div class="sf-editor">
+        <pre class="sf-hl" id="sf-hl" aria-hidden="true"></pre>
+        <textarea class="sf-input" id="sf-input" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" placeholder="Paste SQL here or drop a .sql file…" aria-label="SQL input"></textarea>
+      </div>
     </section>
     <section class="panel">
       <div class="panel-head">
-        <h3>Result</h3>
+        <h3 id="sf-out-title">Result</h3>
         <button class="btn btn-sm" id="sf-copy" type="button"><i data-lucide="copy"></i> Copy</button>
-        <button class="btn btn-sm" id="sf-download" type="button"><i data-lucide="download"></i> Download .sql</button>
+        <button class="btn btn-sm" id="sf-download" type="button"><i data-lucide="download"></i> <span id="sf-dl-label">Download .sql</span></button>
         <button class="btn btn-sm" id="sf-swap" type="button" title="Move the result into the input"><i data-lucide="arrow-left"></i> Use as input</button>
       </div>
-      <textarea class="textarea code" id="sf-output" spellcheck="false" readonly placeholder="Formatted SQL appears here" aria-label="SQL result"></textarea>
+      <div class="sf-result" id="sf-result" role="tabpanel" aria-labelledby="sf-tab-format">
+        <pre class="sf-code sf-pane" id="sf-out-format" tabindex="0" aria-label="Formatted SQL" data-placeholder="Formatted SQL appears here"></pre>
+        <div class="sf-pane sf-report" id="sf-out-analyze" hidden aria-label="Query analysis"></div>
+        <div class="sf-pane sf-report" id="sf-out-explain" hidden aria-label="Query explanation"></div>
+        <pre class="sf-code sf-pane" id="sf-out-json" hidden tabindex="0" aria-label="JSON result" data-placeholder="JSON appears here"></pre>
+      </div>
     </section>
   </div>
   <div class="sf-stats" id="sf-stats" aria-live="polite"></div>

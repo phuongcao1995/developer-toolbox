@@ -23,6 +23,7 @@
 </head>
 <body>
   <div class="app">
+    <a class="skip-link" href="#main" onclick="event.preventDefault();document.getElementById('main').focus()">Skip to content</a>
     <aside class="sidebar" id="sidebar" aria-label="Primary">
       <a class="logo" href="#/"><span class="logo-mark"><i data-lucide="wrench"></i></span><span>Developer<b>Toolbox</b></span></a>
       <nav class="nav" id="nav"></nav>
@@ -34,11 +35,13 @@
         <button class="search-trigger" id="open-search" aria-label="Search tools"><i data-lucide="search"></i><span>Search tools…</span><kbd>Ctrl K</kbd></button>
         <div class="topbar-actions">
           <button class="btn btn-ghost btn-icon" id="theme-toggle" aria-label="Toggle theme"><i data-lucide="moon"></i></button>
+          <button class="btn btn-ghost btn-icon" id="open-shortcuts" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)"><i data-lucide="keyboard"></i></button>
           <button class="btn btn-ghost btn-icon" id="open-settings" aria-label="Settings"><i data-lucide="settings"></i></button>
-          <span class="avatar" title="User (placeholder)">DT</span>
+          
         </div>
       </header>
       <main class="main" id="main" tabindex="-1"></main>
+      <div id="route-announcer" class="sr-only" role="status" aria-live="polite"></div>
     </div>
   </div>
   <noscript><p style="padding:2rem">Developer Toolbox requires JavaScript.</p></noscript>

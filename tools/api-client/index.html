@@ -1,40 +1,156 @@
-<div class="ac-layout">
-  <div class="ac-main stack">
+<div class="ac-app" id="ac-app">
+  <aside class="ac-side panel" id="ac-side" aria-label="Collections and history">
+    <div class="ac-side-head">
+      <div class="tabs ac-tabs ac-side-tabs">
+        <button class="tab active" data-stab="collections">Collections</button>
+        <button class="tab" data-stab="history">History</button>
+      </div>
+      <button class="btn btn-ghost btn-icon btn-sm ac-side-close" id="ac-side-close" aria-label="Close sidebar"><i data-lucide="x"></i></button>
+    </div>
+
+    <div class="ac-side-panel" data-spanel="collections">
+      <div class="ac-side-tools">
+        <button class="btn btn-sm" data-action="new-collection"><i data-lucide="folder-plus"></i> New collection</button>
+        <button class="btn btn-sm" data-action="import-file" title="Import a Developer Toolbox export, a Postman v2.1 collection or a Postman environment"><i data-lucide="upload"></i> Import…</button>
+      </div>
+      <div id="ac-col-note" aria-live="polite" hidden></div>
+      <div class="ac-tree-host" id="ac-tree-host"></div>
+      <div class="ac-node-tools" role="toolbar" aria-label="Actions for the selected tree item">
+        <button class="btn btn-sm" data-node="new-folder" title="New folder inside the selected collection or folder">+ Folder</button>
+        <button class="btn btn-sm" data-node="new-request" title="Save the current request into the selected collection or folder">+ Request</button>
+        <button class="btn btn-sm" data-node="rename" title="Rename (F2)">Rename</button>
+        <button class="btn btn-sm" data-node="duplicate">Duplicate</button>
+        <button class="btn btn-sm" data-node="up" aria-label="Move up">Up</button>
+        <button class="btn btn-sm" data-node="down" aria-label="Move down">Down</button>
+        <button class="btn btn-sm" data-node="move">Move to…</button>
+        <button class="btn btn-sm" data-node="export">Export…</button>
+        <button class="btn btn-sm btn-danger" data-node="delete" title="Delete (Delete key)">Delete</button>
+      </div>
+      <p class="hint ac-pad">Arrow keys move, Enter opens a request, F2 renames, Delete removes. Collections are stored in this browser only (localStorage).</p>
+    </div>
+
+    <div class="ac-side-panel" data-spanel="history" hidden>
+      <div class="ac-hist-tools">
+        <input class="input" id="ac-hist-q" type="search" placeholder="Filter history (method, URL, status…)" aria-label="Filter history" autocomplete="off">
+        <select class="select" id="ac-hist-f" aria-label="History status filter">
+          <option value="all">All</option><option value="pinned">Pinned</option><option value="2xx">2xx success</option><option value="3xx">3xx redirect</option>
+          <option value="4xx">4xx client error</option><option value="5xx">5xx server error</option><option value="failed">Failed</option>
+        </select>
+      </div>
+      <div class="ac-hist-tools">
+        <button class="btn btn-sm" data-action="export-history" title="Download the history with sensitive values removed"><i data-lucide="download"></i> Export</button>
+        <button class="btn btn-sm btn-danger" data-action="clear-history"><i data-lucide="trash-2"></i> Clear</button>
+      </div>
+      <label class="ac-savesens hint"><input type="checkbox" id="ac-save-sens"> Save sensitive values in history</label>
+      <p class="hint ac-savesens-note">Off: Authorization, Cookie, API-key headers and Auth-tab secrets are saved as [redacted]. Variables are saved as {{names}}, never as their values. Bodies are cut at 64 KB. Pinned entries survive Clear.</p>
+      <div class="ac-history-list" id="ac-history" role="list"></div>
+    </div>
+  </aside>
+  <div class="ac-scrim" id="ac-scrim" hidden></div>
+
+  <section class="ac-main stack">
+    <div class="ac-topbar">
+      <button class="btn btn-icon ac-side-toggle" id="ac-side-toggle" aria-label="Open collections and history" aria-expanded="false" aria-controls="ac-side"><i data-lucide="panel-left"></i></button>
+      <div class="ac-reqname" aria-live="polite">
+        <span class="ac-dirty" id="ac-dirty" hidden role="img" aria-label="Unsaved changes" title="Unsaved changes"></span>
+        <b id="ac-reqname">Untitled request</b>
+        <span class="hint ac-reqpath" id="ac-reqpath"></span>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn btn-sm" data-action="new-request" title="Start a blank request"><i data-lucide="file-plus"></i> New</button>
+      <button class="btn btn-sm" data-action="save" title="Save to the open collection item (Save as… if it is not saved yet)"><i data-lucide="save"></i> Save</button>
+      <button class="btn btn-sm" data-action="save-as"><i data-lucide="copy-plus"></i> Save as…</button>
+      <button class="btn btn-sm" data-action="import-curl"><i data-lucide="terminal"></i> Import cURL</button>
+      <label class="ac-env">Environment
+        <select class="select" id="ac-env" aria-label="Active environment"></select></label>
+      <button class="btn btn-sm" data-action="manage-env"><i data-lucide="settings-2"></i> Environments</button>
+    </div>
+
     <div class="ac-urlbar">
       <select class="select ac-method" id="ac-method" aria-label="HTTP method">
-        <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+        <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option><option>HEAD</option><option>OPTIONS</option>
       </select>
-      <input class="input mono ac-url" id="ac-url" type="url" placeholder="https://api.example.com/resource" spellcheck="false" autocomplete="off" aria-label="Request URL">
-      <button class="btn btn-primary" id="ac-send"><i data-lucide="send"></i> Send</button>
+      <input class="input mono ac-url" id="ac-url" type="text" inputmode="url" placeholder="https://api.example.com/{{resource}}" spellcheck="false" autocomplete="off" aria-label="Request URL">
+      <button class="btn btn-primary" id="ac-send" title="Send (Enter, or Ctrl+Enter anywhere in this tool)"><i data-lucide="send"></i> Send</button>
       <button class="btn btn-danger" id="ac-cancel" hidden><i data-lucide="x"></i> Cancel</button>
-      <button class="btn" id="ac-example" title="Fill in a public CORS-enabled API"><i data-lucide="sparkles"></i> Try example</button>
+      <button class="btn" id="ac-example" title="Fill in a public CORS-enabled API and send"><i data-lucide="sparkles"></i> Try example</button>
+      <span class="ac-copyas">
+        <select class="select" id="ac-copyas" aria-label="Copy request as">
+          <option value="curl-posix">cURL (bash / zsh)</option><option value="curl-cmd">cURL (Windows cmd)</option><option value="curl-powershell">cURL (PowerShell)</option>
+          <option value="fetch">JavaScript fetch()</option><option value="python">Python requests</option>
+        </select>
+        <button class="btn" data-action="copy-as" title="Copy the request with variables and auth resolved (includes real secrets)"><i data-lucide="copy"></i> Copy</button>
+      </span>
     </div>
-    <div id="ac-error" hidden></div>
+    <p class="hint ac-varsnote" id="ac-vars-note" aria-live="polite"></p>
+    <div id="ac-error" aria-live="polite" hidden></div>
+    <div class="alert alert-warn ac-warn" id="ac-warn" hidden>
+      <span id="ac-warn-text"></span>
+      <button class="btn btn-sm" id="ac-send-anyway">Send anyway</button>
+    </div>
 
     <div class="panel">
       <div class="tabs ac-tabs">
         <button class="tab active" data-tab="params">Params <span class="badge" id="ac-params-count">0</span></button>
         <button class="tab" data-tab="headers">Headers <span class="badge" id="ac-headers-count">0</span></button>
+        <button class="tab" data-tab="auth">Auth <span class="badge" id="ac-auth-badge" hidden></span></button>
         <button class="tab" data-tab="body">Body</button>
+        <button class="tab" data-tab="settings">Settings</button>
       </div>
       <div class="panel-body" data-panel="params">
         <div class="ac-rows" id="ac-params-rows"></div>
         <button class="btn btn-sm" data-action="add-param"><i data-lucide="plus"></i> Add param</button>
-        <p class="hint">Enabled params are appended to the URL when sent.</p>
+        <p class="hint">Params and the URL stay in sync: editing either updates the other. Only the query string is rewritten. Use <code>{{name}}</code> for variables.</p>
       </div>
       <div class="panel-body" data-panel="headers" hidden>
         <div class="ac-rows" id="ac-headers-rows"></div>
         <button class="btn btn-sm" data-action="add-header"><i data-lucide="plus"></i> Add header</button>
-        <p class="hint">Some headers (Host, Origin, Cookie…) are forbidden and set by the browser.</p>
+        <p class="hint">Some headers (Host, Origin, Cookie…) are forbidden and set by the browser; they are dropped silently. Variables work in names and values.</p>
+        <div class="alert alert-warn" id="ac-forbidden" hidden></div>
+      </div>
+      <div class="panel-body" data-panel="auth" hidden>
+        <div class="toolbar">
+          <label class="ac-inline" for="ac-auth-type">Type
+            <select class="select" id="ac-auth-type">
+              <option value="none">None</option><option value="bearer">Bearer token</option><option value="basic">Basic</option>
+              <option value="apikey">API key</option><option value="custom">Custom scheme</option>
+            </select></label>
+        </div>
+        <div class="ac-auth-fields" id="ac-auth-fields"></div>
+        <div class="ac-auth-preview" id="ac-auth-preview" hidden>
+          <span class="hint">Added to the request:</span>
+          <code class="ac-auth-line" id="ac-auth-line"></code>
+          <button class="btn btn-sm" id="ac-auth-reveal" aria-pressed="false">Reveal</button>
+        </div>
+        <p class="hint">Values may use <code>{{variables}}</code>; mark the variable as secret in the environment so it is masked and excluded from exports. An explicit Authorization header in the Headers tab takes precedence. Auth is applied at send time and is not saved in history unless "Save sensitive values" is on. Saved collection requests keep what you type here (in localStorage), so prefer a <code>{{variable}}</code>.</p>
       </div>
       <div class="panel-body" data-panel="body" hidden>
         <div class="toolbar">
+          <label class="ac-inline" for="ac-body-type">Type
+            <select class="select" id="ac-body-type">
+              <option value="json">JSON</option><option value="text">Text</option><option value="form">Form URL-encoded</option>
+              <option value="multipart">Multipart form-data</option><option value="raw">Raw</option>
+            </select></label>
           <button class="btn btn-sm" data-action="prettify"><i data-lucide="wand-2"></i> Prettify</button>
           <button class="btn btn-sm" data-action="validate"><i data-lucide="check"></i> Validate</button>
-          <span class="hint" id="ac-body-note"></span>
         </div>
-        <textarea class="textarea code" id="ac-body" spellcheck="false" placeholder='{"title": "hello"}'></textarea>
-        <div id="ac-body-msg" hidden></div>
+        <p class="hint" id="ac-body-note"></p>
+        <textarea class="textarea code" id="ac-body" spellcheck="false" placeholder='{"title": "hello"}   (Form / Multipart: one key=value per line)' aria-label="Request body"></textarea>
+        <div id="ac-body-msg" aria-live="polite" hidden></div>
+      </div>
+      <div class="panel-body stack" data-panel="settings" hidden>
+        <div class="ac-settings-grid">
+          <label class="ac-field">Timeout (seconds)
+            <input class="input" id="ac-timeout" type="number" min="1" max="300" step="1" value="30" inputmode="numeric"></label>
+          <label class="ac-field">Follow redirects
+            <select class="select" id="ac-redirect"><option value="follow">Follow (default)</option><option value="manual">Manual (do not follow)</option></select></label>
+          <label class="ac-field">Credentials (cookies)
+            <select class="select" id="ac-credentials"><option value="same-origin">same-origin (default)</option><option value="include">include</option><option value="omit">omit</option></select></label>
+        </div>
+        <p class="hint" id="ac-redirect-note"></p>
+        <p class="hint"><b>Credentials.</b> <code>include</code> sends and stores cookies on cross-origin requests, but the server must then answer with <code>Access-Control-Allow-Credentials: true</code> and a specific (not <code>*</code>) <code>Access-Control-Allow-Origin</code>, otherwise the browser blocks the response. <code>omit</code> never sends cookies.</p>
+        <div class="alert alert-info">Requests are sent directly from your browser: there is no proxy or backend. CORS rules apply, so servers without CORS headers cannot be called, and browsers hide some headers (Cookie, Origin, Set-Cookie…).</div>
+        <p class="hint"><b>Scripting is unsupported.</b> Postman-style pre-request and test scripts are not run (and are skipped on import) because arbitrary script cannot be safely sandboxed in a static page. Use <code>{{variables}}</code> and the dynamic variables <code>{{$uuid}}</code>, <code>{{$timestamp}}</code>, <code>{{$isoTimestamp}}</code>, <code>{{$randomInt}}</code> instead.</p>
       </div>
     </div>
 
@@ -44,28 +160,44 @@
         <span class="badge" id="ac-status" hidden></span>
         <span class="hint" id="ac-meta"></span>
         <button class="btn btn-sm" data-action="copy-res"><i data-lucide="copy"></i> Copy</button>
-        <button class="btn btn-sm" data-action="download-res"><i data-lucide="download"></i> Download</button>
+        <button class="btn btn-sm" data-action="download-res"><i data-lucide="download"></i> <span id="ac-dl-label">Download</span></button>
       </div>
+      <p class="hint ac-pad ac-status-explain" id="ac-status-explain" aria-live="polite" hidden></p>
+      <div class="alert alert-warn ac-trunc" id="ac-trunc" hidden></div>
       <div class="tabs ac-tabs">
         <button class="tab active" data-rtab="body">Body</button>
         <button class="tab" data-rtab="headers">Headers <span class="badge" id="ac-rheaders-count">0</span></button>
+        <button class="tab" data-rtab="cookies">Cookies <span class="badge" id="ac-rcookies-count">0</span></button>
+        <button class="tab" data-rtab="timing">Timing</button>
       </div>
       <div class="panel-body flush" data-rpanel="body">
-        <div class="ac-loading" id="ac-loading" hidden><span class="spinner"></span> Sending request…</div>
-        <pre class="code-block ac-output" id="ac-output">Send a request to see the response here.</pre>
+        <div class="ac-viewbar">
+          <div class="ac-seg" role="group" aria-label="Response view">
+            <button class="btn btn-sm active" data-view="pretty" aria-pressed="true">Pretty</button>
+            <button class="btn btn-sm" data-view="tree" aria-pressed="false">Tree</button>
+            <button class="btn btn-sm" data-view="raw" aria-pressed="false">Raw</button>
+            <button class="btn btn-sm" data-view="preview" aria-pressed="false" title="HTML responses only; rendered in a sandboxed frame with scripts disabled">Preview</button>
+          </div>
+          <span class="ac-treebar" id="ac-treebar" hidden>
+            <input class="input" id="ac-tree-q" type="search" placeholder="Search keys and values" aria-label="Search the JSON tree" autocomplete="off">
+            <button class="btn btn-sm" data-action="tree-prev" aria-label="Previous match">Prev</button>
+            <button class="btn btn-sm" data-action="tree-next" aria-label="Next match">Next</button>
+            <button class="btn btn-sm" data-action="tree-expand">Expand all</button>
+            <button class="btn btn-sm" data-action="tree-collapse">Collapse all</button>
+            <span class="hint" id="ac-tree-count" aria-live="polite"></span>
+          </span>
+        </div>
+        <div class="ac-loading" id="ac-loading" role="status" aria-live="polite" hidden><span class="spinner"></span> Sending request…</div>
+        <pre class="code-block ac-output" id="ac-output" tabindex="0">Send a request to see the response here.</pre>
+        <div class="ac-tree-wrap" id="ac-tree" hidden></div>
+        <div class="ac-preview-wrap" id="ac-preview" hidden></div>
       </div>
       <div class="panel-body flush" data-rpanel="headers" hidden>
-        <div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Value</th></tr></thead><tbody id="ac-rheaders"></tbody></table></div>
+        <div class="table-wrap"><table class="table ac-hdr-table"><thead><tr><th>Name</th><th>Value</th><th>What it means</th></tr></thead><tbody id="ac-rheaders"></tbody></table></div>
         <p class="hint ac-pad">Only CORS-safelisted response headers (and any listed in Access-Control-Expose-Headers) are readable from the browser.</p>
       </div>
+      <div class="panel-body" data-rpanel="cookies" hidden id="ac-cookies"></div>
+      <div class="panel-body" data-rpanel="timing" hidden id="ac-timing"></div>
     </div>
-  </div>
-
-  <aside class="panel ac-history">
-    <div class="panel-head">
-      <h3>History</h3>
-      <button class="btn btn-sm btn-danger" data-action="clear-history"><i data-lucide="trash-2"></i> Clear</button>
-    </div>
-    <div class="ac-history-list" id="ac-history"></div>
-  </aside>
+  </section>
 </div>

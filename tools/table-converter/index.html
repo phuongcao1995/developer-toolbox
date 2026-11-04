@@ -4,6 +4,7 @@
       <option value="json">JSON</option>
       <option value="csv">CSV</option>
       <option value="markdown">Markdown table</option>
+      <option value="xml">XML</option>
     </select></div>
   <button class="btn btn-icon tc-swap" id="tc-swap" type="button" title="Swap input and output" aria-label="Swap input and output"><i data-lucide="arrow-left-right"></i></button>
   <div class="field"><label for="tc-to">To</label>
@@ -12,6 +13,7 @@
       <option value="json">JSON</option>
       <option value="markdown">Markdown table</option>
       <option value="sql">SQL INSERT</option>
+      <option value="xml">XML</option>
     </select></div>
   <button class="btn btn-primary" id="tc-convert" type="button"><i data-lucide="play"></i> Convert</button>
   <label class="check"><input type="checkbox" id="tc-auto" checked> Auto-convert</label>
@@ -31,7 +33,30 @@
         <option value="pipe">Pipe ( | )</option>
         <option value="auto">Auto-detect (input)</option>
       </select></div>
+    <div class="field" data-for="csv-in"><label for="tc-quote">Quote character</label>
+      <select id="tc-quote" class="select">
+        <option value="&quot;">Double quote ( " )</option>
+        <option value="'">Single quote ( ' )</option>
+        <option value="auto">Auto-detect</option>
+      </select></div>
+    <div class="field" data-for="csv-in"><label for="tc-comment">Comment lines</label>
+      <select id="tc-comment" class="select">
+        <option value="">Not used</option>
+        <option value="#">Ignore lines starting with #</option>
+        <option value="//">Ignore lines starting with //</option>
+        <option value=";">Ignore lines starting with ;</option>
+      </select></div>
+    <label class="check" data-for="csv-in" title="Remove spaces around unquoted values; also allows spaces before and after quotes"><input type="checkbox" id="tc-trim"> Trim whitespace</label>
+    <label class="check" data-for="csv-in" title="Drop rows in which every cell is empty (such as ,,,). Completely blank lines are always skipped."><input type="checkbox" id="tc-skipempty"> Skip empty rows</label>
+    <label class="check" data-for="csv-in" title="Rename repeated or blank header names (id, id_2, column_3). When off, repeated names are kept and JSON output keeps only the last value."><input type="checkbox" id="tc-dedupe" checked> De-duplicate headers</label>
+    <div class="field" data-for="xml-out"><label for="tc-xmlroot">XML root element</label>
+      <input id="tc-xmlroot" class="input" placeholder="rows (tables) / root (JSON)" spellcheck="false" autocomplete="off"></div>
+    <div class="field" data-for="xml-out"><label for="tc-xmlrow">XML row element (tables)</label>
+      <input id="tc-xmlrow" class="input" value="row" spellcheck="false" autocomplete="off"></div>
     <label class="check" data-for="csv-in csv-out json-in"><input type="checkbox" id="tc-header" checked> First row is header</label>
+    <label class="check" data-for="json-in" title="Nested objects become dot-path columns (a.b). Arrays are not expanded: they stay as JSON text in one cell."><input type="checkbox" id="tc-flatten"> Flatten nested objects (dot paths; arrays stay JSON)</label>
+    <label class="check" data-for="csv-out" title="Prefix cells starting with = + - @ (or tab/CR) with a single quote so spreadsheets do not run them as formulas"><input type="checkbox" id="tc-escf"> Escape formulas</label>
+    <label class="check" data-for="csv-out" title="Add a UTF-8 byte order mark to the downloaded file so Excel detects the encoding"><input type="checkbox" id="tc-bom"> UTF-8 BOM (download)</label>
     <label class="check" data-for="csv-in markdown-in"><input type="checkbox" id="tc-infer"> Infer numbers / booleans</label>
     <label class="check" data-for="json-out sql-out"><input type="checkbox" id="tc-null"> Empty string as NULL</label>
     <div class="field" data-for="json-out"><label for="tc-shape">JSON shape</label>
@@ -53,13 +78,24 @@
   </div>
 </div>
 
-<div id="tc-msg" class="tc-msg" hidden></div>
-<div id="tc-warn" class="tc-msg" hidden></div>
+<div id="tc-msg" class="tc-msg" aria-live="assertive" hidden></div>
+<div id="tc-warn" class="tc-msg" role="status" aria-live="polite" hidden></div>
+<div id="tc-large" class="alert alert-warn tc-msg tc-large" role="status" hidden>
+  <span id="tc-large-text"></span>
+  <button class="btn btn-sm" id="tc-large-go" type="button">Convert anyway</button>
+</div>
+<div id="tc-progress" class="panel tc-msg tc-progress" role="status" aria-live="polite" hidden>
+  <div class="panel-body tc-progress-body">
+    <span id="tc-ptext">Converting…</span>
+    <progress id="tc-pbar" max="100" value="0"></progress>
+    <button class="btn btn-sm btn-danger" id="tc-cancel" type="button">Cancel</button>
+  </div>
+</div>
 
 <div class="grid-2 tc-main">
   <div class="panel" id="tc-in-panel">
     <div class="panel-head"><h3>Input</h3><span class="hint" id="tc-in-stats"></span></div>
-    <textarea id="tc-in" class="textarea code" spellcheck="false" placeholder="Paste data here, drop a .csv / .json / .md / .txt file, or click Sample…"></textarea>
+    <textarea id="tc-in" class="textarea code" aria-label="Input data" spellcheck="false" placeholder="Paste data here, drop a .csv / .json / .md / .txt file, or click Sample…"></textarea>
   </div>
   <div class="panel">
     <div class="panel-head">
@@ -71,7 +107,7 @@
       <button class="tab active" data-tab="text" type="button">Text</button>
       <button class="tab" data-tab="preview" type="button">Preview table</button>
     </div>
-    <div data-panel="text"><textarea id="tc-out" class="textarea code" readonly spellcheck="false" placeholder="Converted output appears here"></textarea></div>
+    <div data-panel="text"><textarea id="tc-out" class="textarea code" aria-label="Converted output" readonly spellcheck="false" placeholder="Converted output appears here"></textarea></div>
     <div data-panel="preview" hidden>
       <div id="tc-preview" class="tc-preview"></div>
     </div>

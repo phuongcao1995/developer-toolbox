@@ -21,4 +21,9 @@ kbd { background: var(--surface-2); border: 1px solid var(--border); border-bott
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 ::selection { background: var(--primary-soft); }
 * { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } .spinner, .btn.loading::after { animation: pulse 1.6s ease-in-out infinite !important; } }
+@keyframes pulse { 50% { opacity: .35; } }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip-link { position: absolute; left: 8px; top: -48px; z-index: 300; padding: 8px 12px; background: var(--primary); color: var(--on-primary); border-radius: var(--radius-sm); }
+.skip-link:focus { top: 8px; }
+.main:focus { outline: none; }

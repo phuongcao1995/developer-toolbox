@@ -3,11 +3,15 @@
   <button class="btn" data-action="toggle-paste" id="mv-paste-btn"><i data-lucide="clipboard-paste"></i> Paste Markdown</button>
   <span class="spacer"></span>
   <span class="mv-fileinfo" id="mv-fileinfo" hidden></span>
+  <button class="btn" data-action="search" disabled id="mv-search-btn" title="Search in document (Ctrl+F)"><i data-lucide="search"></i> Search</button>
+  <button class="btn" data-action="print" disabled id="mv-print"><i data-lucide="printer"></i> Print / PDF</button>
   <button class="btn" data-action="copy" disabled id="mv-copy"><i data-lucide="copy"></i> Copy source</button>
   <button class="btn" data-action="download" disabled id="mv-download"><i data-lucide="download"></i> Download .md</button>
 </div>
 
 <div id="mv-msg" hidden></div>
+<div id="mv-note" class="alert alert-info" role="status" hidden></div>
+<div class="mv-spin" id="mv-spin" hidden><span class="spinner"></span> Rendering…</div>
 
 <div class="panel mv-paste" id="mv-paste" hidden>
   <div class="panel-head">
@@ -28,9 +32,20 @@
   <nav class="mv-toc panel" id="mv-toc-wrap" aria-label="Table of contents">
     <div class="panel-head">
       <h3>Contents</h3>
-      <button class="btn btn-sm btn-ghost mv-toc-toggle" data-action="toggle-toc" aria-label="Toggle contents"><i data-lucide="chevrons-up-down"></i></button>
+      <button class="btn btn-sm btn-ghost mv-toc-toggle" data-action="toggle-toc" aria-label="Collapse or expand contents" aria-expanded="true"><i data-lucide="chevrons-up-down"></i></button>
     </div>
     <ul class="mv-toc-list" id="mv-toc"></ul>
   </nav>
-  <article class="md-body mv-article" id="mv-article"></article>
+  <div class="mv-main" id="mv-main" tabindex="-1">
+    <div class="mv-search" id="mv-search" role="search" aria-label="Search in document" hidden>
+      <input class="input" id="mv-search-q" placeholder="Find in document" aria-label="Find in document" spellcheck="false" autocomplete="off">
+      <button class="chip" id="mv-search-case" aria-pressed="false" title="Match case">Aa</button>
+      <span class="hint mv-search-count" id="mv-search-count" aria-live="polite"></span>
+      <button class="btn btn-sm btn-icon" data-search="prev" aria-label="Previous match" title="Previous (Shift+Enter)">&uarr;</button>
+      <button class="btn btn-sm btn-icon" data-search="next" aria-label="Next match" title="Next (Enter)">&darr;</button>
+      <button class="btn btn-sm btn-icon" data-search="close" aria-label="Close search" title="Close (Esc)">&times;</button>
+    </div>
+    <details class="md-frontmatter" id="mv-fm" hidden><summary>Front matter</summary><pre><code id="mv-fm-text"></code></pre></details>
+    <article class="md-body mv-article" id="mv-article"></article>
+  </div>
 </div>

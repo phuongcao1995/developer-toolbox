@@ -36,6 +36,20 @@ a:hover::after{content:"→";color:RED}`,
 <ul><li>One</li><li>Two</li></ul><button onclick="go( 1,2 )">Go</button></div>
 <script>function go(a,b){console.log(a+b)}</script></body></html>`,
   json: `{"name":"demo","version":"1.0.0","scripts":{"start":"node index.js","test":"jest --coverage"},"keywords":["a","b"],"nested":{"list":[1,2,3,{"deep":true,"value":null}],"empty":{},"emptyList":[]}}`,
+  jsonc: `{// comment
+"a":1,/* c */"b":[1,2,],}`,
+  json5: `{a:1,'b':"two",c:[1,2,3,],}`,
+  yaml: `key:   value
+list:
+    - a
+    -   b
+map: {x: 1,   y: 2}
+`,
+  graphql: `query Q($id:ID!){user(id:$id){name,friends(first:10){edges{node{id name}}}}}`,
+  handlebars: `<div class="entry {{if active 'on'}}">{{#each items as |item|}}<p>{{item.title}}</p>{{/each}}</div>`,
+  vue: `<template><div :class="{a:isA}"><p v-for="i in items" :key="i">{{i}}</p></div></template>
+<script>export default {data(){return {isA:true,items:[1,2,3]}}}</script>
+<style scoped>.a{color:red}</style>`,
   markdown: `Title
 =====
 *  item one

@@ -1,14 +1,25 @@
 // Code Image Generator - pure logic (no DOM): options, geometry shared by the preview and the PNG renderer.
-export { highlight, LANGUAGES, detectLanguageByName } from './highlight.js';
+export { highlight, LANGUAGES, detectLanguageByName, textCols, segments, cellWidth } from './highlight.js';
 export { THEMES, GRADIENTS, TOKEN_CLASSES, gradientCss, gradientLine, colorFor } from './themes.js';
 import { THEMES, GRADIENTS } from './themes.js';
-import { LANGUAGES } from './highlight.js';
+import { LANGUAGES, textCols } from './highlight.js';
 
 /** Same stack in CSS (preview) and canvas (export) so glyph metrics match. */
 export const FONT_STACK = "'JetBrains Mono','Fira Code','SF Mono',Menlo,Consolas,'DejaVu Sans Mono','Liberation Mono',monospace";
 export const UI_FONT = "system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 export const MAX_CANVAS_PIXELS = 120e6; // stay well below browser canvas limits (~268M px, 16384 px per side)
 export const MAX_CANVAS_SIDE = 16000;
+export const MAX_LINES = 3000; // beyond this the preview/export is truncated (keeps highlighting and canvas work bounded)
+
+/** Cut code to MAX_LINES lines. Returns { code, total, truncated }. */
+export function limitLines(code, max = MAX_LINES) {
+  const s = String(code ?? '');
+  let idx = -1, count = 1;
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) === 10) { count++; if (count === max + 1 && idx < 0) idx = i; }
+  }
+  return count > max ? { code: s.slice(0, idx), total: count, truncated: true } : { code: s, total: count, truncated: false };
+}
 
 export const DEFAULT_OPTIONS = {
   lang: 'javascript', theme: 'one-dark', bgMode: 'gradient', bgColor: '#abb8c3', gradient: 'purple-haze', padding: 48, fontSize: 14, radius: 12,
@@ -50,7 +61,7 @@ export function computeLayout(lines, o, charW) {
   const n = Math.max(1, lines.length);
   const digits = String(n).length;
   const gutter = o.lineNumbers ? Math.ceil(digits * charW) + 22 : 0;
-  const maxCols = lines.reduce((m, l) => Math.max(m, l.reduce((s, t) => s + t.text.length, 0)), 0);
+  const maxCols = lines.reduce((m, l) => Math.max(m, l.reduce((s, t) => s + textCols(t.text), 0)), 0);
   const autoW = Math.ceil(gutter + maxCols * charW + padX * 2);
   const winW = o.autoWidth ? Math.max(autoW, 260) : o.width;
   const winH = titleH + padTop + n * lineH + padBottom;

@@ -1,21 +1,44 @@
+.tool-diff-checker .df-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 0 0 14px; padding: 8px 12px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.tool-diff-checker .df-options legend { padding: 0 6px; font-size: 12px; color: var(--text-muted); }
+.tool-diff-checker .df-field { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text); }
+.tool-diff-checker .df-field .select { width: auto; min-width: 70px; }
 .tool-diff-checker .df-inputs { margin-bottom: 14px; }
 .tool-diff-checker .df-inputs .textarea { min-height: 200px; max-height: 360px; }
-.tool-diff-checker #df-msg { margin-bottom: 12px; }
+.tool-diff-checker #df-msg, .tool-diff-checker #df-guard, .tool-diff-checker .df-notes, .tool-diff-checker .df-busy { margin-bottom: 12px; }
+.tool-diff-checker #df-guard { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.tool-diff-checker #df-guard[hidden], .tool-diff-checker .df-busy[hidden], .tool-diff-checker .df-notes[hidden] { display: none; }
+.tool-diff-checker .df-notes { list-style: none; padding: 8px 12px; border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: var(--radius-sm); background: var(--info-soft); color: var(--text); font-size: 13px; }
+.tool-diff-checker .df-notes li + li { margin-top: 4px; }
+.tool-diff-checker .df-busy { display: flex; align-items: center; gap: 10px; color: var(--text-muted); }
+.tool-diff-checker .df-busy[hidden] { display: none; }
+.tool-diff-checker .df-head { flex-wrap: wrap; }
+.tool-diff-checker .df-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 14px; border-bottom: 1px solid var(--border); }
 .tool-diff-checker .df-views { margin: 0; }
 .tool-diff-checker .df-output { overflow: auto; max-height: 70vh; background: var(--surface); }
+.tool-diff-checker .df-output:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 .tool-diff-checker .df-output .empty { border: 0; }
 .tool-diff-checker table.df { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: var(--editor-font-size); table-layout: fixed; }
-.tool-diff-checker table.df td { padding: 0 8px; vertical-align: top; white-space: pre-wrap; word-break: break-all; line-height: 1.5; }
-.tool-diff-checker table.df td.no { width: 46px; text-align: right; color: var(--text-faint); user-select: none; padding: 0 6px; border-right: 1px solid var(--border); background: var(--surface-2); }
-.tool-diff-checker table.df td.sign { width: 18px; padding: 0 2px; text-align: center; color: var(--text-faint); user-select: none; }
+.tool-diff-checker table.df td { padding: 0 8px; vertical-align: top; white-space: pre; overflow: hidden; line-height: 1.5; }
+.tool-diff-checker .df-output.wrap table.df td { white-space: pre-wrap; word-break: break-all; overflow: visible; }
+.tool-diff-checker .df-output:not(.wrap) table.df { width: max-content; min-width: 100%; table-layout: auto; }
+.tool-diff-checker table.df td.no { width: 46px; min-width: 46px; text-align: right; color: var(--text-faint); user-select: none; padding: 0 6px; border-right: 1px solid var(--border); background: var(--surface-2); }
+.tool-diff-checker table.df td.sign { width: 20px; min-width: 20px; padding: 0 2px; text-align: center; font-weight: 700; color: var(--text-muted); user-select: none; }
 .tool-diff-checker table.df.side td.txt + td.no { border-left: 1px solid var(--border); }
-.tool-diff-checker .add td.txt, .tool-diff-checker .add td.sign, .tool-diff-checker td.add-c { background: var(--add-bg); }
-.tool-diff-checker .del td.txt, .tool-diff-checker .del td.sign, .tool-diff-checker td.del-c { background: var(--del-bg); }
+.tool-diff-checker .add td.txt, .tool-diff-checker .add td.sign, .tool-diff-checker td.add-c, .tool-diff-checker td.sign.add-c { background: var(--add-bg); }
+.tool-diff-checker .del td.txt, .tool-diff-checker .del td.sign, .tool-diff-checker td.del-c, .tool-diff-checker td.sign.del-c { background: var(--del-bg); }
+.tool-diff-checker .add td.sign, .tool-diff-checker td.sign.add-c { color: var(--success); }
+.tool-diff-checker .del td.sign, .tool-diff-checker td.sign.del-c { color: var(--danger); }
 .tool-diff-checker td.empty-cell { background: repeating-linear-gradient(135deg, transparent 0 6px, var(--surface-2) 6px 12px); }
 .tool-diff-checker .add .w, .tool-diff-checker .add-c .w { background: color-mix(in srgb, var(--success) 38%, transparent); border-radius: 2px; }
 .tool-diff-checker .del .w, .tool-diff-checker .del-c .w { background: color-mix(in srgb, var(--danger) 38%, transparent); border-radius: 2px; }
+.tool-diff-checker tr.cur td { box-shadow: inset 0 2px 0 var(--primary), inset 0 -2px 0 var(--primary); }
+.tool-diff-checker tr.fold td { background: var(--surface-2); text-align: center; padding: 2px 8px; white-space: normal; }
+.tool-diff-checker tr.fold .fold-btn { border: 0; background: transparent; color: var(--primary); font: 500 12px var(--font); cursor: pointer; padding: 2px 10px; border-radius: var(--radius-sm); }
+.tool-diff-checker tr.fold .fold-btn:hover { background: var(--primary-soft); }
 .tool-diff-checker .eof { color: var(--text-faint); font-style: italic; font-size: 11px; }
+.tool-diff-checker .df-more { padding: 8px; text-align: center; color: var(--text-muted); font-size: 12px; }
 @media (max-width: 700px) {
-  .tool-diff-checker table.df td.no { width: 34px; }
+  .tool-diff-checker table.df td.no { width: 34px; min-width: 34px; }
   .tool-diff-checker table.df.side { min-width: 640px; }
 }
+.tool-diff-checker table.df td.txt::after { content: "\200b"; }

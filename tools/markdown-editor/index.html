@@ -1,47 +1,91 @@
-<div class="toolbar">
-  <div class="chips me-modes" style="margin:0">
-    <button class="chip" data-mode="editor">Editor</button>
-    <button class="chip active" data-mode="split">Split</button>
-    <button class="chip" data-mode="preview">Preview</button>
+<div class="toolbar me-top">
+  <div class="chips me-modes" role="group" aria-label="View mode" style="margin:0">
+    <button class="chip" data-mode="editor" aria-pressed="false">Editor</button>
+    <button class="chip active" data-mode="split" aria-pressed="true">Split</button>
+    <button class="chip" data-mode="preview" aria-pressed="false">Preview</button>
   </div>
+  <button class="chip" data-action="toggle-orient" id="me-orient" aria-pressed="false" title="Stack editor above preview instead of side by side">Stacked</button>
+  <button class="chip" data-action="toggle-sync" id="me-sync" aria-pressed="true" title="Scroll editor and preview together">Sync scroll</button>
+  <button class="chip" data-action="toggle-wrap" id="me-wrap" aria-pressed="true" title="Wrap long lines in the editor">Word wrap</button>
+  <button class="chip" data-action="toggle-toc" id="me-toc-btn" aria-pressed="false" aria-expanded="false" aria-controls="me-toc-wrap" title="Show the table of contents">Contents</button>
+  <span class="me-fontctl" role="group" aria-label="Editor font size">
+    <button class="btn btn-sm btn-icon" data-action="font-dec" aria-label="Decrease font size" title="Smaller text">A&minus;</button>
+    <span class="hint" id="me-fs" aria-live="polite"></span>
+    <button class="btn btn-sm btn-icon" data-action="font-inc" aria-label="Increase font size" title="Larger text">A+</button>
+  </span>
   <span class="spacer"></span>
   <span class="hint" id="me-stats"></span>
   <span class="hint" id="me-saved"></span>
+  <button class="btn btn-sm" data-action="fullscreen" id="me-fullscreen" aria-pressed="false" title="Fullscreen (Esc to exit)"><i data-lucide="maximize"></i> Fullscreen</button>
 </div>
 
 <div class="toolbar me-files">
-  <button class="btn btn-sm" data-action="open"><i data-lucide="folder-open"></i> Open</button>
+  <button class="btn btn-sm" data-action="open"><i data-lucide="folder-open"></i> Import</button>
   <button class="btn btn-sm" data-action="export-md"><i data-lucide="download"></i> Export .md</button>
   <button class="btn btn-sm" data-action="export-html"><i data-lucide="file-code"></i> Export HTML</button>
+  <label class="me-chk"><input type="checkbox" id="me-export-toc"> Include table of contents</label>
   <button class="btn btn-sm" data-action="copy-md"><i data-lucide="copy"></i> Copy Markdown</button>
   <button class="btn btn-sm" data-action="copy-html"><i data-lucide="code"></i> Copy HTML</button>
+  <button class="btn btn-sm" data-action="copy-text"><i data-lucide="clipboard"></i> Copy rendered text</button>
+  <button class="btn btn-sm" data-action="print"><i data-lucide="printer"></i> Print / PDF</button>
+  <button class="btn btn-sm btn-primary" data-action="render-now" id="me-render" hidden><i data-lucide="refresh-cw"></i> Render</button>
   <button class="btn btn-sm btn-danger" data-action="clear"><i data-lucide="trash-2"></i> Clear</button>
 </div>
 
 <div id="me-msg" hidden></div>
+<div id="me-notice" class="alert alert-info" role="status" hidden></div>
 
-<div class="me-panes" id="me-panes" data-mode="split">
-  <div class="panel me-editor-pane">
-    <div class="panel-head me-format" role="toolbar" aria-label="Formatting">
-      <button class="btn btn-sm btn-icon" data-fmt="bold" title="Bold (Ctrl+B)" aria-label="Bold"><i data-lucide="bold"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="italic" title="Italic (Ctrl+I)" aria-label="Italic"><i data-lucide="italic"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="strike" title="Strikethrough" aria-label="Strikethrough"><i data-lucide="strikethrough"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="heading" title="Heading (click to cycle level)" aria-label="Heading"><i data-lucide="heading"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="link" title="Link" aria-label="Link"><i data-lucide="link"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="image" title="Image" aria-label="Image"><i data-lucide="image"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="code" title="Inline code" aria-label="Inline code"><i data-lucide="code"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="codeblock" title="Code block" aria-label="Code block"><i data-lucide="square-code"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="ul" title="Bullet list" aria-label="Bullet list"><i data-lucide="list"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="ol" title="Numbered list" aria-label="Numbered list"><i data-lucide="list-ordered"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="task" title="Task list" aria-label="Task list"><i data-lucide="list-checks"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="quote" title="Quote" aria-label="Quote"><i data-lucide="quote"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="table" title="Table" aria-label="Table"><i data-lucide="table"></i></button>
-      <button class="btn btn-sm btn-icon" data-fmt="hr" title="Horizontal rule" aria-label="Horizontal rule"><i data-lucide="minus"></i></button>
+<div class="me-body">
+  <nav class="panel me-toc" id="me-toc-wrap" aria-label="Table of contents" hidden>
+    <div class="panel-head"><h3>Contents</h3></div>
+    <ul class="me-toc-list" id="me-toc"></ul>
+  </nav>
+
+  <div class="me-panes" id="me-panes" data-mode="split" data-orient="row">
+    <div class="panel me-editor-pane" id="me-editor-pane">
+      <div class="panel-head me-format" role="toolbar" aria-label="Formatting">
+        <button class="btn btn-sm btn-icon" data-fmt="bold" title="Bold (Ctrl+B)" aria-label="Bold"><i data-lucide="bold"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="italic" title="Italic (Ctrl+I)" aria-label="Italic"><i data-lucide="italic"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="strike" title="Strikethrough" aria-label="Strikethrough"><i data-lucide="strikethrough"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="heading" title="Heading (click to cycle level)" aria-label="Heading"><i data-lucide="heading"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="link" title="Link (Ctrl+K)" aria-label="Link"><i data-lucide="link"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="image" title="Image" aria-label="Image"><i data-lucide="image"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="code" title="Inline code" aria-label="Inline code"><i data-lucide="code"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="codeblock" title="Code block" aria-label="Code block"><i data-lucide="square-code"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="ul" title="Bullet list" aria-label="Bullet list"><i data-lucide="list"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="ol" title="Numbered list" aria-label="Numbered list"><i data-lucide="list-ordered"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="task" title="Task list" aria-label="Task list"><i data-lucide="list-checks"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="quote" title="Quote" aria-label="Quote"><i data-lucide="quote"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="table" title="Table" aria-label="Table"><i data-lucide="table"></i></button>
+        <button class="btn btn-sm btn-icon" data-fmt="hr" title="Horizontal rule" aria-label="Horizontal rule"><i data-lucide="minus"></i></button>
+      </div>
+      <div class="me-find" id="me-find" role="search" aria-label="Find and replace" hidden>
+        <div class="me-find-row">
+          <input class="input" id="me-find-q" placeholder="Find" aria-label="Find" spellcheck="false" autocomplete="off">
+          <button class="chip" id="me-find-case" aria-pressed="false" title="Match case">Aa</button>
+          <button class="chip" id="me-find-re" aria-pressed="false" title="Regular expression">.*</button>
+          <span class="hint me-find-count" id="me-find-count" aria-live="polite"></span>
+          <button class="btn btn-sm btn-icon" data-find="prev" aria-label="Previous match" title="Previous (Shift+Enter)">&uarr;</button>
+          <button class="btn btn-sm btn-icon" data-find="next" aria-label="Next match" title="Next (Enter)">&darr;</button>
+          <button class="btn btn-sm btn-icon" data-find="close" aria-label="Close find and replace" title="Close (Esc)">&times;</button>
+        </div>
+        <div class="me-find-row">
+          <input class="input" id="me-find-r" placeholder="Replace with" aria-label="Replace with" spellcheck="false" autocomplete="off">
+          <button class="btn btn-sm" data-find="replace">Replace</button>
+          <button class="btn btn-sm" data-find="all">Replace all</button>
+        </div>
+      </div>
+      <div class="me-input-wrap" id="me-input-wrap">
+        <textarea class="textarea code me-input" id="me-input" spellcheck="false" aria-label="Markdown source" placeholder="Write Markdown here… (drop a .md file to open it)"></textarea>
+      </div>
     </div>
-    <textarea class="textarea code me-input" id="me-input" spellcheck="false" placeholder="Write Markdown here… (drop a .md file to open it)"></textarea>
-  </div>
-  <div class="panel me-preview-pane">
-    <div class="panel-head"><h3>Preview</h3></div>
-    <div class="md-body me-preview" id="me-preview"></div>
+    <div class="me-splitter" id="me-splitter" role="separator" tabindex="0" aria-orientation="vertical" aria-valuemin="15" aria-valuemax="85" aria-valuenow="50" aria-label="Resize editor and preview (arrow keys)"></div>
+    <div class="panel me-preview-pane">
+      <div class="panel-head"><h3>Preview</h3><span class="me-spin" id="me-spin" hidden><span class="spinner"></span> Rendering…</span><span class="hint" id="me-stale" hidden>Preview out of date</span></div>
+      <div class="md-body me-preview" id="me-preview" aria-label="Rendered preview">
+        <details class="md-frontmatter" id="me-fm" hidden><summary>Front matter</summary><pre><code id="me-fm-text"></code></pre></details>
+        <div class="md-doc" id="me-doc"></div>
+      </div>
+    </div>
   </div>
 </div>

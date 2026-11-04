@@ -8,8 +8,9 @@ export const CATEGORIES = [
   { id: 'api',     name: 'API & Database',     icon: 'database' },
 ];
 
+const DEFAULT_UPDATED = '2026-11-03';
 const t = (id, name, description, category, icon, keywords) =>
-  ({ id, name, description, category, icon, keywords, entry: `tools/${id}/tool.js` });
+  ({ id, name, description, category, icon, keywords, entry: `tools/${id}/tool.js`, version: '1.0', updated: DEFAULT_UPDATED, note: '' });
 
 export const TOOLS = [
   t('json-formatter', 'JSON Formatter', 'Format, minify, validate and explore JSON; convert to XML, CSV or YAML.', 'data', 'braces', ['json', 'beautify', 'minify', 'validate', 'tree', 'xml', 'csv', 'yaml']),
@@ -42,23 +43,123 @@ export const TOOLS = [
 export const getTool = id => TOOLS.find(x => x.id === id) || null;
 export const getCategory = id => CATEGORIES.find(c => c.id === id) || null;
 
-/** Search by name, description, keywords; optional category filter. Name hits rank highest. */
-export function searchTools(query = '', category = null) {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-  return TOOLS
-    .filter(x => !category || x.category === category)
-    .map(x => {
-      const name = x.name.toLowerCase(), desc = x.description.toLowerCase(), kw = x.keywords.join(' ');
-      let score = 0;
-      for (const w of words) {
-        if (name.includes(w)) score += 10;
-        else if (kw.includes(w)) score += 5;
-        else if (desc.includes(w)) score += 2;
-        else return { x, score: -1 };
-      }
-      return { x, score };
-    })
-    .filter(r => r.score >= 0)
-    .sort((a, b) => b.score - a.score)
-    .map(r => r.x);
+/** Per-tool release notes. `note` is shown under "Recently updated" on the dashboard; keep it to one short sentence. */
+const RELEASES = {
+  'cron-generator': { updated: '2026-11-03', version: '1.1', note: 'Day-of-week 7 handled, clearer errors, DST note, visible keyboard focus.' },
+  'markdown-editor': { updated: '2026-11-04', version: '1.2', note: 'Table of contents, Mermaid diagrams, fullscreen, find & replace and safer preview.' },
+  'markdown-viewer': { updated: '2026-11-04', version: '1.2', note: 'Table of contents, Mermaid, in-document search and safe rendering of untrusted files.' },
+  'json-formatter': { updated: '2026-11-04', version: '1.2', note: 'Tree explorer, JSONPath, Schema validation, JSON diff, TypeScript and sample data.' },
+  'sql-formatter': { updated: '2026-11-04', version: '1.2', note: 'Syntax highlighting, query analysis, explain, SQL to JSON and dialects.' },
+  'jwt-decoder': { updated: '2026-11-04', version: '1.2', note: 'Signature verification (HS/RS/ES/PS), security warnings and a live expiry countdown.' },
+  'api-client': { updated: '2026-11-04', version: '1.2', note: 'Collections, environments, auth helpers, cURL and Postman import/export, JSON tree.' },
+  'regex-tester': { updated: '2026-11-04', version: '1.2', note: '47 templates, mistake checker, code export, cheat sheet; runs in a safe worker.' },
+  'table-converter': { updated: '2026-11-04', version: '1.2', note: 'XML conversion, large-file worker, better CSV handling and Unicode.' },
+  'diff-checker': { updated: '2026-11-04', version: '1.2', note: 'Exact diffs on huge files, character-level view, folding and ignore options.' },
+  'cyberchef': { updated: '2026-11-04', version: '1.1', note: 'Binary-safe output, HTML entities, Base32/58, ROT13 and more operations.' },
+  'timestamp-converter': { updated: '2026-11-04', version: '1.1', note: 'Exact nanoseconds and microseconds, ambiguity hints.' },
+  'uuid-generator': { updated: '2026-11-04', version: '1.1', note: 'UUID v7, nil and max UUIDs.' },
+  'webhook-inspector': { updated: '2026-11-03', version: '1.1', note: 'Redacts secrets in stored history, backs off when polling fails.' },
+  'base64-converter': { updated: '2026-11-03', version: '1.1', note: 'Rejects unsafe data-URI types and builds safe HTML/CSS snippets.' },
+};
+for (const [id, r] of Object.entries(RELEASES)) Object.assign(getTool(id) || {}, r);
+
+/** Dev-time sanity check of the registry; returns a list of problems (empty = healthy). */
+export function validateRegistry(tools = TOOLS, categories = CATEGORIES) {
+  const problems = [], seen = new Set(), cats = new Set(categories.map(c => c.id));
+  for (const x of tools) {
+    if (!/^[a-z0-9-]+$/.test(x.id || '')) problems.push(`Invalid tool id: ${x.id}`);
+    if (seen.has(x.id)) problems.push(`Duplicate tool id: ${x.id}`);
+    seen.add(x.id);
+    if (!cats.has(x.category)) problems.push(`${x.id}: unknown category "${x.category}"`);
+    for (const f of ['name', 'description', 'icon', 'entry']) if (!x[f]) problems.push(`${x.id}: missing ${f}`);
+    if (!Array.isArray(x.keywords) || !x.keywords.length) problems.push(`${x.id}: needs keywords`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(x.updated || '')) problems.push(`${x.id}: updated must be YYYY-MM-DD`);
+  }
+  return problems;
 }
+
+// ---------- Search ----------
+const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+/** Damerau-Levenshtein distance; returns max+1 early when the length gap alone exceeds `max`. */
+export function editDistance(a, b, max = 2) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+  }
+  return d[a.length][b.length];
+}
+
+/** Subsequence match ("jsnfmt" -> "JSON Formatter"). Returns {score, idx[]} or null. Rewards consecutive and word-start hits. */
+function subsequence(word, text) {
+  const idx = []; let ti = 0, score = 0, prev = -2;
+  for (const ch of word) {
+    const at = text.indexOf(ch, ti);
+    if (at < 0) return null;
+    score += (at === prev + 1 ? 3 : 1) + (at === 0 || /[\s\-/]/.test(text[at - 1]) ? 2 : 0);
+    idx.push(at); prev = at; ti = at + 1;
+  }
+  return { score, idx };
+}
+
+/** Merge sorted character indexes into [start,end) ranges. */
+const toRanges = idx => idx.reduce((r, i) => {
+  const last = r[r.length - 1];
+  if (last && last[1] === i) last[1] = i + 1; else r.push([i, i + 1]);
+  return r;
+}, []);
+
+/** Score one query word against a tool. Returns {score, nameIdx[]} or null if it does not match at all. */
+function matchWord(w, x, cat) {
+  const name = norm(x.name), desc = norm(x.description), kws = x.keywords.map(norm), catName = norm(cat?.name);
+  const at = name.indexOf(w);
+  if (at >= 0) {
+    const wordStart = at === 0 || /[\s\-/]/.test(name[at - 1]);
+    return { score: (wordStart ? 100 : 70) - Math.min(at, 20), nameIdx: [...Array(w.length).keys()].map(i => at + i) };
+  }
+  if (x.id.includes(w)) return { score: 60, nameIdx: [] };
+  if (kws.includes(w)) return { score: 55, nameIdx: [] };
+  if (kws.some(k => k.startsWith(w))) return { score: 45, nameIdx: [] };
+  if (kws.some(k => k.includes(w))) return { score: 30, nameIdx: [] };
+  if (catName.includes(w)) return { score: 20, nameIdx: [] };
+  if (desc.includes(w)) return { score: 15, nameIdx: [] };
+  if (w.length >= 3) {
+    const sub = subsequence(w, name);
+    if (sub) return { score: 8 + sub.score, nameIdx: sub.idx };
+    // typo tolerance against the words of the name and the keywords
+    const max = w.length >= 7 ? 2 : w.length >= 4 ? 1 : 0;
+    if (max) {
+      const pool = [...name.split(/[\s\-/]+/), ...kws];
+      if (pool.some(p => editDistance(w, p, max) <= max || editDistance(w, p.slice(0, w.length), max) <= max)) return { score: 6, nameIdx: [] };
+    }
+  }
+  return null;
+}
+
+/**
+ * Ranked search. Every word of the query must match (AND). Returns [{tool, score, ranges}] where `ranges`
+ * are [start,end) character ranges inside tool.name to highlight. An empty query returns all tools in registry order.
+ */
+export function searchToolsDetailed(query = '', category = null, tools = TOOLS) {
+  const words = norm(query).split(/\s+/).filter(Boolean);
+  const pool = tools.filter(x => !category || x.category === category);
+  if (!words.length) return pool.map(tool => ({ tool, score: 0, ranges: [] }));
+  const out = [];
+  for (const tool of pool) {
+    const cat = getCategory(tool.category);
+    let score = 0, idx = [], ok = true;
+    for (const w of words) {
+      const m = matchWord(w, tool, cat);
+      if (!m) { ok = false; break; }
+      score += m.score; idx = idx.concat(m.nameIdx);
+    }
+    if (ok) out.push({ tool, score, ranges: toRanges([...new Set(idx)].sort((a, b) => a - b)) });
+  }
+  return out.sort((a, b) => b.score - a.score || a.tool.name.localeCompare(b.tool.name));
+}
+
+/** Search by name, description, keywords and category with fuzzy matching; optional category filter. */
+export const searchTools = (query = '', category = null) => searchToolsDetailed(query, category).map(r => r.tool);

@@ -52,3 +52,68 @@
 .tool-regex-tester .rt-ex strong { font-weight: 600; }
 .tool-regex-tester .rt-ex code { font: 12px var(--mono); color: var(--text-muted); word-break: break-all; }
 @media (max-width: 800px) { .tool-regex-tester .grid-2 { grid-template-columns: 1fr; } .tool-regex-tester .rt-tabpane { max-height: none; } }
+
+/* Export row */
+.tool-regex-tester .rt-export-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tool-regex-tester .rt-export-select { width: auto; min-width: 120px; }
+.tool-regex-tester .rt-export-caveat { flex: 1 1 260px; margin: 0; }
+.tool-regex-tester .rt-export-code { margin: 0; max-height: 160px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+.tool-regex-tester .rt-export-code:empty { display: none; }
+
+/* Tabs wrap instead of scrolling horizontally */
+.tool-regex-tester .rt-tabs { flex-wrap: wrap; overflow-x: visible; }
+.tool-regex-tester .rt-h { margin: 14px 0 4px; font-size: 13px; }
+.tool-regex-tester .rt-row { cursor: pointer; }
+.tool-regex-tester tr.rt-row:hover, .tool-regex-tester tr.rt-row:focus-visible { background: var(--surface-2); outline: none; }
+
+/* Explain: pattern ruler, token highlight, groups */
+.tool-regex-tester .rt-ruler { font: 600 14px/1.8 var(--mono); padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--code-bg); word-break: break-all; }
+.tool-regex-tester .rt-tk { cursor: pointer; border-radius: 3px; padding: 1px 0; border-bottom: 2px solid transparent; }
+.tool-regex-tester .rt-tk.k-quantifier { color: var(--warn); }
+.tool-regex-tester .rt-tk.k-anchor, .tool-regex-tester .rt-tk.k-look { color: var(--success); }
+.tool-regex-tester .rt-tk.k-error { color: var(--danger); }
+.tool-regex-tester .rt-tk.hl, .tool-regex-tester .rt-x.hl { background: var(--primary-soft); border-bottom-color: var(--primary); }
+.tool-regex-tester .rt-x { cursor: pointer; }
+.tool-regex-tester .rt-x:focus-visible, .tool-regex-tester .rt-chit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+.tool-regex-tester .rt-group { display: flex; gap: 10px; align-items: baseline; text-align: left; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius-sm); padding: 4px 8px; margin-bottom: 4px; cursor: pointer; width: 100%; font: 13px var(--font); }
+.tool-regex-tester .rt-group:hover { border-color: var(--primary); }
+.tool-regex-tester .rt-group code { font: 12px var(--mono); color: var(--text-muted); word-break: break-all; }
+
+/* Split / replace details */
+.tool-regex-tester .rt-splitlist { margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 2px; }
+.tool-regex-tester .rt-splitlist code { font: 12px var(--mono); white-space: pre-wrap; word-break: break-all; }
+.tool-regex-tester .rt-details > summary { cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 0; }
+.tool-regex-tester .faint { color: var(--text-faint); font-style: italic; }
+
+/* Mistakes */
+.tool-regex-tester .rt-findings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tool-regex-tester .rt-finding-btn { width: 100%; display: flex; gap: 10px; align-items: flex-start; text-align: left; border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius-sm); background: var(--surface); color: var(--text); padding: 8px 10px; cursor: pointer; font: 13px var(--font); }
+.tool-regex-tester .rt-finding-btn:disabled { cursor: default; opacity: 1; }
+.tool-regex-tester .rt-finding-btn:not(:disabled):hover { background: var(--surface-2); }
+.tool-regex-tester .sev-error .rt-finding-btn { border-left-color: var(--danger); }
+.tool-regex-tester .sev-warning .rt-finding-btn { border-left-color: var(--warn); }
+.tool-regex-tester .sev-info .rt-finding-btn { border-left-color: var(--info); }
+.tool-regex-tester .rt-finding-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+/* Library, saved patterns, cheat sheet */
+.tool-regex-tester .rt-filter { display: flex; gap: 8px; flex-wrap: wrap; }
+.tool-regex-tester .rt-filter .input { flex: 1 1 160px; }
+.tool-regex-tester .rt-filter .select { flex: 0 1 180px; width: auto; }
+.tool-regex-tester .rt-library { display: flex; flex-direction: column; gap: 8px; }
+.tool-regex-tester .rt-card { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.tool-regex-tester .rt-card p { margin: 0; font-size: 13px; }
+.tool-regex-tester .rt-card-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tool-regex-tester .rt-card-head .spacer { flex: 1; }
+.tool-regex-tester .rt-card-head .input { flex: 1 1 140px; width: auto; }
+.tool-regex-tester .rt-card-code { font: 12px var(--mono); color: var(--text-muted); word-break: break-all; }
+.tool-regex-tester .rt-limit-note { color: var(--text-muted); }
+.tool-regex-tester .rt-save { display: flex; gap: 6px; flex-wrap: wrap; }
+.tool-regex-tester .rt-save .input { flex: 1 1 140px; }
+.tool-regex-tester .rt-savetools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tool-regex-tester .rt-sec { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 10px; margin-bottom: 6px; }
+.tool-regex-tester .rt-sec > summary { cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 0; }
+.tool-regex-tester .rt-cheat { display: flex; flex-direction: column; gap: 2px; padding-bottom: 6px; }
+.tool-regex-tester .rt-chit { display: flex; gap: 10px; align-items: baseline; text-align: left; border: 0; background: none; color: var(--text); padding: 3px 6px; border-radius: var(--radius-sm); cursor: pointer; font: 13px var(--font); }
+.tool-regex-tester .rt-chit:hover { background: var(--primary-soft); }
+.tool-regex-tester .rt-chit code { flex: none; min-width: 90px; font: 600 12px var(--mono); color: var(--primary); }
+.tool-regex-tester .rt-chit span { min-width: 0; }

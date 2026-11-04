@@ -1,12 +1,19 @@
 import { copyText, downloadFile, toast, pickFile, enableDrop, readFileAsText, readFileAsArrayBuffer,
-  showMessage, initTabs, bindActions, withLoading, formatBytes, renderIcons } from '../../assets/js/components/ui.js';
+  showMessage, initTabs, bindActions, formatBytes, renderIcons } from '../../assets/js/components/ui.js';
 import { encodeText, encodeBytes, decodeText, decodeToBytes, detectMime, extForMime, toDataUri,
-  imgSnippet, cssSnippet, SIZE_WARN_BYTES } from './logic.js';
+  imgSnippet, cssSnippet, isSafeMime, isImageMime, sanitizeFilename, SIZE_WARN_BYTES, IMAGE_MAX_BYTES } from './logic.js';
 
 export default {
   mount(root, ctx) {
     const $ = id => root.querySelector('#' + id);
     const disposers = [];
+    // Busy indicator for slow reads/encodes (several MB of data can take a moment).
+    const busyBox = $('b64-busy'); let busyCount = 0;
+    const withBusy = async (label, fn) => {
+      busyCount++; busyBox.querySelector('span:last-child').textContent = label; busyBox.hidden = false;
+      await new Promise(r => requestAnimationFrame(() => r())); // let the spinner paint before heavy synchronous work
+      try { return await fn(); } finally { if (--busyCount === 0) busyBox.hidden = true; }
+    };
 
     // ---------- TEXT ----------
     const tIn = $('b64-text-in'), tOut = $('b64-text-out'), tMsg = $('b64-text-msg');
@@ -32,6 +39,7 @@ export default {
 
     // ---------- IMAGE ----------
     let img = null; // { dataUri, b64, mime, name, size, w, h }
+    let imgToken = 0; // bumped on every load/reset so a slow, stale image decode cannot overwrite a newer one
     const iMsg = $('b64-img-msg');
     const refreshImgOutput = () => {
       if (!img) return;
@@ -40,7 +48,7 @@ export default {
       $('b64-snip-css').textContent = cssSnippet(img.dataUri);
     };
     const resetImg = () => {
-      img = null;
+      img = null; imgToken++;
       $('b64-img-preview').innerHTML = '<span class="hint">No image yet.</span>';
       $('b64-img-info').hidden = true;
       $('b64-img-out').hidden = true; $('b64-img-snips').hidden = true;
@@ -48,8 +56,9 @@ export default {
     };
     /** Validate by actually decoding the image in the browser, then show everything. */
     const showImage = (dataUri, b64, mime, name, size) => new Promise(resolve => {
-      const el = new Image();
+      const el = new Image(), token = ++imgToken;
       el.onload = () => {
+        if (token !== imgToken) return resolve(false); // superseded by a newer load or a reset
         img = { dataUri, b64, mime, name, size, w: el.naturalWidth, h: el.naturalHeight };
         const prev = $('b64-img-preview'); prev.replaceChildren(el);
         el.alt = name || 'preview';
@@ -60,18 +69,22 @@ export default {
         showMessage(iMsg, 'success', `Image loaded: ${img.w} x ${img.h}px, ${formatBytes(size)}, Base64 length ${b64.length.toLocaleString()} chars.`);
         resolve(true);
       };
-      el.onerror = () => { resetImg(); showMessage(iMsg, 'error', 'The data could not be decoded as an image. It is either not an image or it is corrupted.'); resolve(false); };
+      el.onerror = () => { if (token !== imgToken) return resolve(false); resetImg(); showMessage(iMsg, 'error', 'The data could not be decoded as an image. It is either not an image or it is corrupted.'); resolve(false); };
       el.src = dataUri;
     });
+    const tooBigMessage = size => `This image is ${formatBytes(size)}. Images over ${formatBytes(IMAGE_MAX_BYTES)} are not encoded here because the Base64 text would be ${formatBytes(Math.ceil(size * 4 / 3))} and slow down the page. Use the File tab for large files.`;
     const loadImageFile = async file => {
       if (!file.type.startsWith('image/')) return showMessage(iMsg, 'error', `"${file.name}" is not an image (type: ${file.type || 'unknown'}). Use the File tab for other files.`);
+      if (file.size > IMAGE_MAX_BYTES) { resetImg(); return showMessage(iMsg, 'warn', tooBigMessage(file.size)); }
       try {
+        await withBusy('Reading and encoding image…', async () => {
         const buf = new Uint8Array(await readFileAsArrayBuffer(file));
-        const mime = file.type || detectMime(buf) || 'image/png';
+        const mime = isImageMime(file.type) ? file.type : (detectMime(buf) || 'image/png');
         const b64 = encodeBytes(buf);
         $('b64-img-paste').value = '';
         await showImage(toDataUri(b64, mime), b64, mime, file.name, file.size);
         if (file.size > SIZE_WARN_BYTES) toast('Large image: output will be very long', 'warn');
+        });
       } catch (e) { showMessage(iMsg, 'error', 'Could not read file: ' + e.message); }
     };
     const loadImagePaste = async () => {
@@ -79,10 +92,11 @@ export default {
       if (!text.trim()) return showMessage(iMsg, 'error', 'Paste a Base64 string or data URI first.');
       try {
         const { bytes, mime: declared } = decodeToBytes(text);
+        if (bytes.length > IMAGE_MAX_BYTES) { resetImg(); return showMessage(iMsg, 'warn', tooBigMessage(bytes.length)); }
         const sniffed = detectMime(bytes);
-        const mime = (declared && declared.startsWith('image/')) ? declared : sniffed;
-        if (!mime || !mime.startsWith('image/')) {
-          return showMessage(iMsg, 'error', declared && !declared.startsWith('image/')
+        const mime = isImageMime(declared) ? declared : sniffed;
+        if (!isImageMime(mime)) {
+          return showMessage(iMsg, 'error', declared && !isImageMime(declared)
             ? `The data: URI declares "${declared}", which is not an image.`
             : 'Could not recognise an image type from the data (no valid image header found).');
         }
@@ -99,13 +113,13 @@ export default {
     const refreshFileOut = () => {
       $('b64-file-out').value = fileB64 ? ($('b64-file-uri').checked ? toDataUri(fileB64, fileMime) : fileB64) : '';
     };
-    const loadFile = file => withLoading(null, async () => {
+    const loadFile = file => withBusy('Reading and encoding file…', async () => {
       showMessage(fMsg, null);
       if (file.size > SIZE_WARN_BYTES) showMessage(fMsg, 'warn', `Large file (${formatBytes(file.size)}). Encoding may be slow and the page may become sluggish.`);
       try {
         const buf = new Uint8Array(await readFileAsArrayBuffer(file));
         fileB64 = encodeBytes(buf); // chunked internally
-        fileMime = file.type || detectMime(buf) || 'application/octet-stream';
+        fileMime = isSafeMime(file.type) ? file.type : (detectMime(buf) || 'application/octet-stream');
         refreshFileOut();
         const info = $('b64-file-info'); info.hidden = false;
         info.textContent = `${file.name} | ${formatBytes(file.size)} -> ${formatBytes(fileB64.length)}`;
@@ -125,6 +139,7 @@ export default {
         if (m && !$('b64-file-mime').value) $('b64-file-mime').value = m;
       } catch { $('b64-file-in-info').textContent = ''; }
     };
+    $('b64-file-in').addEventListener('input', ctx.debounce(fileInInfo, 250));
     $('b64-file-in').addEventListener('change', fileInInfo);
 
     // ---------- actions ----------
@@ -167,7 +182,7 @@ export default {
         try {
           const { bytes, mime } = decodeToBytes(text);
           const type = $('b64-file-mime').value.trim() || mime || detectMime(bytes) || 'application/octet-stream';
-          let name = $('b64-file-name').value.trim().replace(/[\\/:*?"<>|]/g, '_') || 'download';
+          let name = sanitizeFilename($('b64-file-name').value);
           if (!/\.[A-Za-z0-9]+$/.test(name)) name += '.' + extForMime(type);
           downloadFile(name, new Blob([bytes], { type }));
           showMessage(box, 'success', `Downloaded ${name} (${formatBytes(bytes.length)}).`);

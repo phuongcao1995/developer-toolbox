@@ -20,3 +20,8 @@
 .tool-cyberchef [data-el="err"] { margin: 10px 12px 0; }
 .tool-cyberchef .panel.dragover { border-color: var(--primary); }
 @media (max-width: 520px) { .tool-cyberchef .cc-step-head .select { max-width: none; flex-basis: 100%; } }
+.tool-cyberchef .cc-file { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 12px 0; }
+.tool-cyberchef .cc-file[hidden], .tool-cyberchef .cc-filewarn[hidden] { display: none; }
+.tool-cyberchef .cc-filewarn { margin: 8px 12px 0; }
+.tool-cyberchef .cc-view { margin: 0; border: 0; display: inline-flex; }
+.tool-cyberchef .cc-view .tab { padding: 4px 10px; }

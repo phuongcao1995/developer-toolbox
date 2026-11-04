@@ -82,8 +82,11 @@
   <select id="wh-filter-method" class="select wh-w-sm" aria-label="Filter by method"><option value="ALL">All methods</option></select>
   <input id="wh-search" class="input wh-w-md" type="search" placeholder="Search URL, headers, body…" aria-label="Search requests">
   <button class="btn" id="wh-export" type="button"><i data-lucide="download"></i> Export JSON</button>
+  <label class="check" title="Off by default: Authorization, Cookie and API-key header values are replaced with [redacted]"><input type="checkbox" id="wh-export-secrets"> Include secrets</label>
   <button class="btn btn-danger" id="wh-clear-all" type="button"><i data-lucide="trash-2"></i> Clear all</button>
 </div>
+
+<p class="hint" id="wh-privacy-note">Saved history keeps at most 64 KB of each body and stores credential headers (Authorization, Cookie, API keys) as [redacted]. Requests you inspect right now are shown in full.</p>
 
 <div class="wh-split">
   <div class="panel wh-list-panel">

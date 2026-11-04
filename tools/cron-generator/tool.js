@@ -21,7 +21,7 @@ export default {
   mount(root, ctx) {
     const $ = id => root.querySelector('#' + id);
     const input = $('cron-expr'), msg = $('cron-msg');
-    let lastRuns = [];
+    let lastRuns = [], lastDates = [], relCells = [];
 
     // ---------- builder ----------
     const cards = FIELDS.map(spec => {
@@ -42,9 +42,10 @@ export default {
       const startSel = el('select', { class: 'select', 'aria-label': 'Start' }, vals.map(opt));
       const step = el('div', { class: 'cron-sub' }, 'Every', stepInp, `${spec.unit}(s), starting at`, startSel);
       const exprTag = el('span', { class: 'mono' }, '*');
+      const hint = el('p', { class: 'hint', role: 'status', hidden: true }, 'Tick at least one value, or switch the mode to "Every".');
       const card = el('div', { class: 'cron-card' },
-        el('h4', {}, spec.label, exprTag), modeSel, grid, range, step);
-      const c = { spec, modeSel, boxes, fromSel, toSel, stepInp, startSel, grid, range, step, exprTag, card };
+        el('h4', {}, spec.label, exprTag), modeSel, grid, hint, range, step);
+      const c = { spec, modeSel, boxes, fromSel, toSel, stepInp, startSel, grid, range, step, exprTag, card, hint };
       const showPanels = () => {
         grid.hidden = modeSel.value !== 'specific'; range.hidden = modeSel.value !== 'range'; step.hidden = modeSel.value !== 'step';
       };
@@ -71,8 +72,12 @@ export default {
 
     /** Builder -> expression text. */
     function fromBuilder() {
+      cards.forEach(c => { c.hint.hidden = true; });
       try {
-        const texts = cards.map(c => composeField(getState(c), c.spec));
+        const texts = cards.map(c => {
+          try { return composeField(getState(c), c.spec); }
+          catch (e) { if (getState(c).mode === 'specific') c.hint.hidden = false; throw e; }
+        });
         input.value = texts.join(' ');
         update(false);
       } catch (e) { showMessage(msg, 'error', e.message); }
@@ -90,14 +95,18 @@ export default {
     const tzUtc = () => root.querySelector('input[name="cron-tz"]:checked')?.value === 'utc';
     const renderRuns = parsed => {
       const tb = $('cron-runs'), note = $('cron-runs-note');
-      tb.replaceChildren(); note.hidden = true; lastRuns = [];
+      tb.replaceChildren(); note.hidden = true; lastRuns = []; lastDates = []; relCells = [];
+      $('cron-dst-note').hidden = tzUtc(); // DST only matters for local time
       if (!parsed) return;
       const utc = tzUtc();
       const now = Date.now();
       const { runs, exhausted } = nextRuns(parsed, new Date(), { count: 10, utc });
-      lastRuns = runs.map(d => formatRun(d, utc));
-      runs.forEach((d, i) => tb.append(el('tr', {}, el('td', {}, String(i + 1)), el('td', { class: 'mono' }, lastRuns[i]),
-        el('td', { class: 'cron-rel' }, relative(d.getTime() - now)))));
+      lastRuns = runs.map(d => formatRun(d, utc)); lastDates = runs;
+      runs.forEach((d, i) => {
+        const rel = el('td', { class: 'cron-rel' }, relative(d.getTime() - now));
+        relCells.push(rel);
+        tb.append(el('tr', {}, el('td', {}, String(i + 1)), el('td', { class: 'mono' }, lastRuns[i]), rel));
+      });
       if (exhausted) {
         note.hidden = false;
         note.textContent = runs.length === 0
@@ -138,7 +147,13 @@ export default {
     input.value = ctx.storage.get('expr', DEFAULT_EXPR) || DEFAULT_EXPR;
     update(true);
     // Refresh the "relative" column once a minute; cleared on unmount.
-    const timer = setInterval(() => { const p = parseCron(input.value); if (p.ok) renderRuns(p); }, 60000);
+    // Only the relative-time cells are touched; the list is recomputed only once its first run has passed.
+    const timer = setInterval(() => {
+      const now = Date.now();
+      if (!lastDates.length) return;
+      if (lastDates[0].getTime() <= now) { const p = parseCron(input.value); if (p.ok) renderRuns(p); return; }
+      lastDates.forEach((d, i) => { const t = relative(d.getTime() - now); if (relCells[i].textContent !== t) relCells[i].textContent = t; });
+    }, 60000);
     renderIcons(root);
     return () => clearInterval(timer);
   },

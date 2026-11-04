@@ -4,7 +4,6 @@ import { copyText, downloadFile, toast, pickFile, enableDrop, readFileAsText, sh
 import * as L from './logic.js';
 import { SAMPLES } from './samples.js';
 
-const CDN_ERROR = 'Prettier could not be loaded from the CDN. This tool needs internet access (jsDelivr) the first time it formats a language.';
 
 export default {
   mount(root, ctx) {
@@ -13,6 +12,8 @@ export default {
       lang: $('#pp-lang'), input: $('#pp-input'), output: $('#pp-output'), msg: $('#pp-msg'), status: $('#pp-status'), format: $('#pp-format'),
       tabWidth: $('#pp-tabwidth'), printWidth: $('#pp-printwidth'), trailing: $('#pp-trailing'), arrow: $('#pp-arrow'),
       useTabs: $('#pp-usetabs'), semi: $('#pp-semi'), single: $('#pp-single'), bracket: $('#pp-bracket'), live: $('#pp-live'),
+      quoteProps: $('#pp-quoteprops'), eol: $('#pp-eol'), prose: $('#pp-prose'), bracketSame: $('#pp-bracketsame'), jsxSingle: $('#pp-jsxsingle'),
+      htmlWs: $('#pp-htmlws'), embedded: $('#pp-embedded'),
     };
     for (const [id, l] of Object.entries(L.LANGUAGES)) els.lang.append(new Option(l.label, id));
     els.lang.value = ctx.storage.get('lang', 'javascript');
@@ -25,27 +26,31 @@ export default {
     const readOptions = () => L.sanitizeOptions({
       tabWidth: els.tabWidth.value, printWidth: els.printWidth.value, trailingComma: els.trailing.value, arrowParens: els.arrow.value,
       useTabs: els.useTabs.checked, semi: els.semi.checked, singleQuote: els.single.checked, bracketSpacing: els.bracket.checked,
+      quoteProps: els.quoteProps.value, endOfLine: els.eol.value, proseWrap: els.prose.value, bracketSameLine: els.bracketSame.checked,
+      jsxSingleQuote: els.jsxSingle.checked, htmlWhitespaceSensitivity: els.htmlWs.value, embeddedLanguageFormatting: els.embedded.value,
     });
     const writeOptions = o => {
       els.tabWidth.value = String(o.tabWidth); els.printWidth.value = o.printWidth; els.trailing.value = o.trailingComma; els.arrow.value = o.arrowParens;
       els.useTabs.checked = o.useTabs; els.semi.checked = o.semi; els.single.checked = o.singleQuote; els.bracket.checked = o.bracketSpacing;
+      els.quoteProps.value = o.quoteProps; els.eol.value = o.endOfLine; els.prose.value = o.proseWrap; els.bracketSame.checked = o.bracketSameLine;
+      els.jsxSingle.checked = o.jsxSingleQuote; els.htmlWs.value = o.htmlWhitespaceSensitivity; els.embedded.value = o.embeddedLanguageFormatting;
     };
     const stored = ctx.storage.get('options', null);
     writeOptions(stored ? L.sanitizeOptions(stored) : L.defaultsFromIndent(ctx.indentUnit));
     if (!els.tabWidth.querySelector(`option[value="${els.tabWidth.value}"]`)) els.tabWidth.append(new Option(els.tabWidth.value, els.tabWidth.value));
     els.tabWidth.value = String(readOptions().tabWidth);
+    els.live.checked = ctx.storage.get('live', false) === true; // 'format as I type' is remembered
 
     // ----- lazy Prettier loading -----
     let corePromise = null; const pluginPromises = {};
-    const loadCore = () => (corePromise ||= loadScript(`${L.CDN_BASE}standalone.js`).catch(e => { corePromise = null; throw e; }));
-    const loadPlugin = name => (pluginPromises[name] ||= loadScript(`${L.CDN_BASE}plugins/${name}.js`).catch(e => { delete pluginPromises[name]; throw e; }));
+    const fail = (what, url, e) => Object.assign(new Error(`Could not load ${what} (prettier@${L.PRETTIER_VERSION}) from ${url}: ${e.message || 'network error'}. This tool needs internet access to jsDelivr the first time it formats a language.`), { cdn: true });
+    const loadCore = () => (corePromise ||= loadScript(`${L.CDN_BASE}standalone.js`).catch(e => { corePromise = null; throw fail('Prettier core "standalone.js"', `${L.CDN_BASE}standalone.js`, e); }));
+    const loadPlugin = name => (pluginPromises[name] ||= loadScript(L.pluginUrl(name)).catch(e => { delete pluginPromises[name]; throw fail(`plugin "${name}"`, L.pluginUrl(name), e); }));
     async function loadFor(langId) {
-      try {
-        await loadCore();
-        await Promise.all(L.LANGUAGES[langId].plugins.map(loadPlugin));
-      } catch (e) { throw Object.assign(new Error(CDN_ERROR), { cdn: true, detail: e.message }); }
-      if (!window.prettier?.format) throw Object.assign(new Error(CDN_ERROR), { cdn: true });
-      return L.LANGUAGES[langId].plugins.map(n => window.prettierPlugins?.[n]).filter(Boolean);
+      await loadCore();
+      await Promise.all(L.LANGUAGES[langId].plugins.map(loadPlugin));
+      if (!window.prettier?.format) throw Object.assign(new Error(`Prettier core "standalone.js" (prettier@${L.PRETTIER_VERSION}) loaded from ${L.CDN_BASE}standalone.js but did not define window.prettier.`), { cdn: true });
+      return L.resolvePlugins(L.LANGUAGES[langId].plugins, window);
     }
 
     // ----- formatting -----
@@ -72,9 +77,9 @@ export default {
           els.status.textContent = `Formatted ${L.LANGUAGES[langId].label} with Prettier ${L.PRETTIER_VERSION} in ${Math.round(performance.now() - t0)} ms.`;
         } catch (e) {
           if (id !== runId || disposed) return;
-          els.status.textContent = '';
-          if (e.cdn) showMessage(els.msg, 'error', e.message);
-          else { els.output.value = ''; showMessage(els.msg, 'error', L.describeError(e)); }
+          // Keep the last good output visible; the error is shown separately above.
+          els.status.textContent = els.output.value ? 'The output below is from the last successful format, not from the current input.' : '';
+          showMessage(els.msg, 'error', e.cdn ? e.message : L.describeError(e));
         }
       };
       if (silent) await job(); else await withLoading(els.format, job);
@@ -93,15 +98,28 @@ export default {
     }
 
     const on = (target, ev, fn) => { target.addEventListener(ev, fn); return () => target.removeEventListener(ev, fn); };
-    const optionInputs = [els.tabWidth, els.printWidth, els.trailing, els.arrow, els.useTabs, els.semi, els.single, els.bracket];
+    const optionInputs = [els.tabWidth, els.printWidth, els.trailing, els.arrow, els.useTabs, els.semi, els.single, els.bracket,
+      els.quoteProps, els.eol, els.prose, els.bracketSame, els.jsxSingle, els.htmlWs, els.embedded];
     const disposers = [
       on(els.format, 'click', () => format()),
+      on(els.live, 'change', () => ctx.storage.set('live', els.live.checked)),
       on(els.lang, 'change', () => { ctx.storage.set('lang', els.lang.value); if (els.live.checked) format({ silent: true }); }),
       ...optionInputs.map(i => on(i, 'change', () => { ctx.storage.set('options', readOptions()); if (els.live.checked) format({ silent: true }); })),
       on(els.input, 'input', liveFormat),
       on($('#pp-sample'), 'click', () => { els.input.value = SAMPLES[els.lang.value] || ''; format(); }),
       on($('#pp-reset'), 'click', () => { const o = L.defaultsFromIndent(ctx.indentUnit); writeOptions(o); ctx.storage.set('options', o); toast('Options reset', 'success'); }),
-      on($('#pp-upload'), 'click', async () => loadFile(await pickFile('.js,.mjs,.cjs,.jsx,.ts,.tsx,.mts,.cts,.css,.scss,.less,.html,.htm,.vue,.json,.md,.markdown,.txt'))),
+      on($('#pp-export-rc'), 'click', () => downloadFile('.prettierrc', L.toPrettierrc(readOptions()), 'application/json;charset=utf-8')),
+      on($('#pp-import-rc'), 'click', async () => {
+        const f = await pickFile('.json,.prettierrc,application/json,text/plain');
+        if (!f) return;
+        try {
+          const { options, ignored } = L.parsePrettierrc(await readFileAsText(f));
+          writeOptions(options); ctx.storage.set('options', options);
+          showMessage(els.msg, ignored.length ? 'warn' : 'info', ignored.length ? `Imported .prettierrc. Ignored: ${ignored.join(', ')}.` : 'Imported .prettierrc.');
+          if (els.live.checked) format({ silent: true });
+        } catch (e) { showMessage(els.msg, 'error', e.message); }
+      }),
+      on($('#pp-upload'), 'click', async () => loadFile(await pickFile('.js,.mjs,.cjs,.jsx,.ts,.tsx,.mts,.cts,.css,.scss,.less,.html,.htm,.vue,.json,.jsonc,.json5,.yaml,.yml,.graphql,.gql,.hbs,.handlebars,.md,.markdown,.txt'))),
       on($('#pp-clear'), 'click', () => { runId++; els.input.value = ''; els.output.value = ''; els.status.textContent = ''; showMessage(els.msg, null); els.input.focus(); }),
       on($('#pp-copy'), 'click', () => copyText(els.output.value)),
       on($('#pp-download'), 'click', () => {

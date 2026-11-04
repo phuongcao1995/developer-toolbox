@@ -11,6 +11,7 @@
 .tool-cron-generator .cron-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 4px; max-height: 150px; overflow: auto; }
 .tool-cron-generator .cron-grid label { position: relative; display: flex; align-items: center; justify-content: center; gap: 3px; border: 1px solid var(--border); border-radius: 6px; padding: 3px 2px; font-size: 12px; cursor: pointer; user-select: none; }
 .tool-cron-generator .cron-grid label:has(input:checked) { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+.tool-cron-generator .cron-grid label:has(input:focus-visible) { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 .tool-cron-generator .cron-grid input { position: absolute; opacity: 0; pointer-events: none; }
 .tool-cron-generator .cron-sub { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; }
 .tool-cron-generator .cron-sub .select, .tool-cron-generator .cron-sub .input { width: auto; min-width: 70px; flex: 1; }

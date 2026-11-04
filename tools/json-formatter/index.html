@@ -9,6 +9,8 @@
       </select>
     </div>
     <label class="check"><input type="checkbox" data-el="sort"> Sort keys</label>
+    <label class="check" title="Format/Minify without JSON.parse: keeps big numbers, 1e400 and duplicate keys exactly as written (ignores Sort keys)"><input type="checkbox" data-el="lossless"> Lossless format</label>
+    <label class="check" title="CSV only: prefix cells starting with = + - @ with a quote"><input type="checkbox" data-el="escf"> Escape formula cells</label>
     <span class="spacer"></span>
     <span class="label">Convert to</span>
     <button class="btn" data-action="xml">XML</button>
@@ -16,6 +18,13 @@
     <button class="btn" data-action="yaml">YAML</button>
   </div>
   <div class="alert" data-el="msg" hidden></div>
+  <div class="alert alert-warn" data-el="lossy" role="status" hidden></div>
+  <div class="alert alert-warn" data-el="sizewarn" role="status" hidden></div>
+  <div class="alert alert-info jf-busy" data-el="busy" role="status" hidden>
+    <span class="spinner" aria-hidden="true"></span><span data-el="busytext">Working in a background thread...</span>
+    <button class="btn btn-sm" data-action="cancel">Cancel</button>
+  </div>
+
   <div class="grid-2 jf-panels">
     <div class="panel" data-el="inpanel">
       <div class="panel-head"><h3>Input</h3>
@@ -25,24 +34,134 @@
       </div>
       <textarea class="textarea code" data-el="input" spellcheck="false" placeholder="Paste JSON here, or drop a .json file…" aria-label="JSON input"></textarea>
     </div>
+
     <div class="panel">
       <div class="panel-head">
-        <div class="tabs jf-tabs">
-          <button class="tab active" data-tab="text">Output <span class="badge" data-el="fmt">JSON</span></button>
-          <button class="tab" data-tab="tree">Tree view</button>
+        <div class="tabs jf-tabs" aria-label="JSON tools">
+          <button class="tab" data-tab="tree">Tree</button>
+          <button class="tab active" data-tab="text">Text <span class="badge" data-el="fmt">JSON</span></button>
+          <button class="tab" data-tab="query">Query</button>
+          <button class="tab" data-tab="schema">Schema</button>
+          <button class="tab" data-tab="compare">Compare</button>
+          <button class="tab" data-tab="ts">TypeScript</button>
+          <button class="tab" data-tab="generate">Generate</button>
         </div>
-        <span class="spacer"></span>
-        <span data-el="treetools" hidden>
+      </div>
+
+      <!-- Tree -->
+      <div data-panel="tree" class="jf-pane" hidden>
+        <div class="jf-bar">
+          <input class="input jf-search" type="search" data-el="tsearch" placeholder="Search keys / values…" aria-label="Search the tree">
+          <select class="select jf-mode" data-el="tmode" aria-label="Search in"><option value="both">Keys + values</option><option value="keys">Keys</option><option value="values">Values</option></select>
+          <span class="hint" data-el="tcount" aria-live="polite"></span>
+          <button class="btn btn-sm" data-action="tprev" aria-label="Previous match">&#9650;</button>
+          <button class="btn btn-sm" data-action="tnext" aria-label="Next match">&#9660;</button>
+          <span class="spacer"></span>
           <button class="btn btn-sm" data-action="expand">Expand all</button>
           <button class="btn btn-sm" data-action="collapse">Collapse all</button>
-        </span>
-        <button class="btn btn-sm" data-action="use"><i data-lucide="arrow-left"></i>Use as input</button>
-        <button class="btn btn-sm" data-action="copy"><i data-lucide="copy"></i>Copy</button>
-        <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i>Download</button>
+        </div>
+        <div class="jf-treewrap"><div class="jf-tree" data-el="tree"></div></div>
+        <p class="hint jf-pad-x">Keys: arrows move, Right/Left expand/collapse, Home/End, Enter toggles, <kbd>p</kbd> copies the JSONPath, <kbd>v</kbd> the value.</p>
       </div>
-      <div data-panel="text" class="jf-pane"><textarea class="textarea code" data-el="output" readonly spellcheck="false" placeholder="Result appears here" aria-label="Output"></textarea></div>
-      <div data-panel="tree" class="jf-pane jf-treewrap" hidden><div class="jf-tree" data-el="tree"></div></div>
+
+      <!-- Text output -->
+      <div data-panel="text" class="jf-pane">
+        <div class="jf-bar">
+          <span class="spacer"></span>
+          <button class="btn btn-sm" data-action="use"><i data-lucide="arrow-left"></i>Use as input</button>
+          <button class="btn btn-sm" data-action="copy"><i data-lucide="copy"></i>Copy</button>
+          <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i>Download</button>
+        </div>
+        <textarea class="textarea code" data-el="output" readonly spellcheck="false" placeholder="Result appears here" aria-label="Output"></textarea>
+      </div>
+
+      <!-- JSONPath query -->
+      <div data-panel="query" class="jf-pane jf-pad" hidden>
+        <div class="jf-bar">
+          <input class="input code" data-el="qexpr" value="$..*" spellcheck="false" aria-label="JSONPath expression" placeholder="$.store.book[?(@.price < 10)].title">
+          <button class="btn btn-primary btn-sm" data-action="qrun">Run</button>
+          <button class="btn btn-sm" data-action="qcopy">Copy results</button>
+        </div>
+        <p class="hint">RFC 9535 subset: <code>$ .name ['k'] [n] [-1] [a:b:c] * .. [?(@.x &lt; 3 &amp;&amp; @.t == 'a')]</code>, <code>in</code>, <code>=~ /re/</code>. Click a result to reveal it in the tree.</p>
+        <div class="alert" data-el="qmsg" hidden></div>
+        <ul class="jf-list" data-el="qlist" aria-label="Query results"></ul>
+      </div>
+
+      <!-- JSON Schema -->
+      <div data-panel="schema" class="jf-pane jf-pad" hidden>
+        <div class="jf-bar">
+          <button class="btn btn-primary btn-sm" data-action="svalidate">Validate input</button>
+          <button class="btn btn-sm" data-action="supload"><i data-lucide="upload"></i>Load schema</button>
+          <button class="btn btn-sm" data-action="ssample">Sample schema</button>
+        </div>
+        <textarea class="textarea code jf-small" data-el="schema" spellcheck="false" aria-label="JSON Schema" placeholder='Paste or drop a JSON Schema (draft-07 / 2020-12 subset)…'></textarea>
+        <div class="alert" data-el="smsg" hidden></div>
+        <ul class="jf-list" data-el="serrors" aria-label="Schema errors"></ul>
+        <div class="alert alert-warn" data-el="snotchecked" hidden></div>
+        <p class="hint">Checked: type, enum, const, properties, required, additional/patternProperties, items/prefixItems, contains, min/max, multipleOf, length, pattern, format (email, uri, date, date-time, uuid, ipv4, ipv6), allOf/anyOf/oneOf/not, if/then/else, local $ref. Anything else is listed as "not checked".</p>
+      </div>
+
+      <!-- Compare -->
+      <div data-panel="compare" class="jf-pane jf-pad" hidden>
+        <div class="jf-bar">
+          <button class="btn btn-primary btn-sm" data-action="crun">Compare</button>
+          <button class="btn btn-sm" data-action="cusea">Use current input as A</button>
+          <button class="btn btn-sm" data-action="cuseb">Use current input as B</button>
+          <select class="select jf-mode" data-el="cmode" aria-label="Array comparison">
+            <option value="index">Arrays by index</option><option value="key">Arrays by key</option><option value="unordered">Arrays ignore order</option>
+          </select>
+          <input class="input jf-key" data-el="ckey" value="id" aria-label="Identity key" title="Identity key used when arrays are compared by key" hidden>
+        </div>
+        <div class="jf-cmp">
+          <label class="field"><span class="label">A (before)</span><textarea class="textarea code jf-small" data-el="ca" spellcheck="false" aria-label="JSON A"></textarea></label>
+          <label class="field"><span class="label">B (after)</span><textarea class="textarea code jf-small" data-el="cb" spellcheck="false" aria-label="JSON B"></textarea></label>
+        </div>
+        <div class="alert" data-el="cmsg" hidden></div>
+        <div class="jf-bar" data-el="cactions" hidden>
+          <button class="btn btn-sm" data-action="cpatch">Copy JSON Patch</button>
+          <button class="btn btn-sm" data-action="ctext">Copy as text</button>
+        </div>
+        <ul class="jf-list jf-diff" data-el="clist" aria-label="Differences"></ul>
+      </div>
+
+      <!-- TypeScript -->
+      <div data-panel="ts" class="jf-pane jf-pad" hidden>
+        <div class="jf-bar">
+          <label class="field jf-root"><span class="label">Root name</span><input class="input" data-el="tsroot" value="Root" aria-label="Root name"></label>
+          <select class="select jf-mode" data-el="tskind" aria-label="Declaration style"><option value="interface">interface</option><option value="type">type</option></select>
+          <label class="check"><input type="checkbox" data-el="tsexport" checked> export</label>
+          <label class="check"><input type="checkbox" data-el="tsreadonly"> readonly</label>
+          <label class="check" title="Properties missing from some array elements become optional"><input type="checkbox" data-el="tsopt" checked> optional from arrays</label>
+        </div>
+        <div class="jf-bar">
+          <button class="btn btn-primary btn-sm" data-action="tsgen">Generate</button>
+          <button class="btn btn-sm" data-action="tscopy"><i data-lucide="copy"></i>Copy</button>
+          <button class="btn btn-sm" data-action="tsdl"><i data-lucide="download"></i>Download .d.ts</button>
+        </div>
+        <div class="alert" data-el="tsmsg" hidden></div>
+        <textarea class="textarea code jf-small jf-tall" data-el="tsout" readonly spellcheck="false" aria-label="TypeScript output" placeholder="Interfaces appear here"></textarea>
+      </div>
+
+      <!-- Generate -->
+      <div data-panel="generate" class="jf-pane jf-pad" hidden>
+        <div class="jf-bar">
+          <select class="select jf-mode" data-el="gsrc" aria-label="Source">
+            <option value="template">From template</option><option value="schema">From schema (Schema tab)</option>
+          </select>
+          <label class="field jf-root"><span class="label">Seed (optional)</span><input class="input" data-el="gseed" placeholder="random" aria-label="Seed"></label>
+          <button class="btn btn-primary btn-sm" data-action="ggen">Generate</button>
+        </div>
+        <textarea class="textarea code jf-small" data-el="gtpl" spellcheck="false" aria-label="Template" placeholder='{"name": "{{name}}"}'></textarea>
+        <p class="hint">Placeholders: <code>{{name}} {{email}} {{uuid}} {{int(1,100)}} {{float(0,1)}} {{bool}} {{date}} {{pick(a,b,c)}} {{lorem(5)}}</code> (also firstName, lastName, datetime, phone, city, country, url, ipv4, word). Put <code>"$repeat": n</code> in an array's first object to repeat it.</p>
+        <div class="alert" data-el="gmsg" hidden></div>
+        <div class="jf-bar">
+          <button class="btn btn-sm" data-action="gcopy"><i data-lucide="copy"></i>Copy</button>
+          <button class="btn btn-sm" data-action="guse"><i data-lucide="arrow-left"></i>Use as input</button>
+          <button class="btn btn-sm" data-action="gdl"><i data-lucide="download"></i>Download</button>
+        </div>
+        <textarea class="textarea code jf-small jf-tall" data-el="gout" readonly spellcheck="false" aria-label="Generated JSON" placeholder="Generated JSON appears here"></textarea>
+      </div>
     </div>
   </div>
-  <p class="hint">Everything runs locally in your browser. Tab inserts your default indentation in the input.</p>
+  <p class="hint">Everything runs locally in your browser. Tab inserts your default indentation in the input. Inputs over 1 MB are parsed in a background worker.</p>
 </div>

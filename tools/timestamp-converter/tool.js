@@ -1,5 +1,5 @@
 import { copyText, showMessage, bindActions, el, renderIcons } from '../../assets/js/components/ui.js';
-import { unixToDate, UNIT_NAMES, fieldsToUnix, parseIso, describeInstant, listTimeZones, browserTimeZone,
+import { unixToDate, isoFromNs, UNIT_NAMES, fieldsToUnix, parseIso, describeInstant, listTimeZones, browserTimeZone,
   zonedParts, tzOffsetMs, formatOffset } from './logic.js';
 
 const FIELD_KEYS = ['year', 'month', 'day', 'hour', 'minute', 'second', 'ms'];
@@ -44,12 +44,21 @@ export default {
     function convertUnix() {
       const msg = $('ts-unix-msg'), badge = $('ts-unit-badge'), out = $('ts-unix-out');
       showMessage(msg, null); badge.hidden = true; out.replaceChildren(); unixRows = [];
+      const hint = $('ts-unix-hint'); hint.hidden = true; hint.replaceChildren();
       const text = $('ts-unix').value;
       if (!text.trim()) return;
       try {
         const r = unixToDate(text, $('ts-unit').value);
         badge.hidden = false; badge.textContent = `${$('ts-unit').value === 'auto' ? 'Detected' : 'Using'}: ${UNIT_NAMES[r.unit]}`;
-        unixRows = [['Seconds', String(Math.floor(r.ms / 1000))], ['Milliseconds', String(r.ms)], ...describeInstant(r.ms, selectedTz())];
+        if (r.ambiguity) {
+          const alt = r.ambiguity.alternative;
+          hint.hidden = false;
+          hint.append(`Ambiguous: this value is valid as seconds and as milliseconds. Assuming ${UNIT_NAMES[r.unit]}. `,
+            el('button', { class: 'btn btn-sm', onclick: () => { $('ts-unit').value = alt; convertUnix(); } }, `Use ${UNIT_NAMES[alt]}`));
+        }
+        unixRows = [['Seconds', String(Math.floor(r.ms / 1000))], ['Milliseconds', String(r.ms)],
+          ['Microseconds', String(r.us)], ['Nanoseconds', String(r.ns)], ['ISO 8601 (ns precision)', isoFromNs(r.ns)],
+          ...describeInstant(r.ms, selectedTz())];
         renderRows(out, unixRows);
       } catch (e) { showMessage(msg, 'error', e.message); }
     }
@@ -64,11 +73,13 @@ export default {
         ? `${pad(f.year, 4)}-${pad(f.month)}-${pad(f.day)}T${pad(f.hour)}:${pad(f.minute)}:${pad(f.second)}` : '';
     };
     /** Read the field inputs. Returns null if year/month/day are all blank (nothing entered yet). */
+    let blanks = [];
     function readFields() {
-      const vals = {}; let any = false;
+      const vals = {}; let any = false; blanks = [];
       for (const k of FIELD_KEYS) {
         const raw = fieldInputs[k].value.trim();
         if (raw !== '') any = true;
+        else if (k === 'hour' || k === 'minute' || k === 'second') blanks.push(k);
         vals[k] = raw === '' ? (k === 'month' || k === 'day' ? NaN : k === 'year' ? NaN : 0) : Number(raw);
       }
       return any ? vals : null;
@@ -84,6 +95,7 @@ export default {
         renderRows(out, [['Seconds', String(r.seconds)], ['Milliseconds', String(r.ms)], ['ISO 8601 (UTC)', new Date(r.ms).toISOString()],
           ['Zone used', interpTz()]]);
         if (r.status !== 'ok') showMessage(msg, 'warn', r.note);
+        else if (blanks.length) showMessage(msg, 'info', `Blank ${blanks.join(', ')} assumed 0.`);
       } catch (e) { showMessage(msg, 'error', e.message); }
     }
     const fillNow = () => { setFields({ ...zonedParts(Date.now(), interpTz()), ms: new Date().getMilliseconds() }); syncDtlFromFields(); convertDate(); };
@@ -91,7 +103,7 @@ export default {
     $('ts-dtl').addEventListener('input', () => {
       const m = /^(\d{4,})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec($('ts-dtl').value);
       if (m) { setFields({ year: +m[1], month: +m[2], day: +m[3], hour: +m[4], minute: +m[5], second: +(m[6] || 0), ms: 0 }); }
-      else FIELD_KEYS.forEach(k => { fieldInputs[k].value = ''; });
+      else return; // partial / cleared picker value: keep the numeric fields as they are
       convertDate();
     });
     FIELD_KEYS.forEach(k => fieldInputs[k].addEventListener('input', () => { syncDtlFromFields(); convertDate(); }));

@@ -17,16 +17,31 @@ export const LANGUAGES = {
   less: { label: 'Less', parser: 'less', ext: 'less', mime: 'text/x-less', plugins: ['postcss'] },
   html: { label: 'HTML', parser: 'html', ext: 'html', mime: 'text/html', plugins: ['html', 'babel', 'estree', 'postcss'] },
   json: { label: 'JSON', parser: 'json', ext: 'json', mime: 'application/json', plugins: ['babel', 'estree'] },
+  jsonc: { label: 'JSON with comments (.jsonc)', parser: 'jsonc', ext: 'jsonc', mime: 'application/json', plugins: ['babel', 'estree'] },
+  json5: { label: 'JSON5', parser: 'json5', ext: 'json5', mime: 'application/json5', plugins: ['babel', 'estree'] },
+  yaml: { label: 'YAML', parser: 'yaml', ext: 'yaml', mime: 'text/yaml', plugins: ['yaml'] },
+  graphql: { label: 'GraphQL', parser: 'graphql', ext: 'graphql', mime: 'application/graphql', plugins: ['graphql'] },
+  handlebars: { label: 'Handlebars', parser: 'glimmer', ext: 'hbs', mime: 'text/x-handlebars-template', plugins: ['glimmer'] },
+  vue: { label: 'Vue', parser: 'vue', ext: 'vue', mime: 'text/x-vue', plugins: ['html', 'babel', 'estree', 'postcss', 'typescript'] },
   markdown: { label: 'Markdown', parser: 'markdown', ext: 'md', mime: 'text/markdown', plugins: ['markdown'] },
 };
 
 const EXT_TO_LANG = { js: 'javascript', mjs: 'javascript', cjs: 'javascript', jsx: 'jsx', ts: 'typescript', mts: 'typescript', cts: 'typescript',
-  tsx: 'tsx', css: 'css', scss: 'scss', less: 'less', html: 'html', htm: 'html', vue: 'html', json: 'json', jsonc: 'json', md: 'markdown', markdown: 'markdown' };
+  tsx: 'tsx', css: 'css', scss: 'scss', less: 'less', html: 'html', htm: 'html', vue: 'vue', json: 'json', jsonc: 'jsonc', json5: 'json5', yaml: 'yaml', yml: 'yaml', graphql: 'graphql', gql: 'graphql', hbs: 'handlebars', handlebars: 'handlebars', md: 'markdown', markdown: 'markdown' };
 export const detectLanguageByName = (name = '') => EXT_TO_LANG[String(name).toLowerCase().split('.').pop()] || null;
 
 export const DEFAULT_OPTIONS = {
   tabWidth: 2, useTabs: false, semi: true, singleQuote: false, trailingComma: 'all', printWidth: 80, bracketSpacing: true, arrowParens: 'always',
+  quoteProps: 'as-needed', endOfLine: 'lf', proseWrap: 'preserve', bracketSameLine: false, jsxSingleQuote: false,
+  htmlWhitespaceSensitivity: 'css', embeddedLanguageFormatting: 'auto',
 };
+// objectWrap exists only in Prettier 3.5+, so it is intentionally not offered for the pinned 3.3.3.
+const ENUMS = {
+  trailingComma: ['none', 'es5', 'all'], arrowParens: ['always', 'avoid'], quoteProps: ['as-needed', 'consistent', 'preserve'],
+  endOfLine: ['lf', 'crlf', 'cr', 'auto'], proseWrap: ['always', 'never', 'preserve'], htmlWhitespaceSensitivity: ['css', 'strict', 'ignore'],
+  embeddedLanguageFormatting: ['auto', 'off'],
+};
+const BOOLS = ['useTabs', 'semi', 'singleQuote', 'bracketSpacing', 'bracketSameLine', 'jsxSingleQuote'];
 
 /** Starting options derived from the user's global indentation setting. */
 export function defaultsFromIndent(unit) {
@@ -48,8 +63,57 @@ export function sanitizeOptions(raw = {}) {
     trailingComma: pick(raw.trailingComma, ['none', 'es5', 'all'], d.trailingComma),
     printWidth: int(raw.printWidth, 20, 400, d.printWidth),
     bracketSpacing: raw.bracketSpacing !== false,
-    arrowParens: pick(raw.arrowParens, ['always', 'avoid'], d.arrowParens),
+    arrowParens: pick(raw.arrowParens, ENUMS.arrowParens, d.arrowParens),
+    quoteProps: pick(raw.quoteProps, ENUMS.quoteProps, d.quoteProps),
+    endOfLine: pick(raw.endOfLine, ENUMS.endOfLine, d.endOfLine),
+    proseWrap: pick(raw.proseWrap, ENUMS.proseWrap, d.proseWrap),
+    bracketSameLine: !!raw.bracketSameLine,
+    jsxSingleQuote: !!raw.jsxSingleQuote,
+    htmlWhitespaceSensitivity: pick(raw.htmlWhitespaceSensitivity, ENUMS.htmlWhitespaceSensitivity, d.htmlWhitespaceSensitivity),
+    embeddedLanguageFormatting: pick(raw.embeddedLanguageFormatting, ENUMS.embeddedLanguageFormatting, d.embeddedLanguageFormatting),
   };
+}
+
+/** Serialize options as .prettierrc JSON (all options, so the file is explicit). */
+export const toPrettierrc = options => JSON.stringify(sanitizeOptions(options), null, 2) + '\n';
+
+/**
+ * Parse a .prettierrc (JSON) text. Returns { options, ignored[] } where ignored lists keys/values that were not understood.
+ * Values that are invalid for a known key are reported and replaced by defaults. Throws Error on invalid JSON / non-objects.
+ */
+export function parsePrettierrc(text) {
+  let obj;
+  try { obj = JSON.parse(String(text).replace(/^﻿/, '')); }
+  catch (e) { throw new Error(`Not valid JSON (.prettierrc must be JSON here; YAML/TOML/JS configs are not supported): ${e.message}`); }
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw new Error('A .prettierrc must be a JSON object such as {"semi": false}.');
+  const ignored = [];
+  const known = new Set(Object.keys(DEFAULT_OPTIONS));
+  const merged = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === '$schema') continue;
+    if (k === 'overrides') { ignored.push('overrides (not supported)'); continue; }
+    if (!known.has(k)) { ignored.push(`${k} (unknown option)`); continue; }
+    const ok = ENUMS[k] ? ENUMS[k].includes(v) : BOOLS.includes(k) ? typeof v === 'boolean' : Number.isFinite(Number(v)) && typeof v !== 'boolean';
+    if (!ok) { ignored.push(`${k} (invalid value ${JSON.stringify(v)})`); continue; }
+    merged[k] = v;
+  }
+  return { options: sanitizeOptions(merged), ignored };
+}
+
+export const pluginUrl = name => `${CDN_BASE}plugins/${name}.js`;
+
+/**
+ * Resolve loaded plugin objects from a global (window.prettierPlugins). Throws an Error naming the missing plugin,
+ * the Prettier version and the CDN URL it should have come from.
+ */
+export function resolvePlugins(names, globalObj) {
+  const reg = globalObj?.prettierPlugins || {};
+  return names.map(n => {
+    if (!reg[n]) {
+      throw Object.assign(new Error(`Prettier plugin "${n}" (prettier@${PRETTIER_VERSION}) did not register itself after loading ${pluginUrl(n)}. The script may be blocked or served incorrectly; check the network tab and your content blocker.`), { cdn: true, plugin: n });
+    }
+    return reg[n];
+  });
 }
 
 /** Full argument for prettier.format(code, ...). `plugins` are the loaded plugin objects. */

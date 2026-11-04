@@ -1,6 +1,7 @@
 // Canvas renderer for the PNG export. It draws from the exact same data as the DOM preview
 // (highlighted lines + computeLayout geometry + theme palette), so the two stay visually identical.
 // Only needs a 2D context-like canvas; contains no DOM lookups.
+import { segments } from './highlight.js';
 import { FONT_STACK, UI_FONT, shadowSpec, MAC_DOTS, lineNumberText, colorFor, gradientLine, GRADIENTS } from './logic.js';
 
 function roundRectPath(g, x, y, w, h, r) {
@@ -85,14 +86,19 @@ export function renderToCanvas(canvas, { lines, layout, opts, theme }, scale) {
     const by = top + i * layout.lineH + base;
     if (opts.lineNumbers) {
       g.fillStyle = theme.ln;
-      let col = 0;
-      for (const ch of lineNumberText(i, layout.digits)) { if (ch !== ' ') g.fillText(ch, left + col * layout.charW, by); col++; }
+      const num = lineNumberText(i, layout.digits), trimmed = num.trimStart();
+      g.fillText(trimmed, left + (num.length - trimmed.length) * layout.charW, by);
     }
+    // One fillText per run of narrow characters; wide characters are pinned to their own 2-cell column.
     let col = 0;
     const tx = left + layout.gutter;
     for (const tok of line) {
+      if (tok.cls === 'plain' && !tok.text.trim()) { for (const s of segments(tok.text, col)) col = s.col + s.cols; continue; }
       g.fillStyle = colorFor(theme, tok.cls);
-      for (const ch of tok.text) { if (ch !== ' ') g.fillText(ch, tx + col * layout.charW, by); col++; }
+      for (const s of segments(tok.text, col)) {
+        if (s.text.trim()) g.fillText(s.text, tx + s.col * layout.charW, by);
+        col = s.col + s.cols;
+      }
     }
   });
   g.restore();

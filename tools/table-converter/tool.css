@@ -21,3 +21,7 @@
   .tool-table-converter .tc-main { grid-template-columns: 1fr; }
   .tool-table-converter .tc-top .field { flex: 1 1 130px; }
 }
+.tool-table-converter .tc-large { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.tool-table-converter .tc-large[hidden], .tool-table-converter .tc-progress[hidden] { display: none; }
+.tool-table-converter .tc-progress-body { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.tool-table-converter .tc-progress-body progress { flex: 1 1 160px; min-width: 120px; }

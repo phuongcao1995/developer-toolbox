@@ -13,6 +13,8 @@ const MINIFY_NOTES = {
   json: 'JSON minify removes all insignificant whitespace; the document is validated first.',
 };
 
+let jsMinifyWarned = false; // show the JS-minify caveat once per session (module lives as long as the page)
+
 export default {
   mount(root, ctx) {
     const $ = s => root.querySelector(s);
@@ -25,6 +27,7 @@ export default {
     els.input.style.fontSize = els.output.style.fontSize = `${ctx.fontSize}px`;
     enableTabIndent(els.input, ctx.indentUnit);
 
+    let dialect = null; // 'scss' | 'less' when the loaded file was one (minify is refused for those)
     const lang = () => els.lang.value;
     const updateNote = () => {
       els.note.textContent = `Beautify uses ${lang() === 'json' ? 'a built-in JSON formatter' : 'js-beautify (loaded from a CDN on first use)'}. Minify: ${MINIFY_NOTES[lang()]}`;
@@ -60,10 +63,10 @@ export default {
       if (!code.trim()) { showMessage(els.msg, 'warn', 'Enter or upload some code first.'); clearResult(); return; }
       await withLoading(mode === 'beautify' ? els.beautify : els.minify, async () => {
         try {
-          const result = mode === 'beautify' ? await beautify(code, l) : L.minify(l, code);
+          const result = mode === 'beautify' ? await beautify(code, l) : L.minify(l, code, { dialect: l === 'css' ? dialect : null });
           els.output.value = result;
           setStats(code, result, mode === 'beautify' ? 'Beautified' : 'Minified');
-          if (mode === 'minify' && l === 'js') showMessage(els.msg, 'info', 'This is a whitespace/comment stripper only. Test the result before shipping.');
+          if (mode === 'minify' && l === 'js' && !jsMinifyWarned) { jsMinifyWarned = true; showMessage(els.msg, 'info', 'This is a whitespace/comment stripper only. Test the result before shipping. (Shown once per session.)'); }
         } catch (e) { clearResult(); showMessage(els.msg, 'error', e.message); }
       });
     }
@@ -73,6 +76,7 @@ export default {
       try {
         els.input.value = await readFileAsText(file);
         const l = L.detectLanguageByName(file.name);
+        dialect = L.detectCssDialect(file.name);
         if (l) { els.lang.value = l; ctx.storage.set('lang', l); updateNote(); } else toast('Unknown file type - keeping the selected language', 'info');
         clearResult(); showMessage(els.msg, null);
       } catch { showMessage(els.msg, 'error', 'Could not read that file.'); }
@@ -82,7 +86,7 @@ export default {
     const disposers = [
       on(els.beautify, 'click', () => run('beautify')),
       on(els.minify, 'click', () => run('minify')),
-      on(els.lang, 'change', () => { ctx.storage.set('lang', lang()); updateNote(); }),
+      on(els.lang, 'change', () => { dialect = null; ctx.storage.set('lang', lang()); updateNote(); }),
       on($('#cb-upload'), 'click', async () => loadFile(await pickFile('.html,.htm,.css,.scss,.less,.js,.mjs,.cjs,.jsx,.json,.vue,.txt'))),
       on($('#cb-clear'), 'click', () => { els.input.value = ''; clearResult(); showMessage(els.msg, null); els.input.focus(); }),
       on($('#cb-copy'), 'click', () => copyText(els.output.value)),
@@ -97,7 +101,9 @@ export default {
       // Auto-detect the language when pasting into an empty editor.
       on(els.input, 'paste', e => {
         if (els.input.value.trim()) return;
-        const l = L.detectLanguageByContent(e.clipboardData?.getData('text') || '');
+        let l = L.detectLanguageByContent(e.clipboardData?.getData('text') || '');
+        dialect = null;
+        if (l === 'xml') { l = 'html'; toast('XML/SVG detected: no XML mode, so HTML is selected. Beautify is approximate and Minify may alter case or self-closing tags.', 'info', 5000); }
         if (l) { els.lang.value = l; updateNote(); }
       }),
       on(root, 'keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') run('beautify'); }),

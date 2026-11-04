@@ -1,11 +1,83 @@
 .tool-sql-formatter .sf-options { align-items: flex-end; }
 .tool-sql-formatter .sf-options .field { min-width: 140px; }
+.tool-sql-formatter [hidden] { display: none !important; }
+.tool-sql-formatter .sf-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; min-height: 34px; color: var(--text); }
 .tool-sql-formatter .hint { margin: 0 0 10px; }
+.tool-sql-formatter .sf-heuristic { padding: 8px 12px; border: 1px solid var(--warn); border-radius: 8px; background: var(--warn-soft); color: var(--warn); }
 .tool-sql-formatter #sf-msg { margin-bottom: 12px; }
-.tool-sql-formatter .sf-panels .textarea { min-height: 360px; }
 .tool-sql-formatter .sf-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; min-height: 22px; }
+
+/* Syntax colours (no shared tokens exist). Contrast >= 4.5:1 on --code-bg / --surface in both themes. */
+.tool-sql-formatter {
+  --sf-kw: #4f46c8; --sf-fn: #0b6a8a; --sf-str: #a31d4a; --sf-num: #9a4a00; --sf-com: #5c6677; --sf-idn: #0f6b4f; --sf-par: #7b3fb3; --sf-op: #9a3412;
+}
+:root[data-theme="dark"] .tool-sql-formatter {
+  --sf-kw: #9ea8ff; --sf-fn: #5fd0ee; --sf-str: #ff9bb8; --sf-num: #ffb86b; --sf-com: #8a94a8; --sf-idn: #5ee0b0; --sf-par: #d2a8ff; --sf-op: #ffa57a;
+}
+.tool-sql-formatter .sf-t-kw { color: var(--sf-kw); font-weight: 600; }
+.tool-sql-formatter .sf-t-fn { color: var(--sf-fn); }
+.tool-sql-formatter .sf-t-str { color: var(--sf-str); }
+.tool-sql-formatter .sf-t-num { color: var(--sf-num); }
+.tool-sql-formatter .sf-t-com { color: var(--sf-com); font-style: italic; }
+.tool-sql-formatter .sf-t-idn { color: var(--sf-idn); }
+.tool-sql-formatter .sf-t-par { color: var(--sf-par); }
+.tool-sql-formatter .sf-t-op { color: var(--sf-op); }
+
+/* Editor: transparent textarea over a highlight layer with identical metrics (bold keywords keep the same advance in monospace fonts). */
+.tool-sql-formatter .sf-editor { position: relative; flex: 1; min-height: 360px; background: var(--code-bg); display: flex; }
+.tool-sql-formatter .sf-hl, .tool-sql-formatter .sf-input, .tool-sql-formatter .sf-code {
+  margin: 0; padding: 10px; border: 0; box-sizing: border-box; font-family: var(--mono); font-size: var(--editor-font-size, 13px);
+  line-height: 1.5; letter-spacing: normal; tab-size: 2; white-space: pre; overflow-wrap: normal; word-break: normal; text-align: left;
+}
+.tool-sql-formatter .sf-hl { position: absolute; inset: 0; overflow: hidden; pointer-events: none; color: var(--text); background: transparent; padding-right: 30px; padding-bottom: 30px; }
+.tool-sql-formatter .sf-hl .sf-t-kw { font-weight: 400; }
+.tool-sql-formatter .sf-input { position: relative; flex: 1; width: 100%; min-height: 360px; resize: none; overflow: auto; background: transparent; color: transparent;
+  caret-color: var(--text); -webkit-text-fill-color: transparent; outline: none; border-radius: 0; }
+.tool-sql-formatter .sf-input::placeholder { color: var(--text-faint); -webkit-text-fill-color: var(--text-faint); opacity: 1; }
+.tool-sql-formatter .sf-input::selection { background: color-mix(in srgb, var(--primary) 35%, transparent); }
+.tool-sql-formatter .sf-editor:focus-within { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+/* IME composition: show the textarea's own text, hide the layer (re-highlighted on compositionend). */
+.tool-sql-formatter .sf-editor.sf-composing .sf-input { color: var(--text); -webkit-text-fill-color: var(--text); }
+.tool-sql-formatter .sf-editor.sf-composing .sf-hl { visibility: hidden; }
+/* Very large input: plain textarea, no overlay. */
+.tool-sql-formatter .sf-editor.sf-plain .sf-hl { display: none; }
+.tool-sql-formatter .sf-editor.sf-plain .sf-input { color: var(--text); -webkit-text-fill-color: var(--text); }
+/* Forced colors: plain textarea. */
+@media (forced-colors: active) {
+  .tool-sql-formatter .sf-hl { display: none; }
+  .tool-sql-formatter .sf-input { color: CanvasText; -webkit-text-fill-color: CanvasText; }
+}
+
+/* Result panes */
+.tool-sql-formatter .sf-result { flex: 1; display: flex; flex-direction: column; min-height: 360px; min-width: 0; background: var(--code-bg); }
+.tool-sql-formatter .sf-pane { flex: 1; min-height: 360px; max-height: 70vh; overflow: auto; min-width: 0; }
+.tool-sql-formatter .sf-code { color: var(--text); background: var(--code-bg); }
+.tool-sql-formatter .sf-code:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.tool-sql-formatter .sf-code:empty::before { content: attr(data-placeholder); color: var(--text-faint); }
+.tool-sql-formatter .sf-report { padding: 12px; background: var(--surface); color: var(--text); font-size: 13px; }
+.tool-sql-formatter .sf-report h4 { margin: 14px 0 6px; font-size: 13px; }
+.tool-sql-formatter .sf-report h4:first-child { margin-top: 0; }
+.tool-sql-formatter .sf-report .sf-stmt { margin: 14px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tool-sql-formatter .sf-report .sf-stmt:first-child { margin-top: 0; }
+.tool-sql-formatter .sf-report .sf-stmt h3 { font-size: 14px; margin-right: 6px; }
+.tool-sql-formatter .sf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tool-sql-formatter .sf-jump { display: block; width: 100%; text-align: left; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2);
+  color: var(--text); font: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.tool-sql-formatter .sf-jump:hover { border-color: var(--primary); }
+.tool-sql-formatter .sf-jump:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+.tool-sql-formatter .sf-static { display: block; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); overflow-wrap: anywhere; }
+.tool-sql-formatter .sf-report code { font-family: var(--mono); font-size: 12px; }
+.tool-sql-formatter .sf-sub { color: var(--text-muted); font-size: 12px; display: block; margin-top: 2px; }
+.tool-sql-formatter .sf-find-warn { border-left: 3px solid var(--warn); }
+.tool-sql-formatter .sf-find-info { border-left: 3px solid var(--info); }
+.tool-sql-formatter .sf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tool-sql-formatter .sf-muted { color: var(--text-muted); }
+.tool-sql-formatter .sf-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+.tool-sql-formatter .sf-steps .badge { margin-right: 6px; }
+.tool-sql-formatter .sf-note { margin: 0 0 10px; padding: 8px 10px; background: var(--info-soft); color: var(--info); border-radius: 6px; font-size: 12px; }
 @media (max-width: 560px) {
   .tool-sql-formatter .sf-options .field { flex: 1 1 130px; }
   .tool-sql-formatter .sf-options .btn { flex: 1 1 auto; }
-  .tool-sql-formatter .sf-panels .textarea { min-height: 220px; }
+  .tool-sql-formatter .sf-editor, .tool-sql-formatter .sf-input, .tool-sql-formatter .sf-result, .tool-sql-formatter .sf-pane { min-height: 220px; }
+  .tool-sql-formatter .sf-tabs .tab { padding: 8px 10px; }
 }

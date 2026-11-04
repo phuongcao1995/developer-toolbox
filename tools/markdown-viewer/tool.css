@@ -12,10 +12,37 @@
 .tool-markdown-viewer .mv-toc-list a:hover { background: var(--surface-2); color: var(--text); }
 .tool-markdown-viewer .mv-toc-list a.active { color: var(--primary); background: var(--primary-soft); border-left-color: var(--primary); font-weight: 600; }
 .tool-markdown-viewer .mv-toc-empty { padding: 10px; color: var(--text-muted); font-size: 13px; }
-.tool-markdown-viewer .mv-toc-toggle { display: none; }
+.tool-markdown-viewer .mv-toc-toggle { margin-left: auto; }
+.tool-markdown-viewer .mv-toc.collapsed .mv-toc-list { display: none; }
+
+.tool-markdown-viewer #mv-note, .tool-markdown-viewer .mv-spin { margin-bottom: 12px; }
+.tool-markdown-viewer .mv-spin { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13px; }
+.tool-markdown-viewer .mv-search { position: sticky; top: 0; z-index: 2; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 8px; margin-bottom: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.tool-markdown-viewer .mv-search .input { flex: 1 1 160px; width: auto; }
+.tool-markdown-viewer .mv-search-count { min-width: 70px; text-align: center; }
+.tool-markdown-viewer mark.mv-hit { background: color-mix(in srgb, var(--warn) 40%, transparent); color: inherit; border-radius: 2px; }
+.tool-markdown-viewer mark.mv-hit.current { background: var(--warn); color: #000; outline: 2px solid var(--warn); }
+.tool-markdown-viewer .mv-anchor-btn { margin-left: .4em; padding: 0 .3em; border: 0; background: none; color: var(--text-muted); font: inherit; font-size: .8em; cursor: pointer; opacity: 0; border-radius: 4px; }
+.tool-markdown-viewer .md-body :is(h1,h2,h3,h4,h5,h6):hover > .mv-anchor-btn, .tool-markdown-viewer .mv-anchor-btn:focus-visible { opacity: 1; }
+.tool-markdown-viewer .mv-anchor-btn:hover { color: var(--primary); background: var(--surface-2); }
+.tool-markdown-viewer .md-frontmatter { margin: 0 0 1em; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
+.tool-markdown-viewer .md-frontmatter summary { padding: 6px 12px; cursor: pointer; font-size: 13px; color: var(--text-muted); }
+.tool-markdown-viewer .md-frontmatter pre { margin: 0; padding: 10px 12px; overflow: auto; font-size: 12.5px; border-top: 1px solid var(--border); }
+.tool-markdown-viewer .md-mermaid { margin: 0 0 1.1em; padding: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: auto; contain: paint; text-align: center; background: var(--surface); }
+.tool-markdown-viewer .md-mermaid svg { max-width: 100%; height: auto; }
+.tool-markdown-viewer .md-mermaid details { text-align: left; margin-top: 8px; font-size: 12.5px; }
+.tool-markdown-viewer .md-mermaid summary { cursor: pointer; color: var(--text-muted); }
+.tool-markdown-viewer .md-mermaid-error { text-align: left; }
+.tool-markdown-viewer .md-mermaid-error .alert { margin-bottom: 8px; }
+.tool-markdown-viewer .md-mermaid-error pre { margin: 0; }
+.tool-markdown-viewer .md-mermaid-note { margin-bottom: 8px; }
+.tool-markdown-viewer .md-img-missing { color: var(--text-muted); font-style: italic; border: 1px dashed var(--border-strong); border-radius: 4px; padding: 0 .4em; }
+.tool-markdown-viewer .md-body pre { max-width: 100%; tab-size: 4; }
+.tool-markdown-viewer .md-body pre code { white-space: pre; display: block; }
 
 /* Reading view */
-.tool-markdown-viewer .mv-article { max-width: 780px; width: 100%; margin: 0 auto; padding: 8px 4px 80px; font-size: 16.5px; line-height: 1.75; word-wrap: break-word; min-width: 0; }
+.tool-markdown-viewer .mv-main { max-width: 780px; width: 100%; margin: 0 auto; min-width: 0; outline: none; }
+.tool-markdown-viewer .mv-article { width: 100%; margin: 0; padding: 8px 4px 80px; font-size: 16.5px; line-height: 1.75; word-wrap: break-word; min-width: 0; }
 .tool-markdown-viewer .md-body > :first-child { margin-top: 0; }
 .tool-markdown-viewer .md-body h1, .tool-markdown-viewer .md-body h2, .tool-markdown-viewer .md-body h3,
 .tool-markdown-viewer .md-body h4, .tool-markdown-viewer .md-body h5, .tool-markdown-viewer .md-body h6 { margin: 1.6em 0 .55em; line-height: 1.25; scroll-margin-top: 16px; }
@@ -42,8 +69,6 @@
 @media (max-width: 900px) {
   .tool-markdown-viewer .mv-layout { grid-template-columns: 1fr; gap: 14px; }
   .tool-markdown-viewer .mv-toc { position: static; max-height: none; }
-  .tool-markdown-viewer .mv-toc-toggle { display: inline-flex; margin-left: auto; }
-  .tool-markdown-viewer .mv-toc.collapsed .mv-toc-list { display: none; }
   .tool-markdown-viewer .mv-toc-list { max-height: 260px; }
 }
 @media (max-width: 480px) {

@@ -1,5 +1,5 @@
 // Pure helpers for the Markdown viewer (no DOM access).
-export { makeSlugger, slugify, countStats } from '../markdown-editor/logic.js';
+export { makeSlugger, slugify, countStats, parseFrontMatter, findMatches } from '../markdown-editor/logic.js';
 
 export const MAX_BYTES = 5 * 1024 * 1024;
 const MD_EXT = /\.(md|markdown|mdown|mkd|txt)$/i;

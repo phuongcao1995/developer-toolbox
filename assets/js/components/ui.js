@@ -19,8 +19,17 @@ export function el(tag, attrs = {}, ...children) {
   return node;
 }
 
+/** Debounced wrapper. The result has .cancel() (drop a pending call) and .flush() (run it now). */
+let debounceScope = null;
+/** Shell hook: debounces created while a scope is set are collected so they can be cancelled on unmount. */
+export const setDebounceScope = scope => { debounceScope = scope; };
 export const debounce = (fn, ms = 200) => {
-  let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+  let t = null, last = [];
+  const d = (...a) => { last = a; clearTimeout(t); t = setTimeout(() => { t = null; fn(...last); }, ms); };
+  d.cancel = () => { clearTimeout(t); t = null; };
+  d.flush = () => { if (t != null) { clearTimeout(t); t = null; fn(...last); } };
+  debounceScope?.push(d);
+  return d;
 };
 
 /** Re-render Lucide icons for any <i data-lucide> inside `root` (no-op if CDN failed). */
@@ -100,10 +109,10 @@ export async function withLoading(btn, fn) {
 
 const scriptCache = new Map();
 /** Load a classic <script> from a CDN once. Rejects if it cannot be loaded (e.g. offline). */
-export function loadScript(src) {
+export function loadScript(src, integrity) {
   if (!scriptCache.has(src)) {
     scriptCache.set(src, new Promise((res, rej) => {
-      const s = el('script', { src });
+      const s = el('script', { src, ...(integrity ? { integrity, crossorigin: 'anonymous' } : {}) });
       s.onload = res; s.onerror = () => { scriptCache.delete(src); rej(new Error(`Could not load ${src} — check your internet connection.`)); };
       document.head.append(s);
     }));
@@ -121,17 +130,34 @@ export function showMessage(box, type, text) {
   if (!box) return;
   if (!type || !text) { box.hidden = true; box.textContent = ''; return; }
   box.hidden = false; box.className = `alert alert-${type}`; box.textContent = text;
+  box.setAttribute('role', type === 'error' ? 'alert' : 'status');
 }
 
 /** Wire tab buttons ([data-tab]) to panels ([data-panel]) inside root. */
 export function initTabs(root, onChange) {
   const tabs = $$('[data-tab]', root), panels = $$('[data-panel]', root);
+  const uid = Math.random().toString(36).slice(2, 7);
+  tabs[0]?.parentElement?.setAttribute('role', 'tablist');
+  tabs.forEach(t => { t.setAttribute('role', 'tab'); t.id ||= `tab-${uid}-${t.dataset.tab}`; });
+  panels.forEach(p => {
+    p.setAttribute('role', 'tabpanel');
+    const t = tabs.find(x => x.dataset.tab === p.dataset.panel);
+    if (t) { p.id ||= `panel-${uid}-${p.dataset.panel}`; p.setAttribute('aria-labelledby', t.id); t.setAttribute('aria-controls', p.id); }
+  });
   const select = name => {
-    tabs.forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('active', on); t.setAttribute('aria-selected', on); });
+    tabs.forEach(t => { const on = t.dataset.tab === name; t.classList.toggle('active', on); t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });
     panels.forEach(p => { p.hidden = p.dataset.panel !== name; });
     onChange?.(name);
   };
-  tabs.forEach(t => t.addEventListener('click', () => select(t.dataset.tab)));
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t.dataset.tab));
+    t.addEventListener('keydown', e => {
+      const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      const to = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : step ? (i + step + tabs.length) % tabs.length : null;
+      if (to == null) return;
+      e.preventDefault(); tabs[to].focus(); select(tabs[to].dataset.tab);
+    });
+  });
   if (tabs[0]) select(tabs.find(t => t.classList.contains('active'))?.dataset.tab || tabs[0].dataset.tab);
   return select;
 }
@@ -148,13 +174,19 @@ export function bindActions(root, handlers) {
 
 /** Tab key inserts the configured indent in code textareas. */
 export function enableTabIndent(textarea, indentUnit = '  ') {
+  let released = false; // Esc releases the Tab trap so keyboard users can leave the field
+  textarea.addEventListener('blur', () => { released = false; });
   textarea.addEventListener('keydown', e => {
-    if (e.key !== 'Tab' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Escape') { released = true; return; }
+    if (e.key !== 'Tab' || e.ctrlKey || e.metaKey || e.altKey || released) return;
     e.preventDefault();
-    const { selectionStart: s, selectionEnd: en, value } = textarea;
-    textarea.value = value.slice(0, s) + indentUnit + value.slice(en);
-    textarea.selectionStart = textarea.selectionEnd = s + indentUnit.length;
-    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    // execCommand keeps the native undo stack; fall back to setRangeText where unsupported.
+    let ok = false;
+    try { ok = document.execCommand('insertText', false, indentUnit); } catch { /* fall through */ }
+    if (!ok) {
+      textarea.setRangeText(indentUnit, textarea.selectionStart, textarea.selectionEnd, 'end');
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   });
 }
 
@@ -163,8 +195,18 @@ export const formatBytes = n => n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024
 // ---------- Modal ----------
 export function openModal({ title, body, actions = [], onClose }) {
   const overlay = el('div', { class: 'modal-overlay' });
-  const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); onClose?.(); };
-  const onKey = e => { if (e.key === 'Escape') close(); };
+  const opener = document.activeElement;
+  const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); onClose?.(); if (opener?.isConnected) opener.focus?.(); };
+  const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled])';
+  const onKey = e => {
+    if (e.key === 'Escape') { e.stopPropagation(); close(); return; }
+    if (e.key !== 'Tab') return; // focus trap
+    const f = [...overlay.querySelectorAll(FOCUSABLE)].filter(n => n.offsetParent !== null);
+    if (!f.length) { e.preventDefault(); return; }
+    const first = f[0], last = f[f.length - 1], inside = overlay.contains(document.activeElement);
+    if (!inside || (e.shiftKey && document.activeElement === first)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  };
   const modal = el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
     el('div', { class: 'modal-head' }, el('h3', {}, title), el('button', { class: 'btn btn-ghost btn-icon', 'aria-label': 'Close', onclick: close }, '✕')),
     el('div', { class: 'modal-body' }, body),
@@ -172,6 +214,7 @@ export function openModal({ title, body, actions = [], onClose }) {
       el('button', { class: `btn ${a.primary ? 'btn-primary' : a.danger ? 'btn-danger' : ''}`, onclick: () => { if (a.onClick?.() !== false) close(); } }, a.label))) : null);
   overlay.addEventListener('mousedown', e => { if (e.target === overlay) close(); });
   overlay.append(modal); document.body.append(overlay); document.addEventListener('keydown', onKey);
+  queueMicrotask(() => { if (!overlay.contains(document.activeElement)) (modal.querySelector(`.modal-body :is(input,select,textarea,button,a[href])`) || modal.querySelector(FOCUSABLE))?.focus(); });
   return { close, modal };
 }
 export const confirmDialog = (title, message, confirmLabel = 'Confirm') => new Promise(res => {

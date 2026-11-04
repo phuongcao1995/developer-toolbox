@@ -14,7 +14,7 @@ export default {
     const counts = countByCategory();
     const chipDefs = [['all', 'All'], ...Object.entries(CATEGORIES).map(([k, v]) => [k, k === 'unofficial' ? v : `${k} ${v}`])];
     chipsBox.innerHTML = chipDefs.map(([key, label]) =>
-      `<button type="button" class="chip" data-cat="${key}">${escapeHtml(label)} <span class="hint">${counts[key]}</span></button>`).join('');
+      `<button type="button" class="chip" data-cat="${key}"${/xx$/.test(key) ? ' title="Includes unofficial codes of this class"' : ''}>${escapeHtml(label)} <span class="hint">${counts[key]}</span></button>`).join('');
     const syncChips = () => chipsBox.querySelectorAll('.chip').forEach(c => {
       const on = c.dataset.cat === state.category;
       c.classList.toggle('active', on); c.setAttribute('aria-pressed', on);
@@ -29,7 +29,7 @@ export default {
         `<span class="badge">${escapeHtml(CATEGORIES[s.statusClass])}</span>`,
         s.hint ? `<span class="badge badge-info">${escapeHtml(s.hint)}</span>` : '',
       ].join('');
-      return `<div class="hs-detail">
+      return `<div class="hs-detail" id="hs-detail-${s.code}" role="region" aria-labelledby="hs-head-${s.code}">
         <div class="hs-badges">${hints}</div>
         <div><h4>Description</h4><p>${escapeHtml(s.description)}</p></div>
         <div><h4>Common usage</h4><p>${escapeHtml(s.commonUsage)}</p></div>
@@ -43,21 +43,23 @@ export default {
       </div>`;
     }
 
-    function render() {
-      const items = searchStatus(q.value, state.category);
-      count.textContent = `${items.length} of ${STATUS_CODES.length} codes`;
-      empty.hidden = items.length > 0;
-      list.innerHTML = items.map(s => {
-        const open = state.open.has(s.code);
-        return `<div class="hs-item${open ? ' open' : ''}" data-code="${s.code}">
-          <button type="button" class="hs-head" aria-expanded="${open}">
+    const itemHtml = s => {
+      const open = state.open.has(s.code);
+      return `<div class="hs-item${open ? ' open' : ''}" data-code="${s.code}">
+          <button type="button" class="hs-head" id="hs-head-${s.code}" aria-expanded="${open}" aria-controls="hs-detail-${s.code}">
             <span class="hs-code c${s.statusClass[0]}">${s.code}</span>
             <span class="hs-title">${escapeHtml(s.title)}${s.unofficial ? ' <span class="badge badge-warn">unofficial</span>' : ''}</span>
             <span class="hs-sum">${escapeHtml(summary(s))}</span>
             <i data-lucide="chevron-right" class="hs-chev"></i>
           </button>${open ? detailHtml(s) : ''}
         </div>`;
-      }).join('');
+    };
+
+    function render() {
+      const items = searchStatus(q.value, state.category);
+      count.textContent = `${items.length} of ${STATUS_CODES.length} codes`;
+      empty.hidden = items.length > 0;
+      list.innerHTML = items.map(itemHtml).join('');
       renderIcons(list);
       syncChips();
     }
@@ -75,9 +77,12 @@ export default {
       const head = e.target.closest('.hs-head');
       if (!head) return;
       const code = Number(head.parentElement.dataset.code);
-      if (state.open.has(code)) state.open.delete(code); else state.open.add(code);
-      render();
-      list.querySelector(`.hs-item[data-code="${code}"] .hs-head`)?.focus();
+      // Toggle just this row in place; no full re-render (keeps focus, scroll position and other rows untouched).
+      const item = head.parentElement, s = STATUS_CODES.find(x => x.code === code);
+      if (state.open.has(code)) { state.open.delete(code); item.querySelector('.hs-detail')?.remove(); }
+      else { state.open.add(code); head.insertAdjacentHTML('afterend', detailHtml(s)); renderIcons(item); }
+      item.classList.toggle('open', state.open.has(code));
+      head.setAttribute('aria-expanded', String(state.open.has(code)));
     };
     list.addEventListener('click', onList);
 

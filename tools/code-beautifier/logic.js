@@ -11,16 +11,28 @@ export const LANGUAGES = {
 /** Guess the language from a file name; returns null when unknown. */
 export function detectLanguageByName(name = '') {
   const ext = String(name).toLowerCase().split('.').pop();
-  const map = { html: 'html', htm: 'html', xhtml: 'html', vue: 'html', css: 'css', scss: 'css', less: 'css',
+  const map = { html: 'html', htm: 'html', xhtml: 'html', vue: 'html', svg: 'html', xml: 'html', css: 'css', scss: 'css', less: 'css',
     js: 'js', mjs: 'js', cjs: 'js', jsx: 'js', json: 'json', map: 'json', webmanifest: 'json' };
   return map[ext] || null;
+}
+
+/** CSS dialect from a file name: 'scss' | 'less' | null. Those cannot be minified by the plain CSS minifier. */
+export function detectCssDialect(name = '') {
+  const ext = String(name).toLowerCase().split('.').pop();
+  return ext === 'scss' || ext === 'less' ? ext : null;
 }
 
 /** Cheap content sniffing used when pasting into an empty editor. */
 export function detectLanguageByContent(text = '') {
   const t = text.trim();
   if (!t) return null;
-  if (/^[[{]/.test(t)) { try { JSON.parse(t); return 'json'; } catch { /* fall through */ } }
+  // SVG / XML documents are not HTML but are the closest we support (the tool shows a notice for 'xml').
+  if (/^<\?xml|^<svg[\s>]|^<!doctype svg/i.test(t)) return 'xml';
+  if (/^[[{]/.test(t)) {
+    try { JSON.parse(t); return 'json'; } catch { /* fall through */ }
+    // Looks like a JSON document (balanced outer brackets) that is merely invalid: report a JSON error, not a JS one.
+    if ((t[0] === '{' && t.endsWith('}')) || (t[0] === '[' && t.endsWith(']'))) return 'json';
+  }
   if (/^<!doctype html|^<html|^<(div|body|head|p|span|section|ul|table|form|a|h[1-6])[\s>]/i.test(t)) return 'html';
   if (/^(@import|@media|@charset|:root|[.#]?[\w-]+(\s*[>+~,]\s*[.#]?[\w-]+)*\s*\{[^{}]*:[^{}]*;?\s*\})/i.test(t)) return 'css';
   return 'js';
@@ -116,7 +128,10 @@ export function formatJson(text, indentUnit = '  ') {
  * Strings and unquoted url(...) contents are copied verbatim. Spaces inside parentheses are kept around operators
  * so calc(1px + 2px) stays valid.
  */
-export function minifyCss(src) {
+export function minifyCss(src, { dialect = null } = {}) {
+  if (dialect === 'scss' || dialect === 'less') {
+    throw new Error(`Minify is disabled for ${dialect.toUpperCase()}: it uses // line comments, nesting and variables that the plain CSS minifier cannot handle safely. Compile to CSS first, or use Beautify.`);
+  }
   const out = [];
   let i = 0, depth = 0, pendingSpace = false;
   const n = src.length;
@@ -147,6 +162,9 @@ export function minifyCss(src) {
       i = end + 2; continue;
     }
     if (/\s/.test(c)) { pendingSpace = true; i++; continue; }
+    if (c === '/' && src[i + 1] === '/') {
+      throw new Error('Found a // line comment: this looks like SCSS/Less, not plain CSS. Minifying it would swallow the following code, so it was refused. Compile to CSS first.');
+    }
     if (c === '"' || c === "'") {
       let j = i + 1;
       while (j < n && src[j] !== c) { if (src[j] === '\\') j++; else if (src[j] === '\n') break; j++; }
@@ -291,18 +309,28 @@ function compactTag(tag) {
   return out.replace(/\s+\/>$/, '/>');
 }
 
+const BLOCK_TAGS = new Set(('html head body title meta link base script style noscript template address article aside blockquote details dialog dd div dl dt '
+  + 'fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup hr li main menu nav ol p pre section summary table caption colgroup col thead tbody '
+  + 'tfoot tr td th ul br option optgroup !').split(' '));
+const isBlockTag = t => !!t && BLOCK_TAGS.has(t);
+
 /**
- * HTML minifier: removes comments (keeps IE conditional comments), collapses whitespace and removes whitespace-only
- * gaps between tags that contain a line break. <pre>/<textarea> are untouched; <script>/<style> bodies are
- * minified with the JS/CSS minifiers when that succeeds, otherwise left as they are.
+ * HTML minifier: removes comments (keeps IE conditional comments), collapses whitespace runs to one space and drops
+ * whitespace only next to block-level tags or at the document edges, so `<span>x</span>
+<span>y</span>` keeps its gap.
+ * <pre>/<textarea> are untouched; <script>/<style> bodies are minified with the JS/CSS minifiers when that succeeds.
  */
 export function minifyHtml(src) {
-  let out = '', i = 0, buf = '';
+  let out = '', i = 0, buf = '', lastTag = null; // lastTag: name of the previous emitted tag ('!' for doctype/comments), null after text
   const n = src.length;
-  const flushText = () => {
+  const flushText = nextTag => {
     if (!buf) return;
-    if (/^\s+$/.test(buf)) { if (!/[\r\n]/.test(buf) && out) out += ' '; }
-    else out += buf.replace(/\s+/g, ' ');
+    const atStart = !out, atEnd = nextTag === undefined;
+    const trimStart = atStart || isBlockTag(lastTag), trimEnd = atEnd || isBlockTag(nextTag);
+    let t = buf.replace(/\s+/g, ' ');
+    if (trimStart) t = t.replace(/^ /, '');
+    if (trimEnd) t = t.replace(/ $/, '');
+    out += t; if (t) lastTag = null;
     buf = '';
   };
   while (i < n) {
@@ -312,7 +340,7 @@ export function minifyHtml(src) {
       const end = src.indexOf('-->', i + 4);
       const stop = end < 0 ? n : end + 3;
       const comment = src.slice(i, stop);
-      if (/^<!--\[if|^<!--<!\[endif/i.test(comment)) { flushText(); out += comment; }
+      if (/^<!--\[if|^<!--<!\[endif/i.test(comment)) { flushText('!'); out += comment; lastTag = '!'; }
       i = stop; continue;
     }
     const m = /^<(\/?)([a-zA-Z][^\s/>]*|!|\?)/.exec(src.slice(i, i + 64));
@@ -325,10 +353,11 @@ export function minifyHtml(src) {
       j++;
     }
     const tag = src.slice(i, j + 1);
-    flushText();
+    const name = m[2] === '?' ? '!' : m[2].toLowerCase();
+    flushText(name);
     out += (m[2] === '!' || m[2] === '?') ? tag : compactTag(tag);
+    lastTag = name;
     i = j + 1;
-    const name = m[2].toLowerCase();
     if (!m[1] && RAW_TAGS.has(name) && !/\/>$/.test(tag)) {
       const rest = src.slice(i), cm = new RegExp(`</${name}\\s*>`, 'i').exec(rest);
       const body = cm ? rest.slice(0, cm.index) : rest;
@@ -350,10 +379,10 @@ function rawBody(name, body, openTag) {
 }
 
 /** Single entry point for tool.js and tests. */
-export function minify(lang, code) {
+export function minify(lang, code, { dialect = null } = {}) {
   if (!code.trim()) throw new Error('Input is empty.');
   switch (lang) {
-    case 'css': return minifyCss(code);
+    case 'css': return minifyCss(code, { dialect });
     case 'js': return minifyJs(code);
     case 'html': return minifyHtml(code);
     case 'json': return minifyJson(code);

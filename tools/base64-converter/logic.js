@@ -36,6 +36,10 @@ export function encodeText(text, opts) {
   return encodeBytes(new TextEncoder().encode(text), opts);
 }
 
+/** A syntactically safe MIME type: type/subtype using only letters, digits and . + - */
+export const isSafeMime = m => /^[a-z]+\/[A-Za-z0-9.+-]+$/i.test(String(m ?? ''));
+export const isImageMime = m => /^image\/[A-Za-z0-9.+-]+$/i.test(String(m ?? ''));
+
 /**
  * Tolerant normalisation: strips a data: URI prefix, whitespace, converts URL-safe
  * characters, and re-adds missing padding. Returns { b64, mime }.
@@ -46,7 +50,9 @@ export function normalizeBase64(input) {
   let mime = null;
   const m = /^data:([^;,]*)((?:;[^;,]*)*),/i.exec(s);
   if (m) {
-    mime = m[1] || null;
+    mime = m[1].trim() || null;
+    if (mime !== null && !isSafeMime(mime)) throw new Error(`The data: URI declares an invalid MIME type "${mime.length > 40 ? mime.slice(0, 40) + '...' : mime}". Only values like "image/png" (letters, digits and . + -) are accepted.`);
+    if (mime) mime = mime.toLowerCase();
     s = s.slice(m[0].length);
     if (!/;base64/i.test(m[2])) throw new Error('This data: URI is not Base64-encoded (missing ";base64").');
   }
@@ -79,6 +85,14 @@ export function decodeText(input) {
   catch { throw new Error('Decoded bytes are not valid UTF-8 text (probably binary data). Use the File tab to download it instead.'); }
 }
 
+/** "BM" alone is common in text; require a plausible BITMAPFILEHEADER (size field, zero reserved bytes, sane pixel offset). */
+function looksLikeBmp(b) {
+  if (b.length < 14) return false;
+  const u32 = i => (b[i] | (b[i + 1] << 8) | (b[i + 2] << 16) | (b[i + 3] << 24)) >>> 0;
+  const size = u32(2), offset = u32(10);
+  return u32(6) === 0 && size >= 26 && size <= b.length && offset >= 14 && offset <= size;
+}
+
 /** Sniff a MIME type from magic bytes. Returns null if unknown. */
 export function detectMime(b) {
   const at = (i, ...v) => v.every((x, k) => b[i + k] === x);
@@ -88,7 +102,7 @@ export function detectMime(b) {
   if (at(0, 0xff, 0xd8, 0xff)) return 'image/jpeg';
   if (str(0, 'GIF8')) return 'image/gif';
   if (str(0, 'RIFF') && str(8, 'WEBP')) return 'image/webp';
-  if (str(0, 'BM')) return 'image/bmp';
+  if (str(0, 'BM') && looksLikeBmp(b)) return 'image/bmp';
   if (at(0, 0, 0, 1, 0)) return 'image/x-icon';
   if (str(4, 'ftypavif')) return 'image/avif';
   if (str(0, '%PDF')) return 'application/pdf';
@@ -103,11 +117,43 @@ const EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'imag
   'text/plain': 'txt', 'application/json': 'json', 'text/html': 'html' };
 export const extForMime = mime => EXT[(mime || '').toLowerCase()] || 'bin';
 
-/** Build a data URI from a Base64 payload (no wrapping) and MIME. */
-export const toDataUri = (b64, mime) => `data:${mime || 'application/octet-stream'};base64,${b64}`;
+/** Build a data URI from a Base64 payload (no wrapping) and MIME. Throws on an unsafe MIME or non-Base64 payload. */
+export function toDataUri(b64, mime) {
+  const m = mime || 'application/octet-stream';
+  if (!isSafeMime(m)) throw new Error(`Invalid MIME type "${String(m).slice(0, 40)}". Use a value like "image/png".`);
+  if (!/^[A-Za-z0-9+/=]*$/.test(b64)) throw new Error('Payload is not valid Base64.');
+  return `data:${m};base64,${b64}`;
+}
 
-/** Ready-to-use snippets for an image data URI. */
-export const imgSnippet = uri => `<img src="${uri}" alt="">`;
-export const cssSnippet = uri => `background-image: url("${uri}");`;
+const escAttr = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const escCss = s => String(s).replace(/[\\"()\s<>]/g, c => '\\' + c.charCodeAt(0).toString(16) + ' ');
+
+/** Reject anything that is not a plain image data URI before it goes into a snippet. */
+function assertImageUri(uri) {
+  if (!/^data:image\/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=]*$/.test(String(uri))) throw new Error('Not a valid image data URI (expected data:image/<type>;base64,<data>).');
+  return String(uri);
+}
+
+/** Ready-to-use snippets for an image data URI (validated and escaped, so hostile input cannot add attributes or tags). */
+export const imgSnippet = uri => `<img src="${escAttr(assertImageUri(uri))}" alt="">`;
+export const cssSnippet = uri => `background-image: url("${escCss(assertImageUri(uri))}");`;
 
 export const SIZE_WARN_BYTES = 20 * 1024 * 1024;
+
+/** Images above this size are refused in the Image tab (the data: URI would be ~1.33x larger and slow to render). */
+export const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
+
+const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
+/**
+ * Make a user-typed file name safe for download: strips control characters (C0, DEL, C1, bidi/zero-width controls),
+ * path separators and characters Windows rejects, trims dots/spaces and avoids reserved device names. Never returns ''.
+ */
+export function sanitizeFilename(name, fallback = 'download') {
+  let s = String(name ?? '')
+    .replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '')
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/^[.\s]+|[.\s]+$/g, '');
+  if (WINDOWS_RESERVED.test(s)) s = '_' + s;
+  if (s.length > 200) s = s.slice(0, 200);
+  return s || fallback;
+}

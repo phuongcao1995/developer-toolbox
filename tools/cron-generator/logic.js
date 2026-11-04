@@ -22,6 +22,15 @@ export const ALIASES = {
   '@weekly': '0 0 * * 0', '@daily': '0 0 * * *', '@midnight': '0 0 * * *', '@hourly': '0 * * * *',
 };
 
+/** First Quartz-only token (L, W, ?, #) in a field, or null. Month/day names such as JUL or WED are not matched. */
+function quartzToken(text) {
+  if (/[?#]/.test(text)) return text.match(/[^,]*[?#][^,]*/)[0];
+  for (const tok of text.split(',')) {
+    if (/^(L|LW|W|L-\d+|\d*L|\d+W|\d+L)(\/\d+)?$/i.test(tok)) return tok;
+  }
+  return null;
+}
+
 /** Parse one numeric/named token; throws Error with a precise message. */
 function parseValue(tok, spec) {
   let v;
@@ -42,6 +51,8 @@ function parseValue(tok, spec) {
  */
 export function parseField(text, spec) {
   if (text === '') throw new Error('is empty.');
+  const quartz = quartzToken(text);
+  if (quartz) throw new Error(`"${quartz}" is a Quartz-style extension and is not supported; this tool implements standard 5-field Vixie cron.`);
   const set = new Set(), items = [];
   for (const raw of text.split(',')) {
     if (raw === '') throw new Error('contains an empty list item (check for a stray comma).');
@@ -63,11 +74,12 @@ export function parseField(text, spec) {
       if (lo > hi) throw new Error(`range "${base}" is backwards: start ${lo} is greater than end ${hi}.`);
     } else {
       lo = parseValue(base, spec); type = 'single';
-      hi = stepTxt !== undefined ? spec.top : lo; // "5/10" means 5-max/10
+      hi = stepTxt !== undefined ? spec.max : lo; // "5/10" means 5-max/10 (for day-of-week max is 7 = Sunday)
     }
     for (let v = lo; v <= hi; v += step) set.add(spec.key === 'dow' && v === 7 ? 0 : v);
     items.push({ type, lo, hi, step, hasStep: stepTxt !== undefined });
   }
+  if (set.size === 0) throw new Error(`"${text}" matches no values.`);
   return { text, values: [...set].sort((a, b) => a - b), items, star: text.startsWith('*') };
 }
 
@@ -87,7 +99,7 @@ export function parseCron(input) {
   }
   const parts = expr.split(' ');
   if (parts.length !== 5) {
-    const extra = parts.length === 6 ? ' (6-field cron with seconds is not supported; remove the seconds field)' : '';
+    const extra = parts.length === 6 || parts.length === 7 ? ` (6/7-field expressions with seconds or year, as used by Quartz/Spring, are not supported; this tool implements standard 5-field Vixie cron)` : '';
     return { ok: false, errors: [{ field: null, message: `Expected 5 fields (minute hour day-of-month month day-of-week) but found ${parts.length}${extra}.` }] };
   }
   const fields = {}, errors = [];
@@ -115,6 +127,8 @@ function formatValues(values, fmt = String) {
   }
   return joinAnd(parts);
 }
+
+const dayName = d => DAY_NAMES[d % 7]; // 7 is an alias of Sunday
 
 /** "Every 15 minutes" style description for a single stepped item, else null. */
 function stepPhrase(f, spec, fmt = String) {
@@ -164,7 +178,7 @@ export function explain(parsed) {
   // Day part: standard cron ORs day-of-month and day-of-week when both are restricted (neither begins with "*").
   const domAll = isAll(dom, sDom), dowAll = isAll(dow, sDow);
   const domTxt = domAll ? '' : (stepPhrase(dom, sDom) || `day-of-month ${formatValues(dom.values)}`);
-  const dowTxt = dowAll ? '' : (stepPhrase(dow, sDow, d => DAY_NAMES[d]) || formatValues(dow.values, d => DAY_NAMES[d]));
+  const dowTxt = dowAll ? '' : (stepPhrase(dow, sDow, dayName) || formatValues(dow.values, dayName));
   let date = '';
   if (domTxt && dowTxt) date = `on ${domTxt} ${!dom.star && !dow.star ? 'or' : 'and'} on ${dowTxt}`;
   else if (domTxt) date = `on ${domTxt}`;
@@ -188,8 +202,53 @@ function dayMatches(f, d, wd) {
  * opts: { count=10, utc=false, horizonYears=10 }.
  * Skips whole months/days/hours that cannot match instead of scanning every minute.
  * Returns { runs: Date[], exhausted: boolean } (exhausted = fewer than `count` found within the horizon).
+ *
+ * Daylight-saving behaviour in local time follows Vixie cron:
+ *  - fall-back (a wall-clock hour repeats): fixed-time jobs run once, wildcard (minute or hour "*") jobs keep running in real time;
+ *  - spring-forward (a wall-clock hour is skipped, shift of up to 3 hours): fixed-time jobs whose time falls inside the skipped
+ *    interval run once, at the first valid instant after the gap (e.g. "30 2 * * *" runs at 03:00 on the transition day).
+ *    Wildcard jobs are not given extra runs.
  */
 export function nextRuns(parsed, from = new Date(), { count = 10, utc = false, horizonYears = 10 } = {}) {
+  const base = nextRunsRaw(parsed, from, { count, utc, horizonYears });
+  const f = parsed.fields;
+  if (utc || f.minute.star || f.hour.star) return base; // no DST handling needed / wildcard jobs get no catch-up runs
+  const limit = from.getTime() + horizonYears * 366 * 86400000;
+  const end = base.runs.length >= count ? base.runs[count - 1].getTime() : limit;
+  const extra = springForwardRuns(parsed, from.getTime(), end);
+  if (!extra.length) return base;
+  const seen = new Set(base.runs.map(d => d.getTime()));
+  const merged = [...base.runs, ...extra.filter(d => !seen.has(d.getTime()) && seen.add(d.getTime()))].sort((a, b) => a - b).slice(0, count);
+  return { runs: merged, exhausted: merged.length < count };
+}
+
+/** Instants (just after each spring-forward gap in [fromMs, endMs]) at which a fixed-time job skipped by the gap runs. */
+function springForwardRuns(parsed, fromMs, endMs) {
+  const f = parsed.fields, out = [];
+  const off = ms => new Date(ms).getTimezoneOffset();
+  const STEP = 6 * 3600000;
+  for (let a = fromMs; a < endMs; a += STEP) {
+    const b = Math.min(a + STEP, endMs + 60000);
+    const offA = off(a), offB = off(b);
+    if (offB >= offA) continue; // only clocks moving forward (offset in minutes WEST decreases)
+    const delta = offA - offB;
+    if (delta > 180) continue; // Vixie cron only catches up shifts under 3 hours
+    let lo = Math.floor(a / 60000), hi = Math.floor(b / 60000);
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (off(mid * 60000) === offA) lo = mid; else hi = mid; }
+    const T = hi * 60000; // first valid instant after the gap
+    if (T <= fromMs || T > endMs) continue;
+    const before = new Date(T - 60000);
+    const w0 = Date.UTC(before.getFullYear(), before.getMonth(), before.getDate(), before.getHours(), before.getMinutes());
+    for (let k = 1; k <= delta; k++) {
+      const w = new Date(w0 + k * 60000); // wall-clock minute that does not exist, read through UTC getters
+      if (f.month.values.includes(w.getUTCMonth() + 1) && dayMatches(f, w.getUTCDate(), w.getUTCDay())
+        && f.hour.values.includes(w.getUTCHours()) && f.minute.values.includes(w.getUTCMinutes())) { out.push(new Date(T)); break; }
+    }
+  }
+  return out;
+}
+
+function nextRunsRaw(parsed, from, { count, utc, horizonYears }) {
   const f = parsed.fields;
   const get = d => utc
     ? { y: d.getUTCFullYear(), mo: d.getUTCMonth() + 1, d: d.getUTCDate(), h: d.getUTCHours(), mi: d.getUTCMinutes(), wd: d.getUTCDay() }
@@ -200,6 +259,7 @@ export function nextRuns(parsed, from = new Date(), { count = 10, utc = false, h
 
   let t = new Date(Math.floor(from.getTime() / 60000) * 60000 + 60000);
   const limit = from.getTime() + horizonYears * 366 * 86400000;
+  const wildcard = f.minute.star || f.hour.star;
   const runs = []; let lastKey = '';
   let guard = 0;
   while (runs.length < count && t.getTime() <= limit && guard++ < 200000) {
@@ -218,12 +278,16 @@ export function nextRuns(parsed, from = new Date(), { count = 10, utc = false, h
       next = m !== undefined ? make(p.y, p.mo, p.d, p.h, m) : make(p.y, p.mo, p.d, p.h + 1, 0);
     } else {
       const key = `${p.y}-${p.mo}-${p.d} ${p.h}:${p.mi}`;
-      if (key !== lastKey) runs.push(new Date(t)); // key check avoids a double run in repeated DST hours
+      // Fixed-time jobs run once in a repeated (fall-back) hour; jobs with a wildcard minute/hour keep running in real time.
+      if (wildcard || key !== lastKey) runs.push(new Date(t));
       lastKey = key;
       next = new Date(t.getTime() + 60000);
     }
     // Guarantee forward progress (DST gaps can normalise a candidate backwards).
-    t = next.getTime() > t.getTime() ? next : new Date(t.getTime() + 60000);
+    // Local-time jumps that cross a clock change within a few hours (fall-back) must step minute by minute,
+    // otherwise the repeated hour would be skipped.
+    const crossesDst = !utc && next.getTimezoneOffset() !== t.getTimezoneOffset() && next.getTime() - t.getTime() <= 3 * 3600000;
+    t = next.getTime() > t.getTime() && !crossesDst ? next : new Date(t.getTime() + 60000);
   }
   return { runs, exhausted: runs.length < count };
 }
@@ -261,7 +325,8 @@ export function composeField(state, spec) {
     case 'every': return '*';
     case 'specific': {
       const v = [...new Set(state.values)].sort((a, b) => a - b);
-      return v.length === 0 || v.length === total(spec) ? '*' : v.join(',');
+      if (v.length === 0) throw new Error(`${spec.label}: tick at least one value, or switch the mode to "Every".`);
+      return v.length === total(spec) ? '*' : v.join(',');
     }
     case 'range':
       if (state.from > state.to) throw new Error(`${spec.label}: range start must not exceed the end.`);

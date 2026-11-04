@@ -126,10 +126,14 @@ function build(rows, unofficial) {
 /** All codes, sorted ascending by code (unofficial entries interleave by number). */
 export const STATUS_CODES = [...build(OFFICIAL, false), ...build(UNOFFICIAL, true)].sort((a, b) => a.code - b.code);
 
-/** Counts per filter chip: { all, '1xx', ..., unofficial }. */
+/**
+ * Counts per filter chip: { all, '1xx', ..., unofficial }.
+ * A class chip (and the "4xx" search) covers every code of that status class, official or not; the "unofficial"
+ * chip lists all unofficial codes, so it overlaps the class chips on purpose.
+ */
 export function countByCategory(list = STATUS_CODES) {
   const counts = { all: list.length, '1xx': 0, '2xx': 0, '3xx': 0, '4xx': 0, '5xx': 0, unofficial: 0 };
-  for (const s of list) counts[s.category]++;
+  for (const s of list) { counts[s.statusClass]++; if (s.unofficial) counts.unofficial++; }
   return counts;
 }
 
@@ -144,7 +148,7 @@ export function searchStatus(query, category = 'all', list = STATUS_CODES) {
   const q = String(query ?? '').trim().toLowerCase();
   let out = list;
   if (category === 'unofficial') out = out.filter(s => s.unofficial);
-  else if (category !== 'all') out = out.filter(s => !s.unofficial && s.category === category);
+  else if (category !== 'all') out = out.filter(s => s.statusClass === category);
   if (!q) return out;
 
   if (/^[1-5]xx$/.test(q)) return out.filter(s => s.statusClass === q);

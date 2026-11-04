@@ -1,14 +1,75 @@
-.tool-markdown-editor .me-files { margin-bottom: 10px; }
-.tool-markdown-editor #me-msg { margin-bottom: 10px; }
-.tool-markdown-editor .me-panes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
+.tool-markdown-editor { --me-h: min(70vh, 800px); }
+.tool-markdown-editor .me-top { gap: 8px; }
+.tool-markdown-editor .me-files { margin-bottom: 10px; align-items: center; }
+.tool-markdown-editor .me-chk { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-muted); cursor: pointer; }
+.tool-markdown-editor .me-fontctl { display: inline-flex; align-items: center; gap: 4px; }
+.tool-markdown-editor .me-fontctl .btn-icon { width: auto; min-width: 34px; padding: 0 6px; }
+.tool-markdown-editor #me-msg, .tool-markdown-editor #me-notice { margin-bottom: 10px; }
+
+/* Layout: [contents] [editor | splitter | preview] */
+.tool-markdown-editor .me-body { display: flex; gap: 12px; align-items: stretch; }
+.tool-markdown-editor .me-toc { flex: 0 0 220px; height: var(--me-h); min-height: 280px; display: flex; flex-direction: column; overflow: hidden; }
+.tool-markdown-editor .me-toc[hidden] { display: none; }
+.tool-markdown-editor .me-toc-list { list-style: none; margin: 0; padding: 6px; overflow: auto; flex: 1; }
+.tool-markdown-editor .me-toc-list .me-toc-empty { padding: 8px; color: var(--text-muted); font-size: 13px; }
+.tool-markdown-editor .me-toc-link { display: block; width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid transparent; border-radius: 6px; padding: 4px 8px; color: var(--text-muted); font: 13px/1.35 var(--font); cursor: pointer; word-break: break-word; }
+.tool-markdown-editor .me-toc-link:hover { background: var(--surface-2); color: var(--text); }
+.tool-markdown-editor .me-toc-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.tool-markdown-editor .me-toc-link.active { color: var(--primary); background: var(--primary-soft); border-left-color: var(--primary); font-weight: 600; }
+
+.tool-markdown-editor .me-panes { flex: 1; min-width: 0; display: flex; flex-direction: row; height: var(--me-h); min-height: 320px; }
+.tool-markdown-editor .me-panes[data-orient="column"] { flex-direction: column; }
+.tool-markdown-editor .me-editor-pane, .tool-markdown-editor .me-preview-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.tool-markdown-editor .me-editor-pane { position: relative; flex: 0 0 calc(var(--me-split, 50) * 1% - 5px); }
+.tool-markdown-editor .me-preview-pane { flex: 1 1 0; }
 .tool-markdown-editor .me-panes[data-mode="editor"] .me-preview-pane,
-.tool-markdown-editor .me-panes[data-mode="preview"] .me-editor-pane { display: none; }
-.tool-markdown-editor .me-panes[data-mode="editor"],
-.tool-markdown-editor .me-panes[data-mode="preview"] { grid-template-columns: 1fr; }
-.tool-markdown-editor .me-format { gap: 2px; padding: 6px 8px; }
-.tool-markdown-editor .me-input { min-height: 480px; height: 70vh; max-height: 800px; border-radius: 0; resize: none; white-space: pre-wrap; word-break: break-word; tab-size: 2; }
-.tool-markdown-editor .me-input.dragover { background: var(--primary-soft); }
-.tool-markdown-editor .me-preview { padding: 16px 20px; overflow: auto; height: 70vh; min-height: 480px; max-height: 800px; }
+.tool-markdown-editor .me-panes[data-mode="preview"] .me-editor-pane,
+.tool-markdown-editor .me-panes:not([data-mode="split"]) .me-splitter { display: none; }
+.tool-markdown-editor .me-panes:not([data-mode="split"]) .me-editor-pane,
+.tool-markdown-editor .me-panes:not([data-mode="split"]) .me-preview-pane { flex: 1 1 auto; }
+
+.tool-markdown-editor .me-splitter { flex: 0 0 10px; position: relative; cursor: col-resize; touch-action: none; border-radius: 4px; }
+.tool-markdown-editor .me-splitter::after { content: ""; position: absolute; inset: 0; margin: auto; width: 2px; height: 36px; border-radius: 2px; background: var(--border-strong); }
+.tool-markdown-editor .me-panes[data-orient="column"] .me-splitter { cursor: row-resize; }
+.tool-markdown-editor .me-panes[data-orient="column"] .me-splitter::after { width: 36px; height: 2px; }
+.tool-markdown-editor .me-splitter:hover::after, .tool-markdown-editor .me-splitter.dragging::after { background: var(--primary); }
+.tool-markdown-editor .me-splitter:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -1px; }
+.tool-markdown-editor .me-panes.dragging-split { user-select: none; }
+.tool-markdown-editor .me-panes.dragging-split .me-preview, .tool-markdown-editor .me-panes.dragging-split .me-input { pointer-events: none; }
+
+.tool-markdown-editor .me-format { gap: 2px; padding: 6px 8px; flex-wrap: wrap; }
+.tool-markdown-editor .me-input-wrap { flex: 1; min-height: 0; display: flex; }
+.tool-markdown-editor .me-input { flex: 1; width: 100%; height: 100%; min-height: 0; border-radius: 0; resize: none; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; font-size: var(--me-fs, var(--editor-font-size, 13px)); }
+.tool-markdown-editor .me-input.nowrap { white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+.tool-markdown-editor .me-input.dragover, .tool-markdown-editor .me-preview.dragover { background: var(--primary-soft); }
+.tool-markdown-editor .me-mirror { position: absolute; left: -99999px; top: 0; visibility: hidden; pointer-events: none; overflow: hidden; border: 0; margin: 0; height: auto; }
+.tool-markdown-editor .me-preview { position: relative; padding: 16px 20px; overflow: auto; flex: 1; min-height: 0; }
+.tool-markdown-editor .me-spin { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-left: auto; }
+
+/* Find & replace */
+.tool-markdown-editor .me-find { padding: 6px 8px; border-bottom: 1px solid var(--border); display: grid; gap: 6px; background: var(--surface-2); }
+.tool-markdown-editor .me-find[hidden] { display: none; }
+.tool-markdown-editor .me-find-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tool-markdown-editor .me-find-row .input { flex: 1 1 140px; width: auto; }
+.tool-markdown-editor .me-find-count { min-width: 64px; text-align: center; }
+
+/* Front matter panel + diagrams */
+.tool-markdown-editor .md-frontmatter { margin: 0 0 1em; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
+.tool-markdown-editor .md-frontmatter[hidden] { display: none; }
+.tool-markdown-editor .md-frontmatter summary { padding: 6px 12px; cursor: pointer; font-size: 13px; color: var(--text-muted); }
+.tool-markdown-editor .md-frontmatter pre { margin: 0; border: 0; border-top: 1px solid var(--border); border-radius: 0 0 8px 8px; font-size: 12.5px; }
+.tool-markdown-editor .md-mermaid { margin: 0 0 1em; padding: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: auto; contain: paint; text-align: center; background: var(--surface); }
+.tool-markdown-editor .md-mermaid svg { max-width: 100%; height: auto; }
+.tool-markdown-editor .md-mermaid details { text-align: left; margin-top: 8px; font-size: 12.5px; }
+.tool-markdown-editor .md-mermaid summary { cursor: pointer; color: var(--text-muted); }
+.tool-markdown-editor .md-mermaid-error { text-align: left; }
+.tool-markdown-editor .md-mermaid-error .alert { margin-bottom: 8px; }
+.tool-markdown-editor .md-mermaid-error pre { margin: 0; }
+.tool-markdown-editor .md-mermaid-note { margin-bottom: 8px; }
+
+/* Fullscreen (the tool root is the fullscreen element) */
+.tool-markdown-editor:fullscreen { --me-h: calc(100vh - 190px); background: var(--bg); padding: 12px 16px; overflow: auto; }
+.tool-markdown-editor:-webkit-full-screen { --me-h: calc(100vh - 190px); background: var(--bg); padding: 12px 16px; overflow: auto; }
 
 /* Rendered Markdown typography */
 .tool-markdown-editor .md-body { line-height: 1.65; word-wrap: break-word; }
@@ -35,10 +96,18 @@
 .tool-markdown-editor .md-body img { max-width: 100%; }
 .tool-markdown-editor .md-body hr { border: 0; border-top: 1px solid var(--border); margin: 1.6em 0; }
 
+/* Code blocks: scroll horizontally instead of stretching the page; plain fallback for unknown languages */
+.tool-markdown-editor .md-body pre { max-width: 100%; tab-size: 4; }
+.tool-markdown-editor .md-body pre code { white-space: pre; display: block; }
+.tool-markdown-editor .md-body .md-img-missing { color: var(--text-muted); font-style: italic; }
+
 @media (max-width: 900px) {
-  .tool-markdown-editor .me-panes[data-mode="split"] { grid-template-columns: 1fr; }
-  .tool-markdown-editor .me-panes[data-mode="split"] .me-input,
-  .tool-markdown-editor .me-panes[data-mode="split"] .me-preview { height: 48vh; min-height: 280px; }
+  .tool-markdown-editor .me-body { flex-direction: column; }
+  .tool-markdown-editor .me-toc { flex-basis: auto; height: 200px; min-height: 0; }
+  .tool-markdown-editor .me-panes { min-height: 360px; }
+  .tool-markdown-editor .me-panes[data-orient="row"] { flex-direction: column; }
+  .tool-markdown-editor .me-panes[data-orient="row"] .me-splitter { cursor: row-resize; }
+  .tool-markdown-editor .me-panes[data-orient="row"] .me-splitter::after { width: 36px; height: 2px; }
 }
 @media (max-width: 480px) {
   .tool-markdown-editor .me-preview { padding: 12px; }

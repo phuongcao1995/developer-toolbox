@@ -1,6 +1,6 @@
 // Code Image Generator UI. Preview (DOM) and PNG export (canvas) are both driven by the same layout/highlight data.
 import { downloadFile, toast, pickFile, enableDrop, readFileAsText, showMessage, withLoading, enableTabIndent,
-  escapeHtml, debounce, renderIcons } from '../../assets/js/components/ui.js';
+  escapeHtml, debounce, renderIcons, confirmDialog } from '../../assets/js/components/ui.js';
 import * as L from './logic.js';
 import { renderToCanvas, measureCharWidth, canvasToBlob } from './render.js';
 import { SAMPLES } from './samples.js';
@@ -13,7 +13,7 @@ export default {
       gradients: $('#cc-gradients'), solid: $('#cc-solid'), bgcolor: $('#cc-bgcolor'), bghex: $('#cc-bgcolor-hex'),
       padding: $('#cc-padding'), fontsize: $('#cc-fontsize'), radius: $('#cc-radius'), width: $('#cc-width'),
       autowidth: $('#cc-autowidth'), linenums: $('#cc-linenums'), shadow: $('#cc-shadow'), scale: $('#cc-scale'),
-      msg: $('#cc-msg'), viewport: $('#cc-viewport'), fit: $('#cc-fit'), stage: $('#cc-stage'), info: $('#cc-info'),
+      msg: $('#cc-msg'), remember: $('#cc-remember'), viewport: $('#cc-viewport'), fit: $('#cc-fit'), stage: $('#cc-stage'), info: $('#cc-info'),
     };
     let disposed = false;
     const measureCanvas = document.createElement('canvas');
@@ -21,7 +21,9 @@ export default {
 
     // ----- state -----
     let opts = L.sanitizeOptions(ctx.storage.get('opts', {}));
-    els.code.value = ctx.storage.get('code', null) ?? SAMPLES[opts.lang] ?? '';
+    let remember = ctx.storage.get('remember', true) !== false; // 'Remember my code' (default on)
+    els.code.value = (remember ? ctx.storage.get('code', null) : null) ?? SAMPLES[opts.lang] ?? '';
+    els.remember.checked = remember;
     els.code.style.fontSize = `${ctx.fontSize}px`;
     enableTabIndent(els.code, '  ');
     for (const [id, l] of Object.entries(L.LANGUAGES)) els.lang.append(new Option(l.label, id));
@@ -57,9 +59,10 @@ export default {
     const charWidth = fs => { if (!charWCache.has(fs)) charWCache.set(fs, measureCharWidth(measureCanvas, fs)); return charWCache.get(fs); };
 
     function buildModel() {
-      const lines = L.highlight(els.code.value, opts.lang);
+      const lim = L.limitLines(els.code.value);
+      const lines = L.highlight(lim.code, opts.lang);
       const layout = L.computeLayout(lines, opts, charWidth(opts.fontSize));
-      return { lines, layout, opts, theme: L.THEMES[opts.theme] };
+      return { lines, layout, opts, theme: L.THEMES[opts.theme], limit: lim };
     }
     function stageBackground(o) {
       if (o.bgMode === 'solid') return o.bgColor;
@@ -74,7 +77,11 @@ export default {
       const vars = ['fg', 'ln', ...L.TOKEN_CLASSES].map(k => `--c-${k}:${k === 'fg' ? theme.fg : theme[k]}`).join(';');
       const rows = lines.map((line, i) => {
         const num = opts.lineNumbers ? `<span class="cc-ln" style="display:inline-block;width:${layout.gutter}px">${escapeHtml(L.lineNumberText(i, layout.digits))}</span>` : '';
-        const toks = line.map(t => (t.cls === 'plain' ? escapeHtml(t.text) : `<span class="cc-t-${t.cls}">${escapeHtml(t.text)}</span>`)).join('');
+        const toks = line.map(t => {
+          // wide characters are pinned to a 2-cell box so the preview matches the PNG grid exactly
+          const html = L.segments(t.text).map(s => (s.wide ? `<span style="display:inline-block;width:${2 * layout.charW}px">${escapeHtml(s.text)}</span>` : escapeHtml(s.text))).join('');
+          return t.cls === 'plain' ? html : `<span class="cc-t-${t.cls}">${html}</span>`;
+        }).join('');
         return `<div class="cc-line" style="height:${layout.lineH}px">${num}${toks}</div>`;
       }).join('');
       const dots = layout.titleH ? L.MAC_DOTS.map((c, i) => `<span class="cc-dot" style="left:${14 + i * 20}px;background:${c}"></span>`).join('')
@@ -87,7 +94,9 @@ export default {
       fitPreview();
       const size = L.exportSize(layout, opts.scale);
       els.info.textContent = `Preview ${layout.stageW} x ${layout.stageH}px - export at ${opts.scale}x: ${size.w} x ${size.h}px.`;
-      showMessage(els.msg, size.error ? 'warn' : null, size.error);
+      const capNote = model.limit.truncated ? `Only the first ${L.MAX_LINES} of ${model.limit.total} lines are shown and exported.` : '';
+      const warn = [size.error, capNote].filter(Boolean).join(' ');
+      showMessage(els.msg, warn ? 'warn' : null, warn);
     }
     function fitPreview() {
       if (!model) return;
@@ -133,7 +142,7 @@ export default {
     }
 
     // ----- events -----
-    const saveCode = debounce(() => ctx.storage.set('code', els.code.value), 400);
+    const saveCode = debounce(() => { if (remember) ctx.storage.set('code', els.code.value); }, 400);
     const paintSoon = debounce(paintPreview, 50);
     function setOptions(next) {
       const prevExt = L.LANGUAGES[opts.lang].ext;
@@ -166,7 +175,18 @@ export default {
         const bg = e.target.closest('[data-bg]'); if (bg) setOptions({ ...opts, bgMode: bg.dataset.bg });
         const gr = e.target.closest('[data-gradient]'); if (gr) setOptions({ ...opts, bgMode: 'gradient', gradient: gr.dataset.gradient });
       }),
-      on($('#cc-sample'), 'click', () => { els.code.value = SAMPLES[opts.lang] || SAMPLES.plain; saveCode(); paintPreview(); }),
+      on(els.remember, 'change', () => {
+        remember = els.remember.checked; ctx.storage.set('remember', remember);
+        if (remember) ctx.storage.set('code', els.code.value); else ctx.storage.remove('code');
+        toast(remember ? 'Your code will be saved in this browser.' : 'Saved code deleted; nothing will be kept.', 'info');
+      }),
+      on($('#cc-sample'), 'click', async () => {
+        const cur = els.code.value.trim();
+        const isSample = !cur || Object.values(SAMPLES).some(s => s.trim() === cur);
+        if (!isSample && !(await confirmDialog('Replace your code?', 'The sample will overwrite the code in the editor. This cannot be undone.', 'Replace'))) return;
+        if (disposed) return;
+        els.code.value = SAMPLES[opts.lang] || SAMPLES.plain; saveCode(); paintPreview();
+      }),
       on($('#cc-upload'), 'click', async () => loadFile(await pickFile('.js,.mjs,.cjs,.jsx,.ts,.tsx,.py,.html,.htm,.css,.scss,.json,.sql,.sh,.bash,.java,.cs,.go,.rs,.php,.txt'))),
       on($('#cc-clear'), 'click', () => { els.code.value = ''; saveCode(); paintPreview(); els.code.focus(); }),
       on($('#cc-download'), 'click', e => download(e.currentTarget)),

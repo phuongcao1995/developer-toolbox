@@ -1,9 +1,13 @@
 <div class="uuid-wrap">
   <div class="panel">
-    <div class="panel-head"><h3>Generate UUID v4</h3>
+    <div class="panel-head"><h3>Generate UUID</h3>
       <span class="badge badge-success"><i data-lucide="shield-check"></i> Generated locally with a CSPRNG</span></div>
     <div class="panel-body stack">
       <div class="uuid-opts">
+        <div class="field"><label for="uuid-version">Version</label>
+          <select class="select" id="uuid-version">
+            <option value="4">v4 - random</option><option value="7">v7 - time-ordered (RFC 9562)</option>
+          </select></div>
         <div class="field"><label for="uuid-count">Count (1-1000)</label>
           <input class="input" id="uuid-count" type="number" min="1" max="1000" value="5"></div>
         <div class="field"><label for="uuid-sep">Separator (copy / download)</label>
@@ -21,11 +25,12 @@
       <div class="row">
         <button class="btn btn-primary" data-action="generate"><i data-lucide="refresh-cw"></i> Generate / Regenerate</button>
         <button class="btn" data-action="nil"><i data-lucide="circle-off"></i> Nil UUID</button>
+        <button class="btn" data-action="max"><i data-lucide="circle"></i> Max UUID</button>
         <button class="btn" data-action="copy-all"><i data-lucide="copy"></i> Copy all</button>
         <button class="btn" data-action="download"><i data-lucide="download"></i> Download .txt</button>
         <button class="btn" data-action="clear"><i data-lucide="eraser"></i> Clear</button>
       </div>
-      <div id="uuid-msg" hidden></div>
+      <div id="uuid-msg" role="status" aria-live="polite" hidden></div>
     </div>
   </div>
 

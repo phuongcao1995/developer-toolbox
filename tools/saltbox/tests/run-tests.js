@@ -56,6 +56,39 @@ const hex = (b) => enc.bytesToHex(b);
       eq(hex(Saltbox.md5(new Uint8Array(data))), nodeCrypto.createHash('md5').update(data).digest('hex'), `len ${n}`);
     }
   });
+  await test('Incremental MD5 matches the RFC vectors and node:crypto for any chunking', async () => {
+    for (const [input, expected] of Object.entries(md5Vectors)) {
+      const bytes = new Uint8Array(Buffer.from(input));
+      const h = Saltbox.md5Stream();
+      for (let i = 0; i < bytes.length; i += 7) h.update(bytes.subarray(i, i + 7));
+      eq(hex(h.digest()), expected, `stream MD5("${input}")`);
+    }
+    const data = nodeCrypto.randomBytes(1000);
+    for (const step of [1, 13, 55, 56, 63, 64, 65, 128, 999, 1000]) {
+      const h = Saltbox.md5Stream();
+      for (let i = 0; i < data.length; i += step) h.update(new Uint8Array(data.subarray(i, i + step)));
+      eq(hex(h.digest()), nodeCrypto.createHash('md5').update(data).digest('hex'), `step ${step}`);
+    }
+  });
+  await test('md5Blob hashes in slices with progress and can be cancelled', async () => {
+    const data = nodeCrypto.randomBytes(100000);
+    const progress = [];
+    const d = await hash.md5Blob(new Blob([data]), { chunkSize: 30000, onProgress: (a, b) => progress.push([a, b]) });
+    eq(hex(d), nodeCrypto.createHash('md5').update(data).digest('hex'));
+    eq(progress.length, 4); eq(progress[3][0], 100000);
+    const ac = new AbortController(); ac.abort();
+    let name = '';
+    try { await hash.md5Blob(new Blob([data]), { signal: ac.signal }); } catch (e) { name = e.name; }
+    eq(name, 'AbortError');
+  });
+  await test('PBKDF2 iteration cap is 5,000,000 and slow runs warn above 1,000,000', async () => {
+    eq(password.LIMITS.maxIterations, 5000000);
+    let rejected = false;
+    try { await password.hashPassword('x', { iterations: 5000001, salt: new Uint8Array(16), length: 32 }); } catch (_) { rejected = true; }
+    eq(rejected, true);
+    eq(password.slowWarning(1000000), '');
+    eq(/1,000,001 iterations/.test(password.slowWarning(1000001)), true);
+  });
   const shaAbc = {
     'SHA-1': 'a9993e364706816aba3e25717850c26c9cd0d89d',
     'SHA-256': 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',

@@ -20,7 +20,8 @@
 
   const LIMITS = {
     minIterations: 1,
-    maxIterations: 10000000, // guards against hostile inputs freezing the tab
+    maxIterations: 5000000, // guards against hostile inputs freezing the tab (PBKDF2 cannot be interrupted once started)
+    slowIterations: 1000000, // above this we warn that it may take a long time
     minSaltBytes: 1,
     recommendedSaltBytes: 16,
     maxSaltBytes: 1024,
@@ -45,6 +46,12 @@
     if (!Number.isInteger(length) || length < LIMITS.minLength || length > LIMITS.maxLength) {
       throw new Error(`Output length must be between ${LIMITS.minLength} and ${LIMITS.maxLength} bytes.`);
     }
+  }
+
+  /** Warning text when the iteration count is high enough to freeze the tab for a while, else ''. */
+  function slowWarning(iterations) {
+    if (!Number.isFinite(iterations) || iterations <= LIMITS.slowIterations) return '';
+    return `${iterations.toLocaleString('en-US')} iterations can take many seconds or minutes, and the browser cannot interrupt PBKDF2 once it has started. The tab may look frozen until it finishes.`;
   }
 
   /** Returns human-readable warnings for weak parameter choices. */
@@ -143,6 +150,6 @@
 
   Saltbox.password = {
     PRESETS, LIMITS, pbkdf2, hashPassword, verifyPassword,
-    encodePHC, parsePHC, assessParams,
+    encodePHC, parsePHC, assessParams, slowWarning,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

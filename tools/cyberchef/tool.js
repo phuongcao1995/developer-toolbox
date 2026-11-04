@@ -1,4 +1,4 @@
-import { copyText, downloadFile, toast, pickFile, enableDrop, showMessage, bindActions, readFileAsText, debounce, el, renderIcons, formatBytes } from '../../assets/js/components/ui.js';
+import { copyText, downloadFile, toast, pickFile, enableDrop, showMessage, bindActions, readFileAsArrayBuffer, debounce, el, renderIcons, formatBytes } from '../../assets/js/components/ui.js';
 import * as L from './logic.js';
 
 export default {
@@ -7,10 +7,13 @@ export default {
     const input = q('input'), output = q('output'), stepsBox = q('steps'), opSelect = q('opselect'), auto = q('auto'), err = q('err');
     let steps = [];            // [{uid, op, enabled, params}]
     let uid = 0, runToken = 0, finalText = '';
+    let fileBytes = null, fileName = '';   // a loaded file is kept as raw bytes (the textarea would normalise line endings and mangle binary)
+    let finalValue = null, view = 'text';  // last pipeline result (string | Uint8Array) and the output view
+    const FILE_WARN = 10 * 1024 * 1024, FILE_MAX = 50 * 1024 * 1024, SHOW_MAX = 2_000_000;
     const rows = new Map();    // uid -> {box, out}
 
     // Operation picker grouped by category.
-    for (const g of ['Encode', 'Decode', 'Hash']) {
+    for (const g of L.GROUPS) {
       const og = el('optgroup', { label: g });
       L.OPERATIONS.filter(o => o.group === g).forEach(o => og.append(el('option', { value: o.id, title: o.desc }, o.name)));
       opSelect.append(og);
@@ -59,7 +62,7 @@ export default {
     // ---- Execution ----
     async function run() {
       const token = ++runToken;
-      const res = await L.runPipeline(input.value, steps);
+      const res = await L.runPipeline(fileBytes || input.value, steps);
       if (token !== runToken) return; // a newer run superseded this one
       const PREVIEW = 4000;
       steps.forEach((s, i) => {
@@ -76,14 +79,28 @@ export default {
       });
       if (res.failedAt >= 0) {
         showMessage(err, 'error', `Step ${res.failedAt + 1} (${L.getOp(steps[res.failedAt].op).name}) failed: ${res.error}`);
-        finalText = ''; output.value = ''; q('outbadge').textContent = '';
+        finalValue = null; renderOutput();
       } else {
         showMessage(err, null);
-        finalText = res.final.text; output.value = finalText;
-        q('outbadge').textContent = res.final.binary ? `binary · ${res.final.bytes} B (hex)` : `${finalText.length} chars`;
+        finalValue = res.finalValue; renderOutput(res.final);
       }
-      q('inmeta').textContent = input.value ? `${input.value.length} chars · ${formatBytes(new TextEncoder().encode(input.value).length)} UTF-8` : '';
+      q('inmeta').textContent = fileBytes ? `File: ${formatBytes(fileBytes.length)} (raw bytes)` : input.value ? `${input.value.length} chars · ${formatBytes(new TextEncoder().encode(input.value).length)} UTF-8` : '';
     }
+    /** Show the final value as text or hex; finalText is what Copy / Download text use. */
+    function renderOutput(final) {
+      if (finalValue === null) { finalText = ''; output.value = ''; q('outbadge').textContent = ''; return; }
+      const bytes = L.valueBytes(finalValue);
+      const d = final || L.displayValue(finalValue);
+      if (view === 'hex') { finalText = L.bytesToHex(bytes, ' '); q('outbadge').textContent = `${bytes.length} B · hex`; }
+      else { finalText = d.text; q('outbadge').textContent = d.binary ? `binary · ${bytes.length} B (shown as hex)` : `${finalText.length} chars · ${formatBytes(bytes.length)}`; }
+      output.value = finalText.length > SHOW_MAX ? finalText.slice(0, SHOW_MAX) + `
+… (display truncated, ${finalText.length} chars in total — Copy and Download use the full output)` : finalText;
+    }
+    root.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+      view = b.dataset.view;
+      root.querySelectorAll('[data-view]').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-pressed', x === b); });
+      renderOutput();
+    }));
     const runSoon = debounce(run, 150);
     const changed = () => { persist(); if (auto.checked) runSoon(); };
     input.addEventListener('input', () => { if (auto.checked) runSoon(); else q('inmeta').textContent = ''; });
@@ -96,20 +113,42 @@ export default {
       renderSteps(); persist(); run();
     } }, r.name)));
 
+    function setFile(bytes, name) {
+      fileBytes = bytes; fileName = name;
+      const on = !!bytes;
+      q('filebar').hidden = !on; input.disabled = on;
+      if (on) { q('filename').textContent = name; q('filesize').textContent = formatBytes(bytes.length); input.value = ''; }
+      input.placeholder = on ? 'A file is loaded — remove it to type text instead.' : 'Type, paste, or drop any file here (files are read as raw bytes)…';
+      showMessage(q('filewarn'), on && bytes.length > FILE_WARN ? 'warn' : null, `This file is ${formatBytes(bytes.length)}. Large inputs can take a while and every step keeps its own copy in memory.`);
+    }
     const loadFile = async f => {
-      if (f.size > 5 * 1024 * 1024) return toast('File is larger than 5 MB', 'error');
-      try { input.value = await readFileAsText(f); run(); toast(`Loaded ${f.name}`, 'success'); } catch (e) { toast('Could not read file: ' + e.message, 'error'); }
+      if (f.size > FILE_MAX) return toast(`File is larger than ${formatBytes(FILE_MAX)}; choose a smaller one`, 'error');
+      try { setFile(new Uint8Array(await readFileAsArrayBuffer(f)), f.name); run(); toast(`Loaded ${f.name} (${formatBytes(f.size)})`, 'success'); }
+      catch (e) { toast('Could not read file: ' + e.message, 'error'); }
     };
 
     bindActions(root, {
       add() { steps.push({ uid: ++uid, op: opSelect.value, enabled: true, params: {} }); renderSteps(); changed(); if (!auto.checked) run(); },
       run() { run(); },
       reset() { steps = []; renderSteps(); persist(); run(); },
-      clear() { input.value = ''; run(); input.focus(); },
+      clear() { setFile(null, ''); input.value = ''; run(); input.focus(); },
+      'remove-file'() { setFile(null, ''); run(); input.focus(); },
       copy() { copyText(finalText); },
-      download() { downloadFile('output.txt', finalText); },
-      use() { if (!finalText) return toast('No output to reuse', 'warn'); input.value = finalText; run(); },
-      async upload() { const f = await pickFile('.txt,.json,.csv,.log,text/*'); if (f) loadFile(f); },
+      download() { downloadFile(view === 'hex' ? 'output.hex.txt' : 'output.txt', finalText); },
+      'download-bytes'() {
+        if (finalValue === null) return toast('No output to download', 'warn');
+        const bytes = L.valueBytes(finalValue);
+        if (!bytes.length) return toast('The output is empty', 'warn');
+        downloadFile('output.bin', new Blob([bytes], { type: 'application/octet-stream' }));
+      },
+      use() {
+        if (finalValue === null) return toast('No output to reuse', 'warn');
+        const d = L.displayValue(finalValue);
+        if (d.binary) setFile(L.valueBytes(finalValue).slice(), 'pipeline output'); // keep real bytes
+        else { setFile(null, ''); input.value = d.text; }
+        run();
+      },
+      async upload() { const f = await pickFile(''); if (f) loadFile(f); },
     });
     const offDrop = enableDrop(input.closest('.panel'), loadFile);
 

@@ -1,6 +1,6 @@
 <div class="jwt-layout">
   <div class="alert alert-warn jwt-notice"><i data-lucide="shield-alert"></i>
-    <span><strong>Decoding does NOT verify the signature.</strong> Anyone can create a token with any contents. Never trust the claims below until the signature has been verified with the correct key on your server. Tokens are decoded locally and never sent anywhere.</span></div>
+    <span><strong>Decoding is not validation. The signature is NOT verified unless you use &ldquo;Verify signature&rdquo; below, and even then claims are not validated.</strong> Anyone can create a token with any contents. Never trust the claims below until the signature has been verified with the correct key on your server. Tokens are decoded locally and never sent anywhere.</span></div>
 
   <div class="panel">
     <div class="panel-head"><h3>Encoded token</h3>
@@ -15,11 +15,14 @@
 
   <div data-el="result" hidden class="stack">
     <div class="card jwt-status">
-      <span class="badge jwt-state" data-el="state"></span>
-      <span data-el="statetext"></span>
+      <span class="badge badge-danger jwt-unverified" data-el="verified" title="Decoding never checks the signature. Use Verify signature below. Time states only reflect the exp/nbf claims.">Signature NOT verified</span>
+      <span class="badge jwt-state" data-el="state" aria-live="polite"></span>
+      <span data-el="statetext" class="jwt-countdown"></span>
       <span class="spacer"></span>
       <span class="hint">Algorithm: <strong data-el="alg">—</strong></span>
     </div>
+
+    <ul class="jwt-warnings" data-el="warnings" aria-label="Token checks" hidden></ul>
 
     <div class="grid-2 jwt-grid">
       <div class="panel">
@@ -32,16 +35,54 @@
       </div>
     </div>
 
-    <div class="panel" data-el="timespanel" hidden>
-      <div class="panel-head"><h3>Time claims</h3><span class="hint">Updates live</span></div>
+    <div class="panel" data-el="hdrpanel" hidden>
+      <div class="panel-head"><h3>Header parameters</h3></div>
       <div class="table-wrap"><table class="table jwt-times">
-        <thead><tr><th>Claim</th><th>UTC</th><th>Local</th><th>Relative</th></tr></thead>
+        <thead><tr><th>Parameter</th><th>Value</th><th>Meaning</th></tr></thead>
+        <tbody data-el="hdrclaims"></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel" data-el="timespanel" hidden>
+      <div class="panel-head"><h3>Claims</h3><span class="hint">Times are shown in UTC and local time and update live. Values are unverified.</span></div>
+      <div class="table-wrap"><table class="table jwt-times">
+        <thead><tr><th>Claim</th><th>Value</th><th>Meaning</th></tr></thead>
         <tbody data-el="times"></tbody>
       </table></div>
     </div>
 
+    <div class="panel jwt-verify">
+      <div class="panel-head"><h3>Verify signature</h3>
+        <span class="hint">Optional. Runs locally with Web Crypto; keys and secrets are never stored or sent anywhere and are cleared when you leave.</span></div>
+      <div class="panel-body stack">
+        <p class="hint" data-el="verify-need" aria-live="polite"></p>
+        <div class="field"><label for="jwt-key">Secret (HS256/384/512) or public key (RS/PS/ES: PEM &ldquo;PUBLIC KEY&rdquo; or JWK)</label>
+          <textarea id="jwt-key" class="textarea code jwt-key" data-el="verify-key" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="your-256-bit-secret   or   -----BEGIN PUBLIC KEY-----"></textarea></div>
+        <div class="row">
+          <div class="field"><label for="jwt-key-enc">Treat a shared secret as</label>
+            <select id="jwt-key-enc" class="select" data-el="verify-enc"><option value="utf8">UTF-8 text</option><option value="base64url">base64url bytes</option></select></div>
+          <button class="btn btn-primary" data-action="verify"><i data-lucide="shield-check"></i>Verify signature</button>
+          <button class="btn" data-action="verify-clear"><i data-lucide="eraser"></i>Clear key</button>
+        </div>
+        <div class="alert" data-el="verify-result" role="status" aria-live="polite" hidden></div>
+        <p class="hint jwt-disclaimer" data-el="verify-disclaimer" hidden></p>
+      </div>
+    </div>
+
+    <div class="panel jwt-claims-check">
+      <div class="panel-head"><h3>Claims check</h3><span class="hint">Separate from the signature: a valid signature says nothing about these, and these say nothing about the signature.</span></div>
+      <div class="panel-body stack">
+        <div class="grid-2">
+          <div class="field"><label for="jwt-exp-iss">Expected issuer (iss), optional</label><input id="jwt-exp-iss" class="input" data-el="claims-iss" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="jwt-exp-aud">Expected audience (aud), optional</label><input id="jwt-exp-aud" class="input" data-el="claims-aud" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <div class="row"><button class="btn" data-action="claims-check"><i data-lucide="list-checks"></i>Check claims</button></div>
+        <ul class="jwt-warnings" data-el="claims-result" aria-live="polite" hidden></ul>
+      </div>
+    </div>
+
     <div class="panel">
-      <div class="panel-head"><h3>Signature (raw, unverified)</h3><button class="btn btn-sm" data-action="copy-sig"><i data-lucide="copy"></i>Copy</button></div>
+      <div class="panel-head"><h3>Signature (raw)</h3><button class="btn btn-sm" data-action="copy-sig"><i data-lucide="copy"></i>Copy</button></div>
       <pre class="code-block jwt-sig" data-el="sig"></pre>
     </div>
   </div>

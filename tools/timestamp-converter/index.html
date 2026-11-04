@@ -43,7 +43,8 @@
           <button class="btn" data-action="unix-copy-all"><i data-lucide="copy"></i> Copy all</button>
           <span class="badge" id="ts-unit-badge" hidden></span>
         </div>
-        <div id="ts-unix-msg" hidden></div>
+        <div id="ts-unix-msg" role="status" aria-live="polite" hidden></div>
+        <div class="alert alert-info" id="ts-unix-hint" role="status" hidden></div>
         <div class="table-wrap"><table class="table ts-table"><tbody id="ts-unix-out"></tbody></table></div>
       </div>
     </div>
@@ -71,7 +72,7 @@
           <button class="btn" data-action="date-now"><i data-lucide="clock"></i> Use now</button>
           <button class="btn" data-action="date-clear"><i data-lucide="eraser"></i> Clear</button>
         </div>
-        <div id="ts-date-msg" hidden></div>
+        <div id="ts-date-msg" role="status" aria-live="polite" hidden></div>
         <div class="table-wrap"><table class="table ts-table"><tbody id="ts-date-out"></tbody></table></div>
       </div>
     </div>
@@ -86,7 +87,7 @@
         <button class="btn" data-action="iso-clear"><i data-lucide="eraser"></i> Clear</button>
       </div>
       <p class="hint">Values with Z or an offset are absolute; date-only values are UTC midnight; date-times without an offset use the zone chosen in "Interpret the date as".</p>
-      <div id="ts-iso-msg" hidden></div>
+      <div id="ts-iso-msg" role="status" aria-live="polite" hidden></div>
       <div class="table-wrap"><table class="table ts-table"><tbody id="ts-iso-out"></tbody></table></div>
     </div>
   </div>

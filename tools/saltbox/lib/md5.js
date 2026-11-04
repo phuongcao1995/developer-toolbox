@@ -26,28 +26,27 @@
     K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 0x100000000);
   }
 
-  /** @param {Uint8Array} bytes @returns {Uint8Array} 16-byte digest */
-  function md5(bytes) {
-    const length = bytes.length;
-    // Message + 0x80 + zero padding + 64-bit little-endian bit length.
-    const paddedLength = (Math.floor((length + 8) / 64) + 1) * 64;
-    const buffer = new Uint8Array(paddedLength);
-    buffer.set(bytes);
-    buffer[length] = 0x80;
-
-    const view = new DataView(buffer.buffer);
-    view.setUint32(paddedLength - 8, (length * 8) >>> 0, true);
-    view.setUint32(paddedLength - 4, Math.floor(length / 0x20000000), true);
-
+  /**
+   * Incremental MD5: feed any number of chunks with update(), then call digest() once.
+   * Lets large files be hashed in slices without holding the whole file in memory.
+   * @returns {{update(bytes: Uint8Array): void, digest(): Uint8Array}}
+   */
+  function createMd5() {
     let a0 = 0x67452301;
     let b0 = 0xefcdab89;
     let c0 = 0x98badcfe;
     let d0 = 0x10325476;
     const M = new Uint32Array(16);
+    const tail = new Uint8Array(64); // bytes of an incomplete block carried between update() calls
+    let tailLength = 0;
+    let total = 0; // total message length in bytes (a safe integer for any realistic file)
+    let done = false;
 
-    for (let offset = 0; offset < paddedLength; offset += 64) {
-      for (let j = 0; j < 16; j++) M[j] = view.getUint32(offset + j * 4, true);
-
+    function block(bytes, offset) {
+      for (let j = 0; j < 16; j++) {
+        const o = offset + j * 4;
+        M[j] = (bytes[o] | (bytes[o + 1] << 8) | (bytes[o + 2] << 16) | (bytes[o + 3] << 24)) >>> 0;
+      }
       let A = a0, B = b0, C = c0, D = d0;
       for (let i = 0; i < 64; i++) {
         let F, g;
@@ -68,14 +67,54 @@
       d0 = (d0 + D) >>> 0;
     }
 
-    const out = new Uint8Array(16);
-    const outView = new DataView(out.buffer);
-    outView.setUint32(0, a0, true);
-    outView.setUint32(4, b0, true);
-    outView.setUint32(8, c0, true);
-    outView.setUint32(12, d0, true);
-    return out;
+    function update(bytes) {
+      if (done) throw new Error('MD5 digest already finished.');
+      total += bytes.length;
+      let pos = 0;
+      if (tailLength) {
+        const take = Math.min(64 - tailLength, bytes.length);
+        tail.set(bytes.subarray(0, take), tailLength);
+        tailLength += take; pos = take;
+        if (tailLength < 64) return;
+        block(tail, 0); tailLength = 0;
+      }
+      for (; pos + 64 <= bytes.length; pos += 64) block(bytes, pos);
+      if (pos < bytes.length) { tail.set(bytes.subarray(pos), 0); tailLength = bytes.length - pos; }
+    }
+
+    function digest() {
+      if (done) throw new Error('MD5 digest already finished.');
+      done = true;
+      // 0x80, zero padding, then the 64-bit little-endian bit length.
+      const padLength = tailLength < 56 ? 64 : 128;
+      const pad = new Uint8Array(padLength);
+      pad.set(tail.subarray(0, tailLength));
+      pad[tailLength] = 0x80;
+      const view = new DataView(pad.buffer);
+      view.setUint32(padLength - 8, (total * 8) >>> 0, true);
+      view.setUint32(padLength - 4, Math.floor(total / 0x20000000), true);
+      block(pad, 0);
+      if (padLength === 128) block(pad, 64);
+
+      const out = new Uint8Array(16);
+      const outView = new DataView(out.buffer);
+      outView.setUint32(0, a0, true);
+      outView.setUint32(4, b0, true);
+      outView.setUint32(8, c0, true);
+      outView.setUint32(12, d0, true);
+      return out;
+    }
+
+    return { update, digest };
   }
 
+  /** @param {Uint8Array} bytes @returns {Uint8Array} 16-byte digest */
+  function md5(bytes) {
+    const h = createMd5();
+    h.update(bytes);
+    return h.digest();
+  }
+
+  Saltbox.md5Stream = createMd5;
   Saltbox.md5 = md5;
 })(typeof window !== 'undefined' ? window : globalThis);

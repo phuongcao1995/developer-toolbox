@@ -4,10 +4,12 @@
 
   <div class="panel">
     <div class="panel-head"><h3>Input</h3>
-      <button class="btn btn-sm" data-action="upload"><i data-lucide="upload"></i>Upload text file</button>
+      <button class="btn btn-sm" data-action="upload"><i data-lucide="upload"></i>Upload file</button>
       <button class="btn btn-sm" data-action="clear"><i data-lucide="trash-2"></i>Clear</button>
     </div>
-    <textarea class="textarea code cc-input" data-el="input" spellcheck="false" placeholder="Type, paste, or drop a text file here…" aria-label="Input"></textarea>
+    <div class="cc-file" data-el="filebar" hidden><span class="badge" data-el="filename"></span><span class="hint" data-el="filesize"></span><button class="btn btn-sm" data-action="remove-file"><i data-lucide="x"></i>Remove file</button></div>
+    <div class="alert alert-warn cc-filewarn" data-el="filewarn" hidden></div>
+    <textarea class="textarea code cc-input" data-el="input" spellcheck="false" placeholder="Type, paste, or drop any file here (files are read as raw bytes)…" aria-label="Input"></textarea>
     <div class="cc-meta hint" data-el="inmeta"></div>
   </div>
 
@@ -34,8 +36,10 @@
 
   <div class="panel">
     <div class="panel-head"><h3>Output <span class="badge" data-el="outbadge"></span></h3>
+      <div class="tabs cc-view" role="group" aria-label="Output view"><button class="tab active" data-view="text" aria-pressed="true">Text</button><button class="tab" data-view="hex" aria-pressed="false">Hex</button></div>
       <button class="btn btn-sm" data-action="copy"><i data-lucide="copy"></i>Copy</button>
-      <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i>Download</button>
+      <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i>Download text</button>
+      <button class="btn btn-sm" data-action="download-bytes" title="Save the exact output bytes (UTF-8 for text results)"><i data-lucide="file-down"></i>Download bytes</button>
       <button class="btn btn-sm" data-action="use"><i data-lucide="arrow-up"></i>Use as input</button>
     </div>
     <div class="alert alert-error cc-err" data-el="err" hidden></div>

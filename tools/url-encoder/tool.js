@@ -48,14 +48,14 @@ export default {
     const renderParams = () => {
       const tb = $('urlenc-params');
       tb.replaceChildren(...params.map((p, i) => {
-        const key = el('input', { class: 'input', value: p.key, 'aria-label': 'Key', spellcheck: 'false' });
-        const val = el('input', { class: 'input', value: p.value, 'aria-label': 'Value', spellcheck: 'false' });
+        const key = el('input', { class: 'input', value: p.key, 'aria-label': `Key ${i + 1}`, spellcheck: 'false' });
+        const val = el('input', { class: 'input', value: p.value, 'aria-label': `Value ${i + 1}`, spellcheck: 'false' });
         const tr = el('tr', { class: p.malformed ? 'urlenc-bad' : '', title: p.malformed ? 'Contained a malformed % sequence; shown raw' : '' },
           el('td', {}, key), el('td', {}, val),
           el('td', { class: 'urlenc-act' },
-            el('button', { class: 'btn btn-sm btn-ghost', 'aria-label': 'Remove parameter', 'data-action': 'del-param', 'data-i': i, html: '<i data-lucide="trash-2"></i>' })));
-        key.addEventListener('input', () => { p.key = key.value; refreshBuilt(); });
-        val.addEventListener('input', () => { p.value = val.value; p.hasEq = true; refreshBuilt(); });
+            el('button', { class: 'btn btn-sm btn-ghost', 'aria-label': `Remove parameter ${i + 1}`, 'data-action': 'del-param', 'data-i': i, html: '<i data-lucide="trash-2"></i>' })));
+        key.addEventListener('input', () => { p.key = key.value; p.dirty = true; refreshBuilt(); });
+        val.addEventListener('input', () => { p.value = val.value; p.hasEq = true; p.dirty = true; refreshBuilt(); });
         return tr;
       }));
       $('urlenc-count').textContent = params.length;
@@ -98,7 +98,7 @@ export default {
       'copy-in': () => copyText(inp.value),
       'copy-out': () => copyText(out.value),
       download: () => downloadFile('url-encoded.txt', out.value),
-      open: async () => { const f = await pickFile('.txt,text/*'); if (f) { try { inp.value = (await readFileAsText(f)).trim(); } catch (e) { showMessage(msg, 'error', e.message); } } },
+      open: async () => { const f = await pickFile('.txt,text/*'); if (f) { try { inp.value = await readFileAsText(f); } catch (e) { showMessage(msg, 'error', e.message); } } },
 
       parse: () => parse(),
       'assume-https': () => parse(true),
@@ -107,7 +107,7 @@ export default {
       'copy-field': (e, b) => copyText($('urlenc-fields')._rows[Number(b.dataset.i)][1]),
       'add-param': () => {
         if (!base) return showMessage(uMsg, 'error', 'Parse a URL first.');
-        params.push({ key: '', value: '', hasEq: true }); renderParams(); refreshBuilt();
+        params.push({ key: '', value: '', hasEq: true, dirty: true }); renderParams(); refreshBuilt();
         $('urlenc-params').lastElementChild?.querySelector('input')?.focus();
       },
       'del-param': (e, b) => { params.splice(Number(b.dataset.i), 1); renderParams(); refreshBuilt(); },

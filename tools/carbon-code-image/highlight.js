@@ -144,11 +144,47 @@ function rulesFor(lang) {
   return compiled.get(lang);
 }
 
-/** Replace tabs with spaces (aligned to tab stops) and normalise line endings so every glyph is one monospace cell. */
+// ---- monospace cell widths (by code point; East-Asian wide + emoji = 2 cells, combining/zero-width = 0) ----
+const WIDE = [[0x1100, 0x115f], [0x2e80, 0x303e], [0x3041, 0x33ff], [0x3400, 0x4dbf], [0x4e00, 0x9fff], [0xa000, 0xa4cf], [0xac00, 0xd7a3],
+  [0xf900, 0xfaff], [0xfe30, 0xfe6f], [0xff00, 0xff60], [0xffe0, 0xffe6], [0x1f300, 0x1f64f], [0x1f680, 0x1f6ff], [0x1f900, 0x1f9ff], [0x20000, 0x3fffd]];
+const ZERO = [[0x0300, 0x036f], [0x1ab0, 0x1aff], [0x1dc0, 0x1dff], [0x200b, 0x200f], [0x20d0, 0x20ff], [0xfe00, 0xfe0f], [0xfe20, 0xfe2f]];
+const inRanges = (cp, r) => r.some(([a, b]) => cp >= a && cp <= b);
+/** Number of monospace cells for one code point. */
+export function cellWidth(cp) {
+  if (cp < 0x300) return 1;
+  if (inRanges(cp, ZERO)) return 0;
+  return inRanges(cp, WIDE) ? 2 : 1;
+}
+/** Number of cells for a string, counted by code points (not UTF-16 units). */
+export function textCols(str) {
+  let n = 0;
+  for (const ch of String(str)) n += cellWidth(ch.codePointAt(0));
+  return n;
+}
+/**
+ * Split text into drawable segments: runs of narrow characters stay together (one fillText per run), every wide
+ * character becomes its own segment so it can be pinned to its grid column. Returns [{ text, col, cols }].
+ */
+export function segments(text, startCol = 0) {
+  const out = []; let col = startCol, run = '', runCol = startCol;
+  const flush = () => { if (run) { out.push({ text: run, col: runCol, cols: col - runCol }); run = ''; } };
+  for (const ch of text) {
+    const w = cellWidth(ch.codePointAt(0));
+    if (w === 2) { flush(); out.push({ text: ch, col, cols: 2, wide: true }); col += 2; runCol = col; }
+    else { if (!run) runCol = col; run += ch; col += w; }
+  }
+  flush();
+  return out;
+}
+
+/** Replace tabs with spaces (aligned to tab stops, measured in cells) and normalise line endings so every glyph sits on the grid. */
 export function normalizeCode(code, tabSize = 4) {
   return String(code ?? '').replace(/\r\n?/g, '\n').split('\n').map(line => {
-    let out = '';
-    for (const ch of line) out += ch === '\t' ? ' '.repeat(tabSize - (out.length % tabSize)) : ch;
+    let out = '', col = 0;
+    for (const ch of line) {
+      if (ch === '\t') { const k = tabSize - (col % tabSize); out += ' '.repeat(k); col += k; }
+      else { out += ch; col += cellWidth(ch.codePointAt(0)); }
+    }
     return out;
   }).join('\n');
 }

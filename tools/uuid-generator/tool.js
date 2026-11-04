@@ -1,5 +1,5 @@
 import { copyText, downloadFile, showMessage, bindActions, el, escapeHtml, renderIcons } from '../../assets/js/components/ui.js';
-import { generateMany, formatUuid, parseCount, inspectUuid, NIL_UUID, SEPARATORS } from './logic.js';
+import { generateMany, formatUuid, parseCount, inspectUuid, NIL_UUID, MAX_UUID, SEPARATORS } from './logic.js';
 
 export default {
   mount(root, ctx) {
@@ -13,16 +13,20 @@ export default {
     for (const [k, id] of Object.entries(ids)) if (typeof saved[k] === 'boolean') $(id).checked = saved[k];
     if (saved.sep && SEPARATORS[saved.sep]) $('uuid-sep').value = saved.sep;
     if (saved.count) $('uuid-count').value = saved.count;
+    if (saved.version === '4' || saved.version === '7') $('uuid-version').value = saved.version;
 
     const fmtOpts = () => Object.fromEntries(Object.entries(ids).map(([k, id]) => [k, $(id).checked]));
     const formatted = () => canonical.map(u => formatUuid(u, fmtOpts()));
     const joined = () => formatted().join(SEPARATORS[$('uuid-sep').value]);
-    const persist = () => ctx.storage.set('opts', { ...fmtOpts(), sep: $('uuid-sep').value, count: $('uuid-count').value });
+    const persist = () => ctx.storage.set('opts', { ...fmtOpts(), sep: $('uuid-sep').value, count: $('uuid-count').value, version: $('uuid-version').value });
 
     function render() {
       const list = $('uuid-list'), items = formatted();
       $('uuid-total').textContent = items.length;
       if (!items.length) { list.innerHTML = '<p class="hint uuid-pad">Nothing generated yet.</p>'; return; }
+      // Same number of rows already shown (display-option change): only update the text of the changed rows.
+      const codes = list.querySelectorAll('.uuid-item code');
+      if (codes.length === items.length) { codes.forEach((c, i) => { if (c.textContent !== items[i]) c.textContent = items[i]; }); return; }
       const frag = document.createDocumentFragment();
       items.forEach((u, i) => frag.append(el('div', { class: 'uuid-item' },
         el('span', { class: 'uuid-idx' }, String(i + 1)), el('code', {}, u),
@@ -35,12 +39,13 @@ export default {
     Object.values(ids).forEach(id => $(id).addEventListener('change', () => { persist(); render(); }));
     $('uuid-sep').addEventListener('change', persist);
     $('uuid-count').addEventListener('change', persist);
+    $('uuid-version').addEventListener('change', persist);
 
     const generate = () => {
       showMessage(msg, null);
       try {
         const n = parseCount($('uuid-count').value);
-        canonical = generateMany(n, {}); // canonical form
+        canonical = generateMany(n, {}, undefined, { version: Number($('uuid-version').value) }); // canonical form
         persist(); render();
       } catch (e) { showMessage(msg, 'error', e.message); }
     };
@@ -54,6 +59,7 @@ export default {
       if (!r.valid) { out.className = 'alert alert-error'; out.textContent = r.message; return; }
       out.className = 'alert alert-success';
       const rows = [['Canonical', r.canonical], ['Version', r.version == null ? (r.versionName || '-') : `${r.version}${r.versionName ? ' - ' + r.versionName : ' (non-standard)'}`], ['Variant', r.variant]];
+      if (r.timestamp) rows.push(['Embedded timestamp (UTC)', r.timestamp.iso], ['Unix milliseconds', String(r.timestamp.ms)]);
       out.innerHTML = '<strong>Valid UUID</strong><dl class="uuid-kv">' + rows.map(([k, x]) => `<dt>${k}</dt><dd>${escapeHtml(x)}</dd>`).join('') + '</dl>';
     };
     $('uuid-inspect').addEventListener('input', inspect);
@@ -61,6 +67,7 @@ export default {
     bindActions(root, {
       generate,
       nil: () => { showMessage(msg, null); canonical = [NIL_UUID]; render(); },
+      max: () => { showMessage(msg, null); canonical = [MAX_UUID]; render(); },
       'copy-all': () => copyText(joined(), `Copied ${canonical.length} UUID${canonical.length === 1 ? '' : 's'}`),
       download: () => downloadFile('uuids.txt', joined()),
       clear: () => { canonical = []; showMessage(msg, null); render(); },

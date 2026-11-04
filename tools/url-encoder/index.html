@@ -20,19 +20,19 @@
       <button class="btn" data-action="swap"><i data-lucide="arrow-left-right"></i> Swap</button>
       <button class="btn" data-action="clear"><i data-lucide="eraser"></i> Clear</button>
     </div>
-    <div id="urlenc-msg" hidden></div>
+    <div id="urlenc-msg" role="status" aria-live="polite" hidden></div>
     <div class="grid-2">
       <div class="panel">
         <div class="panel-head"><h3>Input</h3>
           <button class="btn btn-sm" data-action="open"><i data-lucide="upload"></i> Open file</button>
           <button class="btn btn-sm" data-action="copy-in"><i data-lucide="copy"></i> Copy</button></div>
-        <textarea class="textarea code" id="urlenc-in" spellcheck="false" placeholder="Text or URL, e.g. https://example.com/search?q=caf&eacute; &amp; cr&egrave;me"></textarea>
+        <textarea class="textarea code" id="urlenc-in" aria-label="Input text" spellcheck="false" placeholder="Text or URL, e.g. https://example.com/search?q=caf&eacute; &amp; cr&egrave;me"></textarea>
       </div>
       <div class="panel">
         <div class="panel-head"><h3>Output</h3>
           <button class="btn btn-sm" data-action="copy-out"><i data-lucide="copy"></i> Copy</button>
           <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i> Download</button></div>
-        <textarea class="textarea code" id="urlenc-out" spellcheck="false" placeholder="Result"></textarea>
+        <textarea class="textarea code" id="urlenc-out" aria-label="Output text" spellcheck="false" placeholder="Result"></textarea>
       </div>
     </div>
     <div class="card urlenc-help">
@@ -47,12 +47,12 @@
 
   <section data-panel="parse" hidden>
     <div class="row urlenc-url-row">
-      <input class="input mono" id="urlenc-url" spellcheck="false" placeholder="https://user:pass@example.com:8080/path/to?x=1&amp;x=2&amp;empty=#section">
+      <input class="input mono" id="urlenc-url" aria-label="URL to parse" spellcheck="false" placeholder="https://user:pass@example.com:8080/path/to?x=1&amp;x=2&amp;empty=#section">
       <button class="btn btn-primary" data-action="parse"><i data-lucide="search"></i> Parse</button>
       <button class="btn" data-action="url-sample"><i data-lucide="sparkles"></i> Sample</button>
       <button class="btn" data-action="url-clear"><i data-lucide="eraser"></i> Clear</button>
     </div>
-    <div id="urlenc-url-msg" hidden></div>
+    <div id="urlenc-url-msg" role="status" aria-live="polite" hidden></div>
     <div id="urlenc-parsed" hidden>
       <div class="grid-2 urlenc-gap">
         <div class="panel">
