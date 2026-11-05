@@ -1,0 +1,140 @@
+<div class="qr-wrap">
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="gen" role="tab" type="button"><i data-lucide="qr-code"></i> Generate</button>
+    <button class="tab" data-tab="read" role="tab" type="button"><i data-lucide="scan-line"></i> Read</button>
+  </div>
+
+  <!-- GENERATE -->
+  <section data-panel="gen">
+    <div class="qr-grid">
+      <div class="stack">
+        <div class="field">
+          <label for="qr-preset">Content type</label>
+          <select class="select" id="qr-preset">
+            <option value="text">Text</option>
+            <option value="url">URL</option>
+            <option value="wifi">Wi-Fi network</option>
+            <option value="vcard">Contact (vCard)</option>
+            <option value="email">Email</option>
+            <option value="sms">SMS</option>
+            <option value="geo">Location (geo)</option>
+          </select>
+        </div>
+
+        <div data-preset="text" class="stack">
+          <div class="field"><label for="qr-text">Text (UTF-8: emoji and CJK are fine)</label>
+            <textarea class="textarea qr-ta" id="qr-text" spellcheck="false" placeholder="Anything you like"></textarea></div>
+        </div>
+        <div data-preset="url" class="stack" hidden>
+          <div class="field"><label for="qr-url">URL</label><input class="input" id="qr-url" inputmode="url" autocomplete="off" placeholder="https://example.com"></div>
+        </div>
+        <div data-preset="wifi" class="stack" hidden>
+          <div class="field"><label for="qr-wifi-ssid">Network name (SSID)</label><input class="input" id="qr-wifi-ssid" autocomplete="off"></div>
+          <div class="grid-2">
+            <div class="field"><label for="qr-wifi-type">Security</label>
+              <select class="select" id="qr-wifi-type"><option value="WPA">WPA/WPA2/WPA3</option><option value="WEP">WEP</option><option value="nopass">No password</option></select></div>
+            <div class="field"><label for="qr-wifi-pass">Password</label><input class="input" id="qr-wifi-pass" type="password" autocomplete="off"></div>
+          </div>
+          <div class="row">
+            <label class="check"><input type="checkbox" id="qr-wifi-hidden"> Hidden network</label>
+            <label class="check"><input type="checkbox" id="qr-wifi-show"> Show password</label>
+          </div>
+        </div>
+        <div data-preset="vcard" class="stack" hidden>
+          <div class="grid-2">
+            <div class="field"><label for="qr-v-first">First name</label><input class="input" id="qr-v-first" autocomplete="off"></div>
+            <div class="field"><label for="qr-v-last">Last name</label><input class="input" id="qr-v-last" autocomplete="off"></div>
+            <div class="field"><label for="qr-v-org">Organisation</label><input class="input" id="qr-v-org" autocomplete="off"></div>
+            <div class="field"><label for="qr-v-title">Job title</label><input class="input" id="qr-v-title" autocomplete="off"></div>
+            <div class="field"><label for="qr-v-phone">Phone</label><input class="input" id="qr-v-phone" type="tel" autocomplete="off"></div>
+            <div class="field"><label for="qr-v-email">Email</label><input class="input" id="qr-v-email" type="email" autocomplete="off"></div>
+          </div>
+          <div class="field"><label for="qr-v-url">Website</label><input class="input" id="qr-v-url" autocomplete="off"></div>
+          <div class="grid-2">
+            <div class="field"><label for="qr-v-street">Street</label><input class="input" id="qr-v-street" autocomplete="off"></div>
+            <div class="field"><label for="qr-v-city">City</label><input class="input" id="qr-v-city" autocomplete="off"></div>
+            <div class="field"><label for="qr-v-region">State / region</label><input class="input" id="qr-v-region" autocomplete="off"></div>
+            <div class="field"><label for="qr-v-postal">Postal code</label><input class="input" id="qr-v-postal" autocomplete="off"></div>
+          </div>
+          <div class="field"><label for="qr-v-country">Country</label><input class="input" id="qr-v-country" autocomplete="off"></div>
+          <div class="field"><label for="qr-v-note">Note</label><textarea class="textarea qr-ta-s" id="qr-v-note"></textarea></div>
+        </div>
+        <div data-preset="email" class="stack" hidden>
+          <div class="field"><label for="qr-m-to">To (comma-separate several)</label><input class="input" id="qr-m-to" type="email" multiple autocomplete="off"></div>
+          <div class="field"><label for="qr-m-subject">Subject</label><input class="input" id="qr-m-subject" autocomplete="off"></div>
+          <div class="field"><label for="qr-m-body">Message</label><textarea class="textarea qr-ta-s" id="qr-m-body"></textarea></div>
+        </div>
+        <div data-preset="sms" class="stack" hidden>
+          <div class="field"><label for="qr-s-num">Phone number</label><input class="input" id="qr-s-num" type="tel" autocomplete="off" placeholder="+15551234567"></div>
+          <div class="field"><label for="qr-s-msg">Message</label><textarea class="textarea qr-ta-s" id="qr-s-msg"></textarea></div>
+        </div>
+        <div data-preset="geo" class="stack" hidden>
+          <div class="grid-2">
+            <div class="field"><label for="qr-g-lat">Latitude (-90 to 90)</label><input class="input" id="qr-g-lat" inputmode="decimal" autocomplete="off" placeholder="48.8584"></div>
+            <div class="field"><label for="qr-g-lng">Longitude (-180 to 180)</label><input class="input" id="qr-g-lng" inputmode="decimal" autocomplete="off" placeholder="2.2945"></div>
+          </div>
+        </div>
+
+        <fieldset class="qr-fieldset">
+          <legend class="label">Appearance</legend>
+          <div class="grid-2">
+            <div class="field"><label for="qr-ec">Error correction</label>
+              <select class="select" id="qr-ec"><option value="L">L &ndash; Low (~7%)</option><option value="M" selected>M &ndash; Medium (~15%)</option><option value="Q">Q &ndash; Quartile (~25%)</option><option value="H">H &ndash; High (~30%)</option></select></div>
+            <div class="field"><label for="qr-size">Image size (px, 64&ndash;2048)</label><input class="input" id="qr-size" type="number" min="64" max="2048" step="16" value="512"></div>
+            <div class="field"><label for="qr-margin">Quiet zone (modules, 0&ndash;16)</label><input class="input" id="qr-margin" type="number" min="0" max="16" step="1" value="4"></div>
+            <div class="field"><label for="qr-fg">Foreground</label><input class="input qr-color" id="qr-fg" type="color" value="#000000"></div>
+            <div class="field"><label for="qr-bg">Background</label><input class="input qr-color" id="qr-bg" type="color" value="#ffffff"></div>
+            <div class="field qr-end"><label class="check"><input type="checkbox" id="qr-transparent"> Transparent background</label></div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="stack">
+        <div id="qr-gen-msg" role="status" aria-live="polite" hidden></div>
+        <div id="qr-warn" role="status" aria-live="polite" hidden></div>
+        <div class="panel">
+          <div class="panel-head"><h3>Preview</h3><span class="badge" id="qr-info" hidden></span></div>
+          <div class="panel-body qr-preview"><canvas id="qr-canvas" role="img" aria-label="Generated QR code"></canvas><span class="hint" id="qr-empty">Fill in the form to generate a QR code.</span></div>
+        </div>
+        <div class="row">
+          <button class="btn btn-primary" data-action="dl-png" type="button"><i data-lucide="download"></i> Download PNG</button>
+          <button class="btn" data-action="dl-svg" type="button"><i data-lucide="file-code"></i> Download SVG</button>
+          <button class="btn" data-action="copy-png" type="button" id="qr-copy-png"><i data-lucide="image"></i> Copy PNG</button>
+          <button class="btn" data-action="copy-payload" type="button"><i data-lucide="copy"></i> Copy content</button>
+        </div>
+        <p class="hint">Non-ASCII text is encoded as UTF-8 without an ECI header; modern phone scanners handle it, a few old readers may show garbled characters.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- READ -->
+  <section data-panel="read" hidden>
+    <div class="qr-grid">
+      <div class="stack">
+        <div class="dropzone" id="qr-drop">
+          <p>Drop an image containing a QR code, paste one (Ctrl+V), or</p>
+          <button class="btn btn-primary" data-action="img-pick" type="button"><i data-lucide="image-up"></i> Choose image</button>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Camera</h3>
+            <label class="qr-inline" for="qr-facing">Camera</label>
+            <select class="select qr-narrow" id="qr-facing"><option value="environment">Rear</option><option value="user">Front</option></select></div>
+          <div class="panel-body stack">
+            <div class="qr-video-wrap" id="qr-video-wrap" hidden><video id="qr-video" playsinline muted aria-label="Camera preview"></video></div>
+            <div class="row">
+              <button class="btn btn-primary" data-action="cam-start" type="button" id="qr-cam-start"><i data-lucide="scan-line"></i> Start camera</button>
+              <button class="btn" data-action="cam-stop" type="button" id="qr-cam-stop" hidden><i data-lucide="x"></i> Stop camera</button>
+            </div>
+            <p class="hint">The camera starts only when you press the button; video never leaves your device. It stops automatically after a code is found.</p>
+          </div>
+        </div>
+        <p class="hint" id="qr-engine"></p>
+      </div>
+      <div class="stack">
+        <div id="qr-read-msg" role="status" aria-live="polite" hidden></div>
+        <div class="qr-img-wrap" id="qr-img-wrap" hidden><img id="qr-img" alt="Image being scanned"></div>
+        <div id="qr-results" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+</div>

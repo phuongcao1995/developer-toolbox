@@ -1,0 +1,128 @@
+<div class="cc">
+  <div class="tabs cc-tabs" aria-label="Colour tools">
+    <button class="tab active" type="button" data-tab="convert">Convert</button>
+    <button class="tab" type="button" data-tab="palette">Palette</button>
+    <button class="tab" type="button" data-tab="contrast">Contrast</button>
+    <button class="tab" type="button" data-tab="cvd">Colour blindness</button>
+    <button class="tab" type="button" data-tab="batch">Batch</button>
+  </div>
+
+  <!-- CONVERT -->
+  <div data-panel="convert">
+    <div class="cc-grid">
+      <section class="panel">
+        <div class="panel-head"><h3>Colour</h3></div>
+        <div class="panel-body cc-stack">
+          <div class="field"><label for="cc-input">Colour (HEX, rgb(), hsl(), hwb(), lab(), lch(), oklab(), oklch(), color(), cmyk() or a name)</label>
+            <input class="input code" id="cc-input" type="text" spellcheck="false" autocomplete="off" value="#3a58e8" aria-describedby="cc-input-msg"></div>
+          <div id="cc-input-msg" class="cc-msg" role="status" aria-live="polite"></div>
+          <div class="cc-pick">
+            <div class="field"><label for="cc-picker">Pick a colour</label><input type="color" id="cc-picker" class="cc-color" value="#3a58e8"></div>
+            <div class="field cc-alpha"><label for="cc-alpha">Alpha <output id="cc-alpha-out" for="cc-alpha">1</output></label>
+              <input type="range" id="cc-alpha" min="0" max="1" step="0.01" value="1"></div>
+            <button class="btn" id="cc-eyedropper" type="button" hidden><i data-lucide="pipette"></i> Eyedropper</button>
+          </div>
+          <div class="cc-swatch" id="cc-swatch" role="img" aria-label="Colour preview"></div>
+          <div id="cc-info" class="cc-info" aria-live="polite"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h3>Output options</h3>
+          <label class="check"><input type="checkbox" id="cc-remember" checked> Remember options</label></div>
+        <div class="panel-body cc-opts">
+          <div class="field"><label for="cc-rounding">Rounding</label>
+            <select id="cc-rounding" class="select">
+              <option value="compact">Compact (CSS-typical)</option><option value="0">0 decimals</option><option value="1">1 decimal</option>
+              <option value="2">2 decimals</option><option value="3">3 decimals</option><option value="4">4 decimals</option><option value="full">Full (6 decimals)</option>
+            </select></div>
+          <div class="field"><label for="cc-syntax">rgb() / hsl() syntax</label>
+            <select id="cc-syntax" class="select"><option value="modern">Modern (space separated)</option><option value="legacy">Legacy (commas, rgba/hsla)</option></select></div>
+          <div class="field"><label for="cc-hexcase">HEX letters</label>
+            <select id="cc-hexcase" class="select"><option value="lower">lowercase</option><option value="upper">UPPERCASE</option></select></div>
+          <label class="check"><input type="checkbox" id="cc-hexshort"> Short HEX when possible (#abc)</label>
+        </div>
+        <p class="hint cc-note">sRGB uses the standard gamma curve. Lab and LCH are D50-relative as in CSS Color 4 (Bradford-adapted from sRGB's D65); OKLab/OKLCH are D65-based. CMYK is a naive formula, not an ICC print profile.</p>
+      </section>
+    </div>
+    <div class="table-wrap cc-formats"><table class="table"><caption class="sr-only">Colour in every format</caption>
+      <thead><tr><th scope="col">Format</th><th scope="col">Value</th><th scope="col"><span class="sr-only">Copy</span></th></tr></thead>
+      <tbody id="cc-formats"></tbody></table></div>
+  </div>
+
+  <!-- PALETTE -->
+  <div data-panel="palette" hidden>
+    <div class="toolbar cc-bar">
+      <div class="field"><label for="cc-scheme">Palette type</label>
+        <select id="cc-scheme" class="select">
+          <option value="complementary">Complementary</option><option value="analogous">Analogous</option><option value="triadic">Triadic</option>
+          <option value="tetradic">Tetradic (rectangle)</option><option value="split">Split-complementary</option>
+          <option value="monochromatic">Monochromatic (lightness steps)</option><option value="tints">Tints (towards white)</option>
+          <option value="shades">Shades (towards black)</option><option value="scale">Material-like scale 50-900</option>
+          <option value="gradient">Gradient between two colours</option>
+        </select></div>
+      <div class="field cc-narrow" id="cc-steps-field"><label for="cc-steps">Steps</label><input type="number" id="cc-steps" class="input" min="2" max="50" value="7"></div>
+      <div class="field" id="cc-end-field" hidden><label for="cc-end">End colour</label>
+        <div class="row"><input class="input code" id="cc-end" type="text" value="#ff3a8c" spellcheck="false"><input type="color" id="cc-end-picker" class="cc-color" aria-label="Pick end colour" value="#ff3a8c"></div></div>
+      <div class="field" id="cc-space-field" hidden><label for="cc-space">Interpolation</label>
+        <select id="cc-space" class="select"><option value="oklab">OKLab (perceptual)</option><option value="srgb">sRGB</option></select></div>
+    </div>
+    <p class="hint">The base colour is the one on the Convert tab. Click a swatch to copy its HEX.</p>
+    <div id="cc-palette-msg" class="cc-msg" role="status" aria-live="polite"></div>
+    <div class="cc-swatches" id="cc-palette"></div>
+    <div class="toolbar cc-bar">
+      <div class="field"><label for="cc-exp-format">Export as</label>
+        <select id="cc-exp-format" class="select"><option value="css">CSS variables</option><option value="scss">SCSS variables</option><option value="tailwind">Tailwind config</option><option value="json">JSON</option></select></div>
+      <div class="field"><label for="cc-exp-prefix">Name prefix</label><input id="cc-exp-prefix" class="input" type="text" value="color" maxlength="30"></div>
+      <button class="btn" id="cc-exp-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+      <button class="btn" id="cc-exp-download" type="button"><i data-lucide="download"></i> Download</button>
+    </div>
+    <textarea class="textarea code cc-export" id="cc-export" readonly spellcheck="false" aria-label="Exported palette"></textarea>
+  </div>
+
+  <!-- CONTRAST -->
+  <div data-panel="contrast" hidden>
+    <div class="cc-grid">
+      <div class="field"><label for="cc-fg">Foreground (text)</label>
+        <div class="row"><input class="input code" id="cc-fg" type="text" value="#767676" spellcheck="false"><input type="color" id="cc-fg-picker" class="cc-color" aria-label="Pick foreground colour" value="#767676"></div></div>
+      <div class="field"><label for="cc-bg">Background</label>
+        <div class="row"><input class="input code" id="cc-bg" type="text" value="#ffffff" spellcheck="false"><input type="color" id="cc-bg-picker" class="cc-color" aria-label="Pick background colour" value="#ffffff"></div></div>
+    </div>
+    <div class="toolbar cc-bar">
+      <button class="btn" id="cc-swap" type="button"><i data-lucide="arrow-left-right"></i> Swap</button>
+      <button class="btn" id="cc-use-current" type="button">Use Convert colour as foreground</button>
+    </div>
+    <div id="cc-contrast-msg" class="cc-msg" role="status" aria-live="polite"></div>
+    <div class="cc-grid">
+      <div class="cc-sample" id="cc-sample"><p class="cc-sample-big">Large text sample 18pt</p><p>Normal text sample: the quick brown fox jumps over the lazy dog.</p></div>
+      <div>
+        <p class="cc-ratio" id="cc-ratio" aria-live="polite"></p>
+        <div class="table-wrap"><table class="table"><caption class="sr-only">WCAG 2.x results</caption>
+          <thead><tr><th scope="col">Check</th><th scope="col">Needs</th><th scope="col">Result</th></tr></thead><tbody id="cc-wcag"></tbody></table></div>
+        <p class="hint" id="cc-apca"></p>
+      </div>
+    </div>
+    <h3 class="cc-h">Suggestions</h3>
+    <div id="cc-suggest" class="cc-suggest"></div>
+  </div>
+
+  <!-- COLOUR BLINDNESS -->
+  <div data-panel="cvd" hidden>
+    <p class="hint">Approximate simulations (Machado et al. 2009, full severity, applied in linear RGB). Real perception varies between people. Showing the Convert colour and the Contrast pair.</p>
+    <div class="cc-cvd" id="cc-cvd"></div>
+  </div>
+
+  <!-- BATCH -->
+  <div data-panel="batch" hidden>
+    <div class="field"><label for="cc-batch-in">One colour per line (any supported format)</label>
+      <textarea class="textarea code cc-batch" id="cc-batch-in" spellcheck="false" placeholder="#ff0000&#10;rgb(0 128 255)&#10;hsl(280 60% 40%)&#10;tomato"></textarea></div>
+    <div class="toolbar cc-bar">
+      <button class="btn" id="cc-batch-sample" type="button">Insert sample</button>
+      <button class="btn" id="cc-batch-copy" type="button"><i data-lucide="copy"></i> Copy as CSV</button>
+      <button class="btn" id="cc-batch-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+      <span class="badge" id="cc-batch-count" aria-live="polite"></span>
+    </div>
+    <div class="table-wrap"><table class="table"><caption class="sr-only">Parsed colours</caption>
+      <thead><tr><th scope="col">Input</th><th scope="col">Swatch</th><th scope="col">HEX</th><th scope="col">RGB</th><th scope="col">HSL</th><th scope="col">OKLCH</th></tr></thead>
+      <tbody id="cc-batch-out"></tbody></table></div>
+  </div>
+</div>

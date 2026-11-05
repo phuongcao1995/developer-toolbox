@@ -1,0 +1,81 @@
+<div class="pg" id="pg">
+  <div class="toolbar pg-bar">
+    <div class="field"><label for="pg-example">Example</label>
+      <select id="pg-example" class="select"></select></div>
+    <button class="btn" id="pg-reset" type="button" title="Replace all three panels with the selected example"><i data-lucide="rotate-ccw"></i> Reset to example</button>
+    <span class="spacer"></span>
+    <label class="check"><input type="checkbox" id="pg-auto" checked> Auto run</label>
+    <button class="btn btn-primary" id="pg-run" type="button" title="Run (Ctrl+Enter)"><i data-lucide="play"></i> Run <span class="pg-kbd">Ctrl+Enter</span></button>
+    <button class="btn" id="pg-stop" type="button" title="Remove the preview frame"><i data-lucide="square"></i> Stop</button>
+  </div>
+
+  <div class="toolbar pg-bar">
+    <div class="field"><label for="pg-layout">Layout</label>
+      <select id="pg-layout" class="select">
+        <option value="side">Editors left, preview right</option>
+        <option value="top">Editors top, preview below</option>
+      </select></div>
+    <div class="field"><label for="pg-viewport">Preview width</label>
+      <select id="pg-viewport" class="select">
+        <option value="responsive">Responsive (fill)</option>
+        <option value="mobile">Mobile (375 px)</option>
+        <option value="tablet">Tablet (768 px)</option>
+        <option value="desktop">Desktop (1280 px)</option>
+        <option value="custom">Custom...</option>
+      </select></div>
+    <div class="field pg-width-field" id="pg-width-field" hidden><label for="pg-width">Width (px)</label>
+      <input type="number" id="pg-width" class="input" min="200" max="4000" step="10" value="600"></div>
+    <label class="check"><input type="checkbox" id="pg-clear-run" checked> Clear console on run</label>
+    <label class="check"><input type="checkbox" id="pg-external"> Allow external resources (https)</label>
+    <label class="check" title="Keep your code and options in this browser (local storage)"><input type="checkbox" id="pg-remember" checked> Remember my code</label>
+    <span class="spacer"></span>
+    <button class="btn" id="pg-import" type="button"><i data-lucide="upload"></i> Import</button>
+    <button class="btn" id="pg-dl-html" type="button" title="One self-contained .html file"><i data-lucide="file-code"></i> Download .html</button>
+    <button class="btn" id="pg-dl-zip" type="button" title="index.html, style.css and script.js"><i data-lucide="archive"></i> Download .zip</button>
+    <button class="btn" id="pg-newtab" type="button" title="Opens the preview in a new tab, still sandboxed"><i data-lucide="external-link"></i> New tab</button>
+    <input type="file" id="pg-file" multiple accept=".html,.htm,.css,.js,.mjs" hidden aria-label="Import files">
+  </div>
+
+  <div id="pg-msg" class="alert" hidden></div>
+  <div id="pg-ext-warn" class="alert alert-warn" hidden>External resources are enabled: your code can load scripts, styles, images and fonts from any https:// address, which can run third-party code in the preview. The preview is still sandboxed (no access to this app, its storage or cookies) and network requests such as fetch() stay blocked. Turn this off unless you need a CDN library.</div>
+
+  <div class="pg-main" id="pg-main">
+    <section class="pg-left" aria-label="Code editors">
+      <div class="pg-tabs" role="group" aria-label="Choose editor">
+        <button type="button" class="pg-tab active" data-tab="html" aria-pressed="true">HTML</button>
+        <button type="button" class="pg-tab" data-tab="css" aria-pressed="false">CSS</button>
+        <button type="button" class="pg-tab" data-tab="js" aria-pressed="false">JS</button>
+      </div>
+      <div class="pg-editors">
+        <div class="pg-ed active" data-ed="html"><h3 class="pg-edhead">HTML <span class="hint">(inside &lt;body&gt;)</span></h3><textarea class="textarea code" id="pg-html" spellcheck="false" aria-label="HTML code"></textarea></div>
+        <div class="pg-ed" data-ed="css"><h3 class="pg-edhead">CSS</h3><textarea class="textarea code" id="pg-css" spellcheck="false" aria-label="CSS code"></textarea></div>
+        <div class="pg-ed" data-ed="js"><h3 class="pg-edhead">JavaScript</h3><textarea class="textarea code" id="pg-js" spellcheck="false" aria-label="JavaScript code"></textarea></div>
+      </div>
+    </section>
+
+    <section class="pg-right" aria-label="Preview and console">
+      <div class="panel pg-preview">
+        <div class="panel-head"><h3>Preview</h3><span class="badge" id="pg-status" role="status">Not run</span></div>
+        <div id="pg-stuck" class="alert alert-error pg-stuck" role="alert" hidden>
+          <span>Preview seems stuck: it has not responded for a few seconds (an endless loop?).</span>
+          <button class="btn btn-sm btn-danger" id="pg-stuck-stop" type="button">Stop</button>
+        </div>
+        <div class="pg-frame-wrap" id="pg-frame-wrap"><p class="pg-empty" id="pg-empty">Press Run to start the preview.</p></div>
+      </div>
+      <div class="panel pg-console">
+        <div class="panel-head">
+          <h3>Console</h3>
+          <span class="badge" id="pg-count" aria-live="polite">0 messages</span>
+          <select id="pg-filter" class="select" aria-label="Filter console messages">
+            <option value="all">All levels</option><option value="log">log</option><option value="info">info</option>
+            <option value="warn">warn</option><option value="error">error</option>
+          </select>
+          <button class="btn btn-sm" id="pg-console-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+          <button class="btn btn-sm" id="pg-console-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+        </div>
+        <div class="pg-log" id="pg-log" role="log" aria-label="Console output" tabindex="0"></div>
+      </div>
+    </section>
+  </div>
+  <p class="hint pg-note">The preview runs in a sandboxed frame without access to this app, its storage or cookies. Network requests (fetch, XHR) are blocked by a Content-Security-Policy; images, fonts and media may come from https:// or data: URLs. Drop .html, .css or .js files anywhere on this tool to import them.</p>
+</div>

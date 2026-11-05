@@ -1,0 +1,25 @@
+<div class="qa">
+  <p class="hint qa-banner" role="note"><strong>Static analysis only.</strong> This tool reads your SQL text. It never connects to a database, never runs the query and cannot produce a real execution plan. Everything below is heuristic: verify with EXPLAIN on your own database.</p>
+
+  <div class="toolbar qa-options">
+    <div class="field"><label for="qa-dialect">Dialect</label><select id="qa-dialect" class="select"></select></div>
+    <div class="field"><label for="qa-example">Example</label><select id="qa-example" class="select"><option value="">Load an example...</option></select></div>
+    <span class="spacer"></span>
+    <button class="btn" id="qa-upload" type="button"><i data-lucide="upload"></i> Upload .sql</button>
+    <button class="btn" id="qa-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+  </div>
+  <div id="qa-msg" class="alert" role="status" hidden></div>
+
+  <div class="qa-main">
+    <section class="panel qa-input" aria-labelledby="qa-in-title">
+      <div class="panel-head"><h3 id="qa-in-title">SQL</h3><span class="qa-count" id="qa-count" aria-live="polite"></span></div>
+      <textarea id="qa-input" class="textarea" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="SQL to analyze" placeholder="Paste one or more SQL statements here..."></textarea>
+    </section>
+
+    <section class="qa-results" aria-label="Analysis">
+      <div class="qa-cards" id="qa-cards" role="listbox" aria-label="Statements"></div>
+      <div class="tabs qa-tabs" role="tablist" aria-label="Analysis sections" id="qa-tabs"></div>
+      <div class="panel"><div class="panel-body qa-pane" id="qa-pane" role="tabpanel" tabindex="0"></div></div>
+    </section>
+  </div>
+</div>

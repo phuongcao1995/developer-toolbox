@@ -1,0 +1,25 @@
+.tool-image-converter .ic-wrap { display: flex; flex-direction: column; gap: 12px; }
+.tool-image-converter .ic-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; align-items: start; }
+.tool-image-converter .ic-notes { border-top: 1px solid var(--border); }
+.tool-image-converter .ic-color { width: 56px; padding: 2px 4px; cursor: pointer; }
+.tool-image-converter .ic-check { justify-content: flex-end; }
+.tool-image-converter input[type="range"] { width: 100%; accent-color: var(--primary); }
+.tool-image-converter .ic-progress { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.tool-image-converter .ic-progress progress { flex: 1; min-width: 0; height: 12px; accent-color: var(--primary); }
+.tool-image-converter .ic-list { display: flex; flex-direction: column; gap: 10px; }
+.tool-image-converter .ic-row { display: grid; grid-template-columns: 96px 96px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; flex-direction: row; overflow: visible; }
+.tool-image-converter .ic-thumb { width: 96px; height: 72px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.tool-image-converter .ic-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.tool-image-converter .ic-meta { min-width: 0; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.tool-image-converter .ic-name { word-break: break-all; }
+.tool-image-converter .ic-note { font-size: 12px; color: var(--warn); }
+.tool-image-converter .ic-err { color: var(--danger); font-size: 13px; }
+.tool-image-converter .ic-actions { display: flex; flex-direction: column; gap: 6px; }
+.tool-image-converter .ic-cmp { position: relative; width: 100%; max-height: 70vh; margin: 0 auto; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.tool-image-converter .ic-cmp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+@media (max-width: 760px) {
+  .tool-image-converter .ic-row { grid-template-columns: 1fr 1fr; }
+  .tool-image-converter .ic-thumb { width: 100%; }
+  .tool-image-converter .ic-meta, .tool-image-converter .ic-actions { grid-column: 1 / -1; }
+  .tool-image-converter .ic-actions { flex-direction: row; flex-wrap: wrap; }
+}

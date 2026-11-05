@@ -1,0 +1,32 @@
+.tool-http-header-analyzer .ha-bar { align-items: flex-end; }
+.tool-http-header-analyzer .ha-bar .field { min-width: 150px; }
+.tool-http-header-analyzer .ha-bar .check { min-height: 34px; }
+.tool-http-header-analyzer .ha-input { margin-bottom: 12px; }
+.tool-http-header-analyzer .ha-input .panel-head h3 { margin-right: 0; }
+.tool-http-header-analyzer .ha-text { min-height: 200px; width: 100%; resize: vertical; }
+.tool-http-header-analyzer .ha-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 22px; }
+.tool-http-header-analyzer .ha-notes p { margin: 0 0 4px; }
+.tool-http-header-analyzer .ha-filter { max-width: 320px; flex: 1 1 220px; }
+.tool-http-header-analyzer .ha-table td, .tool-http-header-analyzer .ha-table th { vertical-align: top; }
+.tool-http-header-analyzer .ha-name code, .tool-http-header-analyzer .ha-value code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+.tool-http-header-analyzer .ha-value { max-width: 340px; word-break: break-all; }
+.tool-http-header-analyzer .ha-expl { min-width: 220px; }
+.tool-http-header-analyzer .ha-flags { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: 6px; }
+.tool-http-header-analyzer .ha-flags .badge { white-space: normal; border-radius: 6px; }
+.tool-http-header-analyzer .ha-row-error { box-shadow: inset 3px 0 0 var(--danger); }
+.tool-http-header-analyzer .ha-row-warn { box-shadow: inset 3px 0 0 var(--warn); }
+.tool-http-header-analyzer .ha-details { margin-top: 6px; font-size: 12.5px; }
+.tool-http-header-analyzer .ha-details summary { cursor: pointer; color: var(--primary); }
+.tool-http-header-analyzer .ha-dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 6px 0; }
+.tool-http-header-analyzer .ha-dl dt { font-weight: 600; font-family: ui-monospace, Menlo, Consolas, monospace; }
+.tool-http-header-analyzer .ha-dl dd { margin: 0; word-break: break-word; }
+.tool-http-header-analyzer .ha-ul { margin: 4px 0 12px; padding-left: 18px; display: grid; gap: 4px; }
+.tool-http-header-analyzer .ha-h { font-size: 14px; margin: 14px 0 4px; }
+.tool-http-header-analyzer .ha-counts { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.tool-http-header-analyzer #ha-disclaimer { margin-bottom: 4px; }
+.tool-http-header-analyzer .ha-report { width: 100%; min-height: 280px; }
+.tool-http-header-analyzer [hidden] { display: none !important; }
+@media (max-width: 720px) {
+  .tool-http-header-analyzer .ha-bar .field { flex: 1 1 130px; }
+  .tool-http-header-analyzer .ha-value { max-width: 200px; }
+}

@@ -14,7 +14,8 @@
 .tool-json-formatter .jf-root { flex-direction: row; align-items: center; gap: 6px; }
 .tool-json-formatter .jf-root .input { width: 130px; }
 .tool-json-formatter .jf-bar .input.code { flex: 1 1 180px; width: auto; }
-.tool-json-formatter .panel > .textarea, .tool-json-formatter .jf-pane > .textarea { min-height: 360px; }
+.tool-json-formatter .jf-panels, .tool-json-formatter .jf-pane { --ed-min-height: 360px; }
+.tool-json-formatter .jf-pane > .ed { flex: 1 1 auto; }
 .tool-json-formatter .panel .textarea.jf-small { min-height: 120px; height: 140px; flex: none; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
 .tool-json-formatter .panel .textarea.jf-small.jf-tall { height: 240px; }
 .tool-json-formatter .panel.dragover, .tool-json-formatter .textarea.dragover { border-color: var(--primary); background: var(--primary-soft); }

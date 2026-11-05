@@ -1,0 +1,51 @@
+.tool-yaml-formatter .yf-options { align-items: flex-end; }
+.tool-yaml-formatter .yf-options .field { min-width: 140px; }
+.tool-yaml-formatter .yf-check { height: 34px; }
+.tool-yaml-formatter .yf-hint { margin: 0 0 10px; }
+.tool-yaml-formatter .yf-status { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.tool-yaml-formatter .yf-status .alert { flex: 1 1 280px; margin-bottom: 12px; }
+.tool-yaml-formatter .yf-status .btn { margin-bottom: 12px; }
+.tool-yaml-formatter .yf-panels { --ed-min-height: 340px; }
+.tool-yaml-formatter .yf-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; min-height: 22px; }
+.tool-yaml-formatter .yf-tabs { margin-top: 8px; }
+.tool-yaml-formatter .yf-bar { align-items: flex-end; }
+.tool-yaml-formatter .yf-grow { flex: 1 1 240px; }
+.tool-yaml-formatter .yf-checks ul, .tool-yaml-formatter .yf-hits ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.tool-yaml-formatter .yf-checks li { display: flex; gap: 10px; align-items: flex-start; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); margin-bottom: 6px; font-size: 13px; min-width: 0; }
+.tool-yaml-formatter .yf-checks li .msg { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.tool-yaml-formatter .yf-checks li .badge { flex: none; }
+.tool-yaml-formatter .yf-link { flex: none; border: 0; background: none; color: var(--primary); font: 12px var(--mono); cursor: pointer; text-decoration: underline; padding: 0; }
+.tool-yaml-formatter .yf-hits { font-size: 13px; margin-bottom: 8px; }
+.tool-yaml-formatter .yf-hits ul { max-height: 180px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.tool-yaml-formatter .yf-hits li button { display: flex; gap: 8px; width: 100%; text-align: left; padding: 5px 10px; border: 0; background: none; color: var(--text); font: 12px var(--mono); cursor: pointer; }
+.tool-yaml-formatter .yf-hits li button:hover, .tool-yaml-formatter .yf-hits li button:focus-visible { background: var(--primary-soft); }
+.tool-yaml-formatter .yf-hits .why { color: var(--text-muted); flex: none; }
+.tool-yaml-formatter .yf-tree { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 8px; max-height: 560px; overflow: auto; font: 13px/1.5 var(--mono); }
+.tool-yaml-formatter .yf-tree ul { list-style: none; margin: 0; padding-left: 18px; }
+.tool-yaml-formatter .yf-tree > ul { padding-left: 0; }
+.tool-yaml-formatter .yf-row { display: flex; align-items: baseline; gap: 4px; min-height: 24px; border-radius: 6px; padding: 0 4px; }
+.tool-yaml-formatter .yf-row:hover { background: var(--surface-2); }
+.tool-yaml-formatter .yf-row.flash { background: var(--mark); }
+.tool-yaml-formatter .yf-tog { flex: none; width: 20px; height: 20px; border: 0; background: none; color: var(--text-muted); cursor: pointer; border-radius: 4px; padding: 0; font: 12px var(--mono); }
+.tool-yaml-formatter .yf-tog:hover, .tool-yaml-formatter .yf-tog:focus-visible { background: var(--surface-3); color: var(--text); }
+.tool-yaml-formatter .yf-gap { flex: none; width: 20px; }
+.tool-yaml-formatter .yf-lbl { min-width: 0; overflow-wrap: anywhere; }
+.tool-yaml-formatter .yf-key { color: var(--primary); font-weight: 600; }
+.tool-yaml-formatter .yf-val { color: var(--success); }
+.tool-yaml-formatter .yf-num { color: var(--info); }
+.tool-yaml-formatter .yf-muted { color: var(--text-muted); }
+.tool-yaml-formatter .yf-act { flex: none; margin-left: auto; border: 1px solid transparent; background: none; color: var(--text-muted); border-radius: 4px; padding: 0 6px; font: 11px var(--font); cursor: pointer; opacity: .55; }
+.tool-yaml-formatter .yf-row:hover .yf-act, .tool-yaml-formatter .yf-act:focus-visible { opacity: 1; border-color: var(--border); background: var(--surface); }
+.tool-yaml-formatter .yf-more { margin: 2px 0 2px 24px; }
+.tool-yaml-formatter .yf-diff { margin: 8px 0 0; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font: 12px/1.5 var(--mono); max-height: 360px; overflow: auto; }
+.tool-yaml-formatter .yf-diff div { display: flex; gap: 8px; padding: 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tool-yaml-formatter .yf-diff .add { background: var(--add-bg); }
+.tool-yaml-formatter .yf-diff .del { background: var(--del-bg); }
+.tool-yaml-formatter .yf-diff .ln { flex: none; width: 4ch; color: var(--text-muted); text-align: right; }
+.tool-yaml-formatter .yf-changes .row { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 560px) {
+  .tool-yaml-formatter .yf-options .field { flex: 1 1 130px; }
+  .tool-yaml-formatter .yf-toolbar .btn, .tool-yaml-formatter .toolbar .btn { flex: 1 1 auto; }
+  .tool-yaml-formatter .yf-panels { --ed-min-height: 220px; }
+  .tool-yaml-formatter .yf-act { opacity: 1; }
+}

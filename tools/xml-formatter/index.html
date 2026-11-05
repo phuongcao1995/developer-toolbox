@@ -1,0 +1,104 @@
+<div class="xf">
+  <div class="toolbar xf-options">
+    <div class="field"><label for="xf-indent">Indentation</label>
+      <select id="xf-indent" class="select"><option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab</option></select></div>
+    <div class="field"><label for="xf-wrap">Attribute wrapping</label>
+      <select id="xf-wrap" class="select">
+        <option value="never">Never</option><option value="80">When line exceeds 80</option>
+        <option value="120">When line exceeds 120</option><option value="always">Always (one per line)</option>
+      </select></div>
+    <div class="field"><label for="xf-empty">Empty elements</label>
+      <select id="xf-empty" class="select">
+        <option value="keep">Keep as written</option><option value="collapse">Self-closing &lt;a/&gt;</option><option value="expand">Expanded &lt;a&gt;&lt;/a&gt;</option>
+      </select></div>
+    <label class="check xf-check"><input type="checkbox" id="xf-trim" checked> Trim text</label>
+    <label class="check xf-check"><input type="checkbox" id="xf-strip"> Strip comments</label>
+    <span class="spacer"></span>
+    <button class="btn btn-primary" id="xf-format" type="button"><i data-lucide="wand-2"></i> Format</button>
+    <button class="btn" id="xf-minify" type="button"><i data-lucide="minimize-2"></i> Minify</button>
+    <button class="btn" id="xf-validate" type="button"><i data-lucide="check-circle-2"></i> Validate</button>
+  </div>
+  <p class="hint xf-hint">Everything runs in your browser. DOCTYPE external entities are refused and entity expansion is limited, so untrusted documents are safe to paste. "Strip comments" applies to Format and Minify; mixed content and <code>xml:space="preserve"</code> are never re-indented.</p>
+
+  <div class="xf-status">
+    <div id="xf-msg" class="alert" hidden></div>
+    <button class="btn btn-sm" id="xf-goto" type="button" hidden><i data-lucide="crosshair"></i> Go to error</button>
+  </div>
+
+  <div class="grid-2 xf-panels">
+    <section class="panel" id="xf-drop">
+      <div class="panel-head">
+        <h3>Input</h3>
+        <span class="badge" id="xf-live" role="status" aria-live="polite"></span>
+        <button class="btn btn-sm" id="xf-sample" type="button">Sample</button>
+        <button class="btn btn-sm" id="xf-upload" type="button"><i data-lucide="upload"></i> Upload</button>
+        <button class="btn btn-sm" id="xf-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+      </div>
+      <textarea class="textarea code" id="xf-input" spellcheck="false" placeholder="Paste XML or JSON here, or drop a file…" aria-label="Input XML or JSON"></textarea>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <h3 id="xf-out-title">Output</h3>
+        <button class="btn btn-sm" id="xf-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn btn-sm" id="xf-download" type="button"><i data-lucide="download"></i> Download</button>
+        <button class="btn btn-sm" id="xf-swap" type="button" title="Move the output into the input"><i data-lucide="arrow-left"></i> Use as input</button>
+      </div>
+      <textarea class="textarea code" id="xf-output" spellcheck="false" readonly placeholder="Result appears here" aria-label="Output"></textarea>
+    </section>
+  </div>
+  <div class="xf-stats" id="xf-stats" aria-live="polite"></div>
+
+  <div class="xf-tabs">
+    <div class="tabs">
+      <button class="tab active" type="button" data-tab="tree">Tree</button>
+      <button class="tab" type="button" data-tab="xpath">XPath</button>
+      <button class="tab" type="button" data-tab="convert">XML &harr; JSON</button>
+      <button class="tab" type="button" data-tab="info">Info &amp; namespaces</button>
+    </div>
+
+    <div data-panel="tree">
+      <div class="toolbar xf-tree-bar">
+        <div class="field xf-grow"><label for="xf-tsearch">Search names, attributes and text</label>
+          <input class="input" id="xf-tsearch" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. book, id, Gambardella"></div>
+        <button class="btn btn-sm" id="xf-trefresh" type="button"><i data-lucide="refresh-cw"></i> Rebuild from input</button>
+        <button class="btn btn-sm" id="xf-texpand" type="button">Expand</button>
+        <button class="btn btn-sm" id="xf-tcollapse" type="button">Collapse</button>
+      </div>
+      <div id="xf-thits" class="xf-hits" aria-live="polite"></div>
+      <div id="xf-tree" class="xf-tree" aria-label="XML tree"></div>
+    </div>
+
+    <div data-panel="xpath" hidden>
+      <div class="toolbar xf-tree-bar">
+        <div class="field xf-grow"><label for="xf-xp">XPath 1.0 expression</label>
+          <input class="input code" id="xf-xp" type="text" autocomplete="off" spellcheck="false" placeholder="//book[@id='bk101']/title"></div>
+        <button class="btn btn-primary btn-sm" id="xf-xprun" type="button"><i data-lucide="play"></i> Evaluate</button>
+        <button class="btn btn-sm" id="xf-xpcopy" type="button"><i data-lucide="copy"></i> Copy results</button>
+      </div>
+      <div class="xf-chips" id="xf-xpex"></div>
+      <p class="hint">Default-namespace elements cannot be addressed by plain name in XPath 1.0: use <code>*[local-name()='book']</code>. Declared prefixes (see Info) work as written.</p>
+      <div id="xf-xpmsg" class="alert" hidden></div>
+      <div id="xf-xpres" class="xf-xpres" aria-live="polite"></div>
+    </div>
+
+    <div data-panel="convert" hidden>
+      <div class="toolbar xf-conv">
+        <div class="field"><label for="xf-cprefix">Attribute prefix</label><input class="input" id="xf-cprefix" type="text" value="@" maxlength="4"></div>
+        <div class="field"><label for="xf-ctext">Text key</label><input class="input" id="xf-ctext" type="text" value="#text" maxlength="16"></div>
+        <div class="field"><label for="xf-croot">Root name (JSON &rarr; XML)</label><input class="input" id="xf-croot" type="text" value="root" maxlength="40"></div>
+        <label class="check xf-check"><input type="checkbox" id="xf-carray"> Always use arrays</label>
+        <label class="check xf-check"><input type="checkbox" id="xf-ccoerce"> Numbers/booleans as JSON types</label>
+        <label class="check xf-check"><input type="checkbox" id="xf-cdecl" checked> XML declaration</label>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-primary" id="xf-toJson" type="button"><i data-lucide="braces"></i> XML &rarr; JSON</button>
+        <button class="btn" id="xf-fromJson" type="button"><i data-lucide="file-code"></i> JSON &rarr; XML</button>
+      </div>
+      <p class="hint">Attributes become <code>@name</code> keys, text becomes <code>#text</code> next to attributes or child elements, repeated elements become arrays and empty elements become <code>null</code>. The conversion uses the Input editor and writes to the Output editor. JSON keys that are not valid XML names are rewritten (a warning lists them).</p>
+    </div>
+
+    <div data-panel="info" hidden>
+      <div id="xf-info" class="xf-info" aria-live="polite"></div>
+    </div>
+  </div>
+</div>

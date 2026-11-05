@@ -1,0 +1,50 @@
+.tool-color-converter { --cc-check-a: var(--surface-3); --cc-check-b: var(--surface); }
+.tool-color-converter .cc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.tool-color-converter .cc-stack { display: flex; flex-direction: column; gap: 12px; }
+.tool-color-converter .cc-opts { display: grid; gap: 12px; }
+.tool-color-converter .cc-note { padding: 0 12px 12px; margin: 0; }
+.tool-color-converter .cc-bar { align-items: flex-end; }
+.tool-color-converter .cc-narrow { max-width: 110px; }
+.tool-color-converter [hidden] { display: none !important; }
+.tool-color-converter .cc-pick { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.tool-color-converter .cc-alpha { flex: 1 1 160px; }
+.tool-color-converter .cc-color { width: 52px; height: 36px; padding: 2px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); cursor: pointer; }
+.tool-color-converter .cc-msg { min-height: 18px; font-size: 12.5px; color: var(--text-muted); }
+.tool-color-converter .cc-msg-error { color: var(--danger); font-weight: 600; }
+.tool-color-converter .cc-msg-ok { color: var(--success); }
+.tool-color-converter .cc-swatch, .tool-color-converter .cc-chip {
+  display: block; border: 1px solid var(--border-strong); border-radius: 8px; overflow: hidden;
+  background: repeating-conic-gradient(var(--cc-check-a) 0% 25%, var(--cc-check-b) 0% 50%) 0 0 / 14px 14px;
+}
+.tool-color-converter .cc-swatch { height: 90px; }
+.tool-color-converter .cc-chip { display: inline-block; width: 22px; height: 22px; vertical-align: middle; border-radius: 5px; }
+.tool-color-converter .cc-chip-lg { width: 48px; height: 48px; border-radius: 8px; }
+.tool-color-converter .cc-chip-fill, .tool-color-converter .cc-sw-fill { display: block; width: 100%; height: 100%; }
+.tool-color-converter .cc-info { display: flex; flex-wrap: wrap; gap: 6px; }
+.tool-color-converter .cc-formats { margin-bottom: 14px; }
+.tool-color-converter .cc-formats th[scope="row"] { white-space: nowrap; width: 1%; font-weight: 600; }
+.tool-color-converter .cc-val { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; word-break: break-all; }
+.tool-color-converter .cc-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.tool-color-converter .cc-sw { display: flex; flex-direction: column; border: 1px solid var(--border-strong); border-radius: 8px; padding: 0; overflow: hidden; background: var(--surface); color: var(--text); cursor: pointer; font: inherit; text-align: left; }
+.tool-color-converter .cc-sw:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.tool-color-converter .cc-sw-fill { height: 56px; background-clip: padding-box; }
+.tool-color-converter .cc-sw-name { font-size: 11px; color: var(--text-muted); padding: 4px 8px 0; }
+.tool-color-converter .cc-sw-hex { font: 12px ui-monospace, Menlo, Consolas, monospace; padding: 0 8px 6px; }
+.tool-color-converter .cc-export { min-height: 140px; width: 100%; }
+.tool-color-converter .cc-sample { border: 1px solid var(--border-strong); border-radius: 8px; padding: 16px; min-height: 120px; }
+.tool-color-converter .cc-sample p { margin: 0 0 8px; }
+.tool-color-converter .cc-sample-big { font-size: 24px; font-weight: 700; }
+.tool-color-converter .cc-ratio { font-size: 22px; font-weight: 700; margin: 0 0 10px; }
+.tool-color-converter .cc-h { margin: 16px 0 8px; font-size: 14px; }
+.tool-color-converter .cc-suggest ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+.tool-color-converter .cc-cvd { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.tool-color-converter .cc-cvd-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface); }
+.tool-color-converter .cc-cvd-card h3 { font-size: 13px; margin: 0 0 8px; }
+.tool-color-converter .cc-cvd-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.tool-color-converter .cc-cvd-tile { border: 1px solid var(--border-strong); border-radius: 8px; padding: 12px; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.tool-color-converter .cc-batch { min-height: 150px; width: 100%; }
+.tool-color-converter .cc-err { color: var(--danger); }
+@media (max-width: 720px) {
+  .tool-color-converter .cc-grid { grid-template-columns: minmax(0, 1fr); }
+  .tool-color-converter .cc-bar .field { flex: 1 1 140px; }
+}

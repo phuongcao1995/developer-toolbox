@@ -6,6 +6,8 @@ export const CATEGORIES = [
   { id: 'code',    name: 'Code Development',   icon: 'code-2' },
   { id: 'utility', name: 'URL, Time & Utilities', icon: 'wrench' },
   { id: 'api',     name: 'API & Database',     icon: 'database' },
+  { id: 'files',   name: 'Files & Media',      icon: 'file-archive' },
+  { id: 'web',     name: 'Web Development',    icon: 'globe' },
 ];
 
 const DEFAULT_UPDATED = '2026-11-03';
@@ -38,6 +40,23 @@ export const TOOLS = [
   t('webhook-inspector', 'Webhook Inspector', 'Inspect webhook requests — demo mode with simulated requests, optional external service.', 'api', 'webhook', ['webhook', 'inspect', 'http', 'request', 'callback']),
   t('table-converter', 'Table Converter', 'Convert between JSON, CSV, SQL INSERT and Markdown tables.', 'api', 'table', ['csv', 'json', 'sql', 'markdown', 'table', 'convert']),
   t('http-status-reference', 'HTTP Status Codes', 'Searchable reference of HTTP status codes with usage notes.', 'api', 'list-checks', ['http', 'status', 'code', '404', '500', 'reference']),
+
+  // Added in the second release (each is an independent child project under tools/<id>/).
+  t('html-entity-converter', 'HTML Entity Converter', 'Encode and decode HTML entities (named, decimal, hex) with live two-way conversion and a searchable entity reference.', 'text', 'code-xml', ['html entities', 'encode', 'decode', 'escape html', 'unicode', 'numeric character reference', 'nbsp', 'copyright', 'special characters']),
+  t('ts-interface-generator', 'TypeScript Interface Generator', 'Generate TypeScript interfaces, Zod schemas or JSDoc typedefs from JSON, JSON Lines or JSON Schema.', 'code', 'braces', ['typescript', 'interface', 'json to ts', 'zod', 'jsdoc', 'json schema', 'types', 'quicktype', 'd.ts', 'jsonl']),
+  t('sql-query-analyzer', 'SQL Query Analyzer', 'Analyze SQL without running it: structure, join diagram, sargability, index suggestions, anti-patterns and a helper for reading EXPLAIN plans.', 'api', 'database-zap', ['sql', 'query', 'analyzer', 'index', 'explain', 'execution plan', 'join', 'sargable', 'lint', 'performance']),
+  t('openapi-viewer', 'OpenAPI / Swagger Viewer', 'Browse OpenAPI 3.x and Swagger 2.0 specs as endpoints and schemas, lint them, generate example payloads, and export Markdown or standalone HTML docs.', 'api', 'network', ['openapi', 'swagger', 'api', 'spec', 'docs', 'endpoints', 'schema', 'rest', 'lint', 'yaml']),
+  t('xml-formatter', 'XML Formatter & Validator', 'Beautify, minify and validate XML with exact error positions, a tree explorer, XPath queries and XML/JSON conversion.', 'data', 'file-code', ['xml', 'format', 'beautify', 'minify', 'validate', 'xpath', 'tree', 'well-formed', 'xml to json']),
+  t('yaml-formatter', 'YAML Formatter & Validator', 'Format and validate YAML (multi-document), convert to and from JSON, and catch common YAML pitfalls.', 'data', 'file-cog', ['yaml', 'yml', 'format', 'validate', 'lint', 'json', 'convert', 'anchors', 'kubernetes', 'config']),
+  t('git-command-generator', 'Git Command Generator', 'Build Git commands for common tasks, with explanations, danger warnings and undo hints. Commands are shown, never run.', 'utility', 'git-branch', ['git', 'command', 'branch', 'merge', 'rebase', 'reset', 'revert', 'stash', 'undo', 'cheat sheet', 'reflog']),
+  t('image-converter', 'Image Converter', 'Convert, resize and compress images to PNG, JPEG or WebP in batches, then download them singly or as a ZIP.', 'files', 'image-down', ['image', 'convert', 'png', 'jpeg', 'webp', 'resize', 'compress', 'batch', 'zip', 'svg']),
+  t('file-hash-generator', 'File Hash Generator', 'Hash text and files with MD5, SHA-1, SHA-256, SHA-384 and SHA-512 (plus HMAC), compare against an expected hash, and verify checksum files.', 'files', 'hash', ['hash', 'checksum', 'md5', 'sha256', 'sha1', 'sha512', 'hmac', 'verify', 'sha256sum', 'integrity']),
+  t('qr-code', 'QR Code Generator & Reader', 'Create QR codes for text, URLs, Wi-Fi, contacts and more, and read them from images or the camera.', 'files', 'qr-code', ['qr', 'qrcode', 'barcode', 'scan', 'wifi', 'vcard', 'url', 'camera', 'generator', 'reader']),
+  t('chmod-calculator', 'Chmod Calculator', 'Convert chmod permissions between checkboxes, octal, symbolic and commands, apply symbolic expressions and umask, and parse ls -l output.', 'utility', 'lock-keyhole', ['chmod', 'permissions', 'unix', 'linux', 'octal', 'umask', 'symbolic', 'ls', 'setuid', 'sticky']),
+  t('html-css-js-playground', 'HTML/CSS/JS Playground', 'Write HTML, CSS and JavaScript with a live sandboxed preview, a console and project export.', 'web', 'square-terminal', ['html', 'css', 'javascript', 'playground', 'sandbox', 'preview', 'codepen', 'console', 'zip']),
+  t('color-converter', 'Color Converter', 'Convert colours between HEX, RGB, HSL, HWB, Lab, LCH, OKLab and OKLCH, build palettes and check WCAG contrast.', 'web', 'palette', ['color', 'colour', 'hex', 'rgb', 'hsl', 'oklch', 'contrast', 'wcag', 'palette', 'gradient', 'colorblind']),
+  t('http-header-analyzer', 'HTTP Header Analyzer', 'Parse and explain HTTP request or response headers and review security headers, cookies, CORS and caching.', 'web', 'shield-check', ['http', 'headers', 'security', 'csp', 'hsts', 'cors', 'cookie', 'cache-control', 'curl', 'response']),
+  t('curl-converter', 'cURL Converter', 'Convert cURL commands to fetch, axios, Python, Go, PHP, Node, HTTPie and PowerShell, or build a cURL command from a form.', 'api', 'terminal-square', ['curl', 'fetch', 'axios', 'python requests', 'go', 'php', 'httpie', 'powershell', 'http request', 'convert']),
 ];
 
 export const getTool = id => TOOLS.find(x => x.id === id) || null;

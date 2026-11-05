@@ -1,0 +1,84 @@
+<div class="yf">
+  <div class="toolbar yf-options">
+    <div class="field"><label for="yf-indent">Indentation</label>
+      <select id="yf-indent" class="select"><option value="2">2 spaces</option><option value="4">4 spaces</option></select></div>
+    <div class="field"><label for="yf-width">Line width</label>
+      <select id="yf-width" class="select"><option value="80">80</option><option value="120">120</option><option value="0">No wrapping</option></select></div>
+    <div class="field"><label for="yf-quote">Quote style</label>
+      <select id="yf-quote" class="select"><option value="'">Single quotes</option><option value="&quot;">Double quotes</option></select></div>
+    <div class="field"><label for="yf-flow">Collection style</label>
+      <select id="yf-flow" class="select">
+        <option value="block">Block (indented)</option><option value="flow-2">Flow from depth 2</option>
+        <option value="flow-1">Flow from depth 1</option><option value="flow">Flow everywhere (JSON-like)</option>
+      </select></div>
+    <label class="check yf-check"><input type="checkbox" id="yf-sort"> Sort keys</label>
+    <label class="check yf-check"><input type="checkbox" id="yf-expand" checked> Expand anchors &amp; aliases</label>
+    <label class="check yf-check"><input type="checkbox" id="yf-force"> Quote all strings</label>
+    <label class="check yf-check"><input type="checkbox" id="yf-dups"> Allow duplicate keys (last wins)</label>
+    <label class="check yf-check"><input type="checkbox" id="yf-warn" checked> Warn before dropping comments</label>
+  </div>
+  <div class="toolbar">
+    <button class="btn btn-primary" id="yf-format" type="button"><i data-lucide="wand-2"></i> Format</button>
+    <button class="btn" id="yf-validate" type="button"><i data-lucide="check-circle-2"></i> Validate</button>
+    <button class="btn" id="yf-toJson" type="button"><i data-lucide="braces"></i> YAML &rarr; JSON</button>
+    <button class="btn" id="yf-fromJson" type="button"><i data-lucide="file-code"></i> JSON &rarr; YAML</button>
+  </div>
+  <p class="hint yf-hint"><strong>Limitation:</strong> the parser (js-yaml, YAML 1.2 core with the safe schema) does not keep comments, so Format removes them. Only standard types are supported: custom tags such as <code>!!js/function</code> are rejected and nothing in the document is ever executed. Everything runs in your browser.</p>
+
+  <div class="yf-status">
+    <div id="yf-msg" class="alert" hidden></div>
+    <button class="btn btn-sm" id="yf-goto" type="button" hidden><i data-lucide="crosshair"></i> Go to error</button>
+  </div>
+
+  <div class="grid-2 yf-panels">
+    <section class="panel" id="yf-drop">
+      <div class="panel-head">
+        <h3>Input</h3>
+        <span class="badge" id="yf-live" role="status" aria-live="polite"></span>
+        <button class="btn btn-sm" id="yf-sample" type="button">Sample</button>
+        <button class="btn btn-sm" id="yf-upload" type="button"><i data-lucide="upload"></i> Upload</button>
+        <button class="btn btn-sm" id="yf-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+      </div>
+      <textarea class="textarea code" id="yf-input" spellcheck="false" placeholder="Paste YAML or JSON here, or drop a file…" aria-label="Input YAML or JSON"></textarea>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <h3 id="yf-out-title">Output</h3>
+        <button class="btn btn-sm" id="yf-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn btn-sm" id="yf-download" type="button"><i data-lucide="download"></i> Download</button>
+        <button class="btn btn-sm" id="yf-swap" type="button" title="Move the output into the input"><i data-lucide="arrow-left"></i> Use as input</button>
+      </div>
+      <textarea class="textarea code" id="yf-output" spellcheck="false" readonly placeholder="Result appears here" aria-label="Output"></textarea>
+    </section>
+  </div>
+  <div class="yf-stats" id="yf-stats" aria-live="polite"></div>
+
+  <div class="yf-tabs">
+    <div class="tabs">
+      <button class="tab active" type="button" data-tab="checks">Checks</button>
+      <button class="tab" type="button" data-tab="outline">Outline</button>
+      <button class="tab" type="button" data-tab="changes">Changes</button>
+    </div>
+
+    <div data-panel="checks">
+      <p class="hint">Heuristic hints about values that different YAML versions or parsers read differently (for example <code>NO</code>, <code>0755</code>, <code>12:30</code>, <code>1.10</code>). They scan the text line by line and can miss or over-report inside unusual constructs.</p>
+      <div id="yf-checks" class="yf-checks" aria-live="polite"></div>
+    </div>
+
+    <div data-panel="outline" hidden>
+      <div class="toolbar yf-bar">
+        <div class="field yf-grow"><label for="yf-tsearch">Search keys and values</label>
+          <input class="input" id="yf-tsearch" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. replicas, nginx"></div>
+        <button class="btn btn-sm" id="yf-trefresh" type="button"><i data-lucide="refresh-cw"></i> Rebuild from input</button>
+        <button class="btn btn-sm" id="yf-texpand" type="button">Expand</button>
+        <button class="btn btn-sm" id="yf-tcollapse" type="button">Collapse</button>
+      </div>
+      <div id="yf-thits" class="yf-hits" aria-live="polite"></div>
+      <div id="yf-tree" class="yf-tree" aria-label="YAML outline"></div>
+    </div>
+
+    <div data-panel="changes" hidden>
+      <div id="yf-changes" class="yf-changes" aria-live="polite"><p class="hint">Run Format to compare the result with the input.</p></div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,149 @@
+<div class="cc">
+  <div class="tabs" aria-label="cURL converter modes">
+    <button class="tab active" type="button" data-tab="parse">From cURL</button>
+    <button class="tab" type="button" data-tab="build">Build a request</button>
+  </div>
+  <p class="hint cc-privacy"><i data-lucide="shield-check"></i> Everything runs in your browser. Nothing is sent anywhere and no request is made.</p>
+
+  <!-- ===================== cURL -> everything ===================== -->
+  <div data-panel="parse">
+    <div class="toolbar cc-options">
+      <div class="field"><label for="cc-shell">Shell syntax</label>
+        <select id="cc-shell" class="select">
+          <option value="auto">Auto-detect</option>
+          <option value="posix">bash / zsh / sh</option>
+          <option value="cmd">Windows cmd (^ continuation)</option>
+          <option value="powershell">PowerShell (` continuation)</option>
+        </select></div>
+      <span class="spacer"></span>
+      <label class="check"><input type="checkbox" id="cc-reveal"> Reveal secrets</label>
+    </div>
+    <section class="panel">
+      <div class="panel-head">
+        <h3>cURL command</h3>
+        <button class="btn btn-sm" id="cc-upload" type="button"><i data-lucide="upload"></i> Upload</button>
+        <button class="btn btn-sm" id="cc-sample" type="button"><i data-lucide="file-code"></i> Sample</button>
+        <button class="btn btn-sm" id="cc-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+      </div>
+      <textarea class="textarea code" id="cc-input" spellcheck="false" placeholder="Paste a cURL command (Chrome DevTools &quot;Copy as cURL&quot; in bash, cmd or PowerShell format works)" aria-label="cURL command"></textarea>
+    </section>
+    <div id="cc-msg" class="alert" hidden></div>
+    <ul class="cc-warnings" id="cc-warnings" aria-live="polite"></ul>
+
+    <div class="grid-2 cc-results">
+      <section class="panel" aria-labelledby="cc-parsed-title">
+        <div class="panel-head"><h3 id="cc-parsed-title">Parsed request</h3></div>
+        <div class="panel-body cc-parsed" id="cc-parsed" aria-live="polite"></div>
+      </section>
+      <section class="panel" aria-labelledby="cc-code-title">
+        <div class="panel-head">
+          <h3 id="cc-code-title">Convert to</h3>
+          <label class="cc-sr" for="cc-target">Target language</label>
+          <select id="cc-target" class="select cc-target"></select>
+          <button class="btn btn-sm" id="cc-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+          <button class="btn btn-sm" id="cc-download" type="button"><i data-lucide="download"></i> Download</button>
+        </div>
+        <div class="cc-code-opts"><label class="check" id="cc-crlf-wrap"><input type="checkbox" id="cc-crlf"> CRLF line endings when copying (raw HTTP)</label></div>
+        <textarea class="textarea code" id="cc-output" spellcheck="false" readonly placeholder="Converted code appears here" aria-label="Converted code"></textarea>
+        <p class="hint cc-copy-note" id="cc-copy-note"></p>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===================== form -> cURL ===================== -->
+  <div data-panel="build" hidden>
+    <div class="grid-2 cc-build">
+      <section class="panel">
+        <div class="panel-head"><h3>Request</h3></div>
+        <div class="panel-body stack">
+          <div class="cc-urlrow">
+            <div class="field cc-method"><label for="cb-method">Method</label>
+              <select id="cb-method" class="select"></select></div>
+            <div class="field cc-grow"><label for="cb-url">URL</label>
+              <input id="cb-url" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="https://api.example.com/items"></div>
+          </div>
+
+          <fieldset class="cc-fieldset"><legend>Query parameters</legend>
+            <div id="cb-params" class="cc-kv"></div>
+            <button class="btn btn-sm" type="button" id="cb-add-param"><i data-lucide="plus"></i> Add parameter</button>
+          </fieldset>
+
+          <fieldset class="cc-fieldset"><legend>Headers</legend>
+            <div id="cb-headers" class="cc-kv"></div>
+            <button class="btn btn-sm" type="button" id="cb-add-header"><i data-lucide="plus"></i> Add header</button>
+          </fieldset>
+
+          <fieldset class="cc-fieldset"><legend>Body</legend>
+            <div class="field"><label for="cb-bodytype">Body type</label>
+              <select id="cb-bodytype" class="select">
+                <option value="none">None</option>
+                <option value="json">JSON</option>
+                <option value="text">Plain text</option>
+                <option value="form">Form (urlencoded)</option>
+                <option value="multipart">Multipart form</option>
+                <option value="raw">Raw (no Content-Type)</option>
+              </select></div>
+            <div class="field" id="cb-body-wrap"><label for="cb-body">Body</label>
+              <textarea id="cb-body" class="textarea code cc-body" spellcheck="false" placeholder="Request body"></textarea></div>
+            <div id="cb-fields-wrap" hidden>
+              <div id="cb-fields" class="cc-kv"></div>
+              <button class="btn btn-sm" type="button" id="cb-add-field"><i data-lucide="plus"></i> Add field</button>
+            </div>
+          </fieldset>
+
+          <fieldset class="cc-fieldset"><legend>Authentication</legend>
+            <div class="field"><label for="cb-auth">Type</label>
+              <select id="cb-auth" class="select">
+                <option value="none">None</option>
+                <option value="basic">Basic</option>
+                <option value="bearer">Bearer token</option>
+                <option value="apikey">API key</option>
+              </select></div>
+            <div class="cc-auth" id="cb-auth-basic" hidden>
+              <div class="field"><label for="cb-user">Username</label><input id="cb-user" class="input" type="text" autocomplete="off"></div>
+              <div class="field"><label for="cb-pass">Password</label><input id="cb-pass" class="input" type="password" autocomplete="off"></div>
+            </div>
+            <div class="cc-auth" id="cb-auth-bearer" hidden>
+              <div class="field"><label for="cb-token">Token</label><input id="cb-token" class="input" type="password" autocomplete="off"></div>
+            </div>
+            <div class="cc-auth" id="cb-auth-apikey" hidden>
+              <div class="field"><label for="cb-key-in">Send in</label>
+                <select id="cb-key-in" class="select"><option value="header">Header</option><option value="query">Query string</option></select></div>
+              <div class="field"><label for="cb-key-name">Name</label><input id="cb-key-name" class="input" type="text" autocomplete="off" placeholder="X-API-Key"></div>
+              <div class="field"><label for="cb-key-value">Value</label><input id="cb-key-value" class="input" type="password" autocomplete="off"></div>
+            </div>
+          </fieldset>
+
+          <div class="row cc-checks">
+            <label class="check"><input type="checkbox" id="cb-follow"> Follow redirects (-L)</label>
+            <label class="check"><input type="checkbox" id="cb-insecure"> Skip TLS verification (-k)</label>
+            <label class="check"><input type="checkbox" id="cb-compressed"> --compressed</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>cURL command</h3>
+          <button class="btn btn-sm" id="cb-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+          <button class="btn btn-sm" id="cb-download" type="button"><i data-lucide="download"></i> Download</button>
+          <button class="btn btn-sm" id="cb-open" type="button" title="Load this command in the From cURL tab"><i data-lucide="arrow-left-right"></i> Open in converter</button>
+        </div>
+        <div class="cc-code-opts">
+          <div class="field cc-shellfield"><label for="cb-shell">Shell</label>
+            <select id="cb-shell" class="select">
+              <option value="posix">bash / zsh</option>
+              <option value="cmd">Windows cmd</option>
+              <option value="powershell">PowerShell</option>
+            </select></div>
+          <label class="check"><input type="checkbox" id="cb-pretty" checked> One option per line</label>
+          <label class="check"><input type="checkbox" id="cb-reveal"> Reveal secrets</label>
+        </div>
+        <div id="cb-msg" class="alert" hidden></div>
+        <ul class="cc-warnings" id="cb-warnings" aria-live="polite"></ul>
+        <textarea class="textarea code" id="cb-output" spellcheck="false" readonly placeholder="The command appears here as you fill in the form" aria-label="Generated cURL command"></textarea>
+        <p class="hint cc-copy-note" id="cb-copy-note"></p>
+      </section>
+    </div>
+  </div>
+</div>

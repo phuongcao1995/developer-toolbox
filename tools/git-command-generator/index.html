@@ -1,0 +1,53 @@
+<div class="gg">
+  <p class="hint gg-banner" role="note"><strong>This tool only shows commands. It never runs git and never leaves your browser.</strong> Review every command before you run it, especially those marked DANGER.</p>
+
+  <div class="tabs gg-tabs" role="tablist" aria-label="Git command generator sections">
+    <button class="tab active" role="tab" type="button" id="gg-tab-builder" data-tab="builder" aria-selected="true" aria-controls="gg-panel-builder">Command builder</button>
+    <button class="tab" role="tab" type="button" id="gg-tab-cheat" data-tab="cheat" aria-selected="false" tabindex="-1" aria-controls="gg-panel-cheat">Cheat sheet</button>
+    <button class="tab" role="tab" type="button" id="gg-tab-explain" data-tab="explain" aria-selected="false" tabindex="-1" aria-controls="gg-panel-explain">Reset vs revert vs restore</button>
+    <button class="tab" role="tab" type="button" id="gg-tab-favs" data-tab="favs" aria-selected="false" tabindex="-1" aria-controls="gg-panel-favs">Favourites <span class="badge" id="gg-fav-count">0</span></button>
+  </div>
+
+  <section id="gg-panel-builder" role="tabpanel" aria-labelledby="gg-tab-builder">
+    <div class="toolbar gg-top">
+      <div class="field gg-grow"><label for="gg-find">Find a task</label><input class="input" id="gg-find" type="search" autocomplete="off" placeholder="e.g. undo, stash, rebase, tag"></div>
+      <div class="field gg-grow"><label for="gg-task">Task</label><select class="select" id="gg-task"></select></div>
+      <div class="field"><label for="gg-shell">Shell</label><select class="select" id="gg-shell"></select></div>
+    </div>
+    <div class="gg-cols">
+      <section class="panel" aria-labelledby="gg-form-title">
+        <div class="panel-head"><h3 id="gg-form-title">Options</h3><button class="btn btn-sm" type="button" id="gg-reset"><i data-lucide="rotate-ccw"></i> Reset</button></div>
+        <div class="panel-body stack">
+          <p class="gg-summary" id="gg-summary"></p>
+          <div class="gg-form" id="gg-form"></div>
+        </div>
+      </section>
+      <section class="panel" aria-labelledby="gg-out-title">
+        <div class="panel-head"><h3 id="gg-out-title">Commands</h3>
+          <button class="btn btn-sm" type="button" id="gg-copy-all"><i data-lucide="copy"></i> Copy all (with comments)</button>
+          <button class="btn btn-sm" type="button" id="gg-copy-plain"><i data-lucide="copy"></i> Copy commands only</button>
+          <button class="btn btn-sm" type="button" id="gg-save"><i data-lucide="star"></i> Save favourite</button></div>
+        <div class="panel-body stack" id="gg-out" aria-live="polite"></div>
+      </section>
+    </div>
+  </section>
+
+  <section id="gg-panel-cheat" role="tabpanel" aria-labelledby="gg-tab-cheat" hidden>
+    <div class="panel"><div class="panel-body stack">
+      <div class="field"><label for="gg-cheat-q">Search the cheat sheet</label><input class="input" id="gg-cheat-q" type="search" autocomplete="off" placeholder="e.g. stash pop, undo, author"></div>
+      <p class="gg-muted" id="gg-cheat-count" aria-live="polite"></p>
+      <ul class="gg-cheat" id="gg-cheat-list"></ul>
+    </div></div>
+  </section>
+
+  <section id="gg-panel-explain" role="tabpanel" aria-labelledby="gg-tab-explain" hidden>
+    <div class="panel"><div class="panel-body stack" id="gg-explain"></div></div>
+  </section>
+
+  <section id="gg-panel-favs" role="tabpanel" aria-labelledby="gg-tab-favs" hidden>
+    <div class="panel"><div class="panel-body stack">
+      <p class="gg-muted">Favourites are saved only in this browser. Use "Save favourite" in the builder.</p>
+      <div id="gg-favs"></div>
+    </div></div>
+  </section>
+</div>

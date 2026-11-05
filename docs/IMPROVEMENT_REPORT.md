@@ -1,5 +1,8 @@
 # DevKit / Developer Toolbox — Improvement Report (Phase 1 audit → Phase 2)
 
+> **Historical snapshot.** This is the audit as it stood *before* any code was changed (21 tools). Nearly all findings have since been addressed; the current
+> status of every group, and the items that remain open, is in [TEST_REPORT.md](TEST_REPORT.md), section 6. The app now has 36 tools; see the [README](../README.md).
+
 Scope: shell (`index.html`, `assets/js`, `assets/css`) and all 20 tools under `tools/`.
 Method: full read of the shell; each tool read in full by an auditor; pure `logic.js` modules were executed in Node on edge cases. Items marked **(run)** were reproduced by execution, **(read)** by code reading only. Nothing in the browser was exercised in this phase, and no application code was changed.
 

@@ -1,0 +1,122 @@
+<div class="cm">
+  <div class="cm-top">
+    <section class="panel" aria-labelledby="cm-grid-title">
+      <div class="panel-head"><h3 id="cm-grid-title">Permissions</h3></div>
+      <div class="panel-body stack">
+        <table class="cm-grid">
+          <caption class="cm-sr">Permission checkboxes by class</caption>
+          <thead><tr><th scope="col"><span class="cm-sr">Permission</span></th><th scope="col">Owner (u)</th><th scope="col">Group (g)</th><th scope="col">Other (o)</th></tr></thead>
+          <tbody id="cm-grid-body"></tbody>
+        </table>
+        <fieldset class="cm-special">
+          <legend>Special bits</legend>
+          <label class="check"><input type="checkbox" id="cm-setuid"> Setuid (4000)</label>
+          <label class="check"><input type="checkbox" id="cm-setgid"> Setgid (2000)</label>
+          <label class="check"><input type="checkbox" id="cm-sticky"> Sticky (1000)</label>
+        </fieldset>
+        <div class="cm-opts">
+          <div class="field"><label for="cm-type">Item type</label>
+            <select class="select" id="cm-type"><option value="file">File</option><option value="dir">Directory</option></select></div>
+          <label class="check"><input type="checkbox" id="cm-showtype"> Show file type character in symbolic form</label>
+          <label class="check"><input type="checkbox" id="cm-pad4"> Always show 4 octal digits</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="cm-conv-title">
+      <div class="panel-head"><h3 id="cm-conv-title">Octal, symbolic and command</h3>
+        <button class="btn btn-sm" type="button" id="cm-reset"><i data-lucide="rotate-ccw"></i> Reset</button></div>
+      <div class="panel-body stack">
+        <div class="field"><label for="cm-octal">Octal (3 or 4 digits)</label>
+          <div class="cm-inrow"><input class="input cm-mono" id="cm-octal" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="cm-octal-err" placeholder="755">
+            <button class="btn btn-sm" type="button" data-copy="cm-octal" aria-label="Copy octal"><i data-lucide="copy"></i></button></div>
+          <div class="cm-err" id="cm-octal-err" role="alert" hidden></div></div>
+        <div class="field"><label for="cm-symbolic">Symbolic (as shown by ls -l)</label>
+          <div class="cm-inrow"><input class="input cm-mono" id="cm-symbolic" type="text" autocomplete="off" spellcheck="false" aria-describedby="cm-symbolic-err" placeholder="rwxr-xr-x">
+            <button class="btn btn-sm" type="button" data-copy="cm-symbolic" aria-label="Copy symbolic"><i data-lucide="copy"></i></button></div>
+          <div class="cm-err" id="cm-symbolic-err" role="alert" hidden></div></div>
+        <div class="cm-cmdopts">
+          <div class="field"><label for="cm-form">Command form</label>
+            <select class="select" id="cm-form"><option value="numeric">Numeric (chmod 755)</option><option value="symbolic">Symbolic (chmod u=rwx,go=rx)</option></select></div>
+          <div class="field"><label for="cm-path">Path</label><input class="input" id="cm-path" type="text" autocomplete="off" spellcheck="false" placeholder="script.sh"></div>
+          <label class="check"><input type="checkbox" id="cm-rec"> -R recursive</label>
+          <label class="check"><input type="checkbox" id="cm-verb"> -v verbose</label>
+        </div>
+        <div class="field"><label for="cm-command">chmod command (editable)</label>
+          <div class="cm-inrow"><input class="input cm-mono" id="cm-command" type="text" autocomplete="off" spellcheck="false" aria-describedby="cm-command-err" placeholder="chmod 755 script.sh">
+            <button class="btn btn-sm" type="button" data-copy="cm-command" aria-label="Copy command"><i data-lucide="copy"></i></button></div>
+          <div class="cm-err" id="cm-command-err" role="alert" hidden></div></div>
+        <p class="hint cm-hint">A symbolic command typed here (for example <code>u+x,go-w</code>) is applied to the current mode, using the umask from "Apply a symbolic expression" below.</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="cm-explain-title">
+    <div class="panel-head"><h3 id="cm-explain-title">What this means</h3></div>
+    <div class="panel-body" id="cm-explain" aria-live="polite"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="cm-apply-title">
+    <div class="panel-head"><h3 id="cm-apply-title">Apply a symbolic expression</h3></div>
+    <div class="panel-body stack">
+      <p class="hint cm-hint">Shows the RESULT of running <code>chmod EXPRESSION</code> on a file with the starting mode below. Examples: <code>u+x</code>, <code>go-w</code>, <code>a=r</code>, <code>u=g</code>, <code>+X</code>, <code>ugo+rx,o-w</code>.</p>
+      <div class="cm-apply-grid">
+        <div class="field"><label for="cm-start">Starting mode (octal or rw-r--r--)</label><input class="input cm-mono" id="cm-start" type="text" autocomplete="off" spellcheck="false" value="644"></div>
+        <div class="field"><label for="cm-expr">Expression</label><input class="input cm-mono" id="cm-expr" type="text" autocomplete="off" spellcheck="false" value="u+x,go-w"></div>
+        <div class="field"><label for="cm-apply-umask">Umask (used when no u/g/o/a is given)</label><input class="input cm-mono" id="cm-apply-umask" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="022"></div>
+        <label class="check"><input type="checkbox" id="cm-apply-dir"> Target is a directory</label>
+      </div>
+      <div class="cm-err" id="cm-apply-err" role="alert" hidden></div>
+      <div id="cm-apply-out" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <div class="cm-two">
+    <section class="panel" aria-labelledby="cm-umask-title">
+      <div class="panel-head"><h3 id="cm-umask-title">Umask calculator</h3></div>
+      <div class="panel-body stack">
+        <div class="field"><label for="cm-umask">Umask (octal)</label><input class="input cm-mono" id="cm-umask" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="022" aria-describedby="cm-umask-err"></div>
+        <div class="cm-err" id="cm-umask-err" role="alert" hidden></div>
+        <div id="cm-umask-out" aria-live="polite"></div>
+        <div class="row"><button class="btn btn-sm" type="button" id="cm-umask-from">Umask that produces the current mode as a directory default</button></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="cm-ls-title">
+      <div class="panel-head"><h3 id="cm-ls-title">Parse ls -l output</h3></div>
+      <div class="panel-body stack">
+        <div class="field"><label for="cm-ls">Paste one or more lines</label>
+          <textarea class="textarea cm-mono" id="cm-ls" rows="3" spellcheck="false" placeholder="-rwxr-xr-x 1 alice staff 1024 Jan  5 12:00 deploy.sh"></textarea></div>
+        <div class="cm-err" id="cm-ls-err" role="alert" hidden></div>
+        <div id="cm-ls-out" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="cm-rec-title">
+    <div class="panel-head"><h3 id="cm-rec-title">Recursive helper</h3></div>
+    <div class="panel-body stack">
+      <p class="hint cm-hint">One mode applied with <code>chmod -R</code> gives files the same execute bits as directories. Use separate modes for directories and files instead.</p>
+      <div class="cm-apply-grid">
+        <div class="field"><label for="cm-rpath">Directory</label><input class="input" id="cm-rpath" type="text" value="." autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="cm-rdir">Directory mode</label><input class="input cm-mono" id="cm-rdir" type="text" inputmode="numeric" value="755" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="cm-rfile">File mode</label><input class="input cm-mono" id="cm-rfile" type="text" inputmode="numeric" value="644" autocomplete="off" spellcheck="false"></div>
+      </div>
+      <div class="cm-err" id="cm-rec-err" role="alert" hidden></div>
+      <div id="cm-rec-out"></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="cm-presets-title">
+    <div class="panel-head"><h3 id="cm-presets-title">Common modes</h3></div>
+    <div class="table-wrap"><table class="table cm-presets">
+      <thead><tr><th scope="col">Mode</th><th scope="col">Symbolic</th><th scope="col">Name</th><th scope="col">Use for</th><th scope="col">Security</th><th scope="col"><span class="cm-sr">Apply</span></th></tr></thead>
+      <tbody id="cm-presets-body"></tbody>
+    </table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="cm-notes-title">
+    <div class="panel-head"><h3 id="cm-notes-title">Caveats</h3></div>
+    <div class="panel-body"><ul class="cm-notes" id="cm-notes"></ul></div>
+  </section>
+</div>

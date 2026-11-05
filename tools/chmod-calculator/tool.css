@@ -1,0 +1,44 @@
+.tool-chmod-calculator .cm { display: flex; flex-direction: column; gap: 16px; }
+.tool-chmod-calculator [hidden] { display: none !important; }
+.tool-chmod-calculator .cm-top, .tool-chmod-calculator .cm-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.tool-chmod-calculator .cm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tool-chmod-calculator .cm-mono, .tool-chmod-calculator code, .tool-chmod-calculator .cm-code { font-family: var(--mono); }
+.tool-chmod-calculator code { font-size: 12.5px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+.tool-chmod-calculator .cm-grid { border-collapse: collapse; width: 100%; }
+.tool-chmod-calculator .cm-grid th, .tool-chmod-calculator .cm-grid td { padding: 8px; text-align: center; border-bottom: 1px solid var(--border); font-size: 13px; }
+.tool-chmod-calculator .cm-grid tbody th { text-align: left; font-weight: 600; }
+.tool-chmod-calculator .cm-grid input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary); }
+.tool-chmod-calculator .cm-special { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; }
+.tool-chmod-calculator .cm-special legend { padding: 0 6px; font-size: 12px; color: var(--text-muted); }
+.tool-chmod-calculator .cm-opts, .tool-chmod-calculator .cm-cmdopts { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: flex-end; }
+.tool-chmod-calculator .cm-cmdopts .field { min-width: 150px; flex: 1 1 150px; }
+.tool-chmod-calculator .cm-inrow { display: flex; gap: 8px; align-items: center; }
+.tool-chmod-calculator .cm-inrow .input { flex: 1; min-width: 0; }
+.tool-chmod-calculator .cm-err { margin-top: 4px; padding: 6px 10px; border-radius: 6px; background: var(--danger-soft); color: var(--danger); font-size: 12.5px; }
+.tool-chmod-calculator [aria-invalid="true"] { border-color: var(--danger); }
+.tool-chmod-calculator .cm-hint { margin: 0; }
+.tool-chmod-calculator .cm-apply-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; align-items: end; }
+.tool-chmod-calculator .cm-list, .tool-chmod-calculator .cm-audit, .tool-chmod-calculator .cm-notes { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.tool-chmod-calculator .cm-audit { list-style: none; padding-left: 0; margin-top: 10px; }
+.tool-chmod-calculator .cm-audit li { padding: 6px 10px; border-left: 3px solid var(--border-strong); background: var(--surface-2); border-radius: 4px; }
+.tool-chmod-calculator .cm-audit-danger { border-left-color: var(--danger) !important; }
+.tool-chmod-calculator .cm-audit-warn { border-left-color: var(--warn) !important; }
+.tool-chmod-calculator .cm-note { margin: 8px 0 0; }
+.tool-chmod-calculator .cm-muted { color: var(--text-muted); font-size: 12.5px; margin: 6px 0 0; }
+.tool-chmod-calculator .cm-result { margin: 0 0 8px; }
+.tool-chmod-calculator .cm-steps { margin: 0 0 10px; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; }
+.tool-chmod-calculator .cm-small th, .tool-chmod-calculator .cm-small td { padding: 6px 10px; text-align: left; }
+.tool-chmod-calculator .cm-ls-entry, .tool-chmod-calculator .cm-var { border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 8px; background: var(--surface-2); display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.tool-chmod-calculator .cm-var { align-items: stretch; }
+.tool-chmod-calculator .cm-var-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tool-chmod-calculator .cm-code { margin: 0; padding: 8px 10px; background: var(--code-bg); border-radius: 6px; overflow-x: auto; font-size: 12.5px; white-space: pre; }
+.tool-chmod-calculator .cm-presets td, .tool-chmod-calculator .cm-presets th { vertical-align: top; font-size: 13px; }
+.tool-chmod-calculator .cm-presets td:nth-child(4), .tool-chmod-calculator .cm-presets td:nth-child(5) { min-width: 200px; }
+.tool-chmod-calculator .cm-grid input:focus-visible, .tool-chmod-calculator .cm-special input:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+@media (max-width: 800px) {
+  .tool-chmod-calculator .cm-top, .tool-chmod-calculator .cm-two { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 480px) {
+  .tool-chmod-calculator .cm-grid th, .tool-chmod-calculator .cm-grid td { padding: 6px 2px; font-size: 12px; }
+}

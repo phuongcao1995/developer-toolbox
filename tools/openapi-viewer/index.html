@@ -1,0 +1,81 @@
+<div class="oa">
+  <details class="oa-source" id="oa-source" open>
+    <summary>Specification source</summary>
+    <div class="oa-source-body">
+      <div class="toolbar">
+        <button class="btn btn-primary" id="oa-load" type="button"><i data-lucide="play"></i> Load</button>
+        <button class="btn" id="oa-upload" type="button"><i data-lucide="upload"></i> Open file</button>
+        <button class="btn" id="oa-fetch-toggle" type="button" aria-expanded="false" aria-controls="oa-fetch"><i data-lucide="globe"></i> From URL</button>
+        <div class="field oa-sample"><label for="oa-sample">Sample</label>
+          <select id="oa-sample" class="select"><option value="">Choose a sample…</option><option value="p30">Petstore (OpenAPI 3.0)</option><option value="e31">Events (OpenAPI 3.1, webhooks)</option><option value="s20">Legacy API (Swagger 2.0)</option></select></div>
+        <span class="spacer"></span>
+        <button class="btn" id="oa-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+      </div>
+      <div id="oa-fetch" class="oa-fetch" hidden>
+        <div class="alert alert-info oa-privacy">Privacy and CORS: the request is made directly from your browser to the address you enter (it is not sent through this site). That server will see your IP address, and it must allow cross-origin requests (CORS), otherwise the browser blocks it: in that case download the file and use "Open file". Only http(s) URLs up to 10 MB are accepted; remote <code>$ref</code> links inside the document are never fetched.</div>
+        <div class="toolbar">
+          <div class="field oa-grow"><label for="oa-url">Specification URL</label><input class="input" id="oa-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://example.com/openapi.json"></div>
+          <button class="btn btn-primary" id="oa-fetch-go" type="button">Fetch</button>
+          <button class="btn" id="oa-fetch-cancel" type="button" hidden>Cancel</button>
+        </div>
+      </div>
+      <div id="oa-drop" class="oa-drop">
+        <textarea class="textarea code" id="oa-input" spellcheck="false" aria-label="OpenAPI or Swagger document (JSON or YAML)" placeholder="Paste an OpenAPI 3.0/3.1 or Swagger 2.0 document (JSON or YAML) here, or drop a file…"></textarea>
+      </div>
+    </div>
+  </details>
+  <div id="oa-msg" class="alert" hidden></div>
+
+  <div id="oa-app" hidden>
+    <div class="oa-head">
+      <div class="oa-title"><h2 id="oa-name"></h2><div id="oa-badges" class="oa-badges"></div></div>
+      <div class="oa-exports">
+        <button class="btn btn-sm" id="oa-md" type="button"><i data-lucide="download"></i> Markdown</button>
+        <button class="btn btn-sm" id="oa-mdcopy" type="button"><i data-lucide="copy"></i> Copy Markdown</button>
+        <button class="btn btn-sm" id="oa-html" type="button"><i data-lucide="file-code"></i> HTML docs</button>
+      </div>
+    </div>
+    <p class="hint">This is a viewer and documentation generator only: there is no "Try it out" button and no request is ever sent to the API described.</p>
+
+    <div class="oa-tabs">
+      <div class="tabs">
+        <button class="tab active" type="button" data-tab="endpoints">Endpoints</button>
+        <button class="tab" type="button" data-tab="schemas">Schemas</button>
+        <button class="tab" type="button" data-tab="info">Info &amp; security</button>
+        <button class="tab" type="button" data-tab="lint">Lint <span class="badge" id="oa-lintcount"></span></button>
+      </div>
+
+      <div data-panel="endpoints">
+        <div class="toolbar oa-filters">
+          <div class="field oa-grow"><label for="oa-q">Search path, method, tag, operationId or summary</label><input class="input" id="oa-q" type="search" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="oa-tag">Tag</label><select class="select" id="oa-tag"><option value="">All tags</option></select></div>
+          <fieldset class="oa-methods"><legend>Methods</legend><span id="oa-methods"></span></fieldset>
+          <label class="check oa-check"><input type="checkbox" id="oa-dep"> Deprecated only</label>
+        </div>
+        <div id="oa-count" class="hint" aria-live="polite"></div>
+        <div class="oa-split">
+          <div id="oa-list" class="oa-list" aria-label="Endpoints"></div>
+          <div id="oa-detail" class="oa-detail" aria-live="polite" tabindex="-1"><p class="hint">Select an endpoint to see its details.</p></div>
+        </div>
+      </div>
+
+      <div data-panel="schemas" hidden>
+        <div class="oa-split">
+          <div>
+            <div class="field"><label for="oa-sq">Filter schemas</label><input class="input" id="oa-sq" type="search" autocomplete="off" spellcheck="false"></div>
+            <div id="oa-slist" class="oa-list" aria-label="Schemas"></div>
+          </div>
+          <div id="oa-sdetail" class="oa-detail" aria-live="polite" tabindex="-1"><p class="hint">Select a schema to explore its structure and see where it is used.</p></div>
+        </div>
+      </div>
+
+      <div data-panel="info" hidden><div id="oa-info" class="oa-info"></div></div>
+
+      <div data-panel="lint" hidden>
+        <div class="toolbar"><div class="field"><label for="oa-lintlevel">Show</label>
+          <select id="oa-lintlevel" class="select"><option value="all">All findings</option><option value="error">Errors</option><option value="warn">Warnings</option><option value="info">Notes</option></select></div></div>
+        <div id="oa-lint" class="oa-lint" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</div>

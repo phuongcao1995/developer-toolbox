@@ -1,4 +1,5 @@
-import { copyText, downloadFile, toast, pickFile, enableDrop, showMessage, initTabs, bindActions, readFileAsText, enableTabIndent, el, formatBytes, debounce as uiDebounce } from '../../assets/js/components/ui.js';
+import { copyText, downloadFile, toast, pickFile, enableDrop, showMessage, initTabs, bindActions, readFileAsText, el, formatBytes, debounce as uiDebounce } from '../../assets/js/components/ui.js';
+import { createEditor } from '../../assets/js/components/editor.js';
 import * as L from './logic.js';
 import * as G from './generate.js';
 import { createTree } from './tree.js';
@@ -18,7 +19,11 @@ export default {
     const debounce = ctx.debounce || uiDebounce;
     const input = q('input'), output = q('output'), msg = q('msg'), indentSel = q('indent'), sortCb = q('sort'), losslessCb = q('lossless'), escfCb = q('escf'), lossy = q('lossy'), sizewarn = q('sizewarn');
     indentSel.value = L.choiceFromUnit(ctx.indentUnit);
-    enableTabIndent(input, ctx.indentUnit);
+    // Shared editor on the two text panes (line numbers, JSON highlighting, Tab/Enter helpers, find & replace). Upload / Clear / Copy /
+    // Download / drop stay with the tool's own buttons, so the editors only get the view tools.
+    const edIn = createEditor(input, { language: 'json', storage: ctx.storage, fontSize: ctx.fontSize, indentUnit: ctx.indentUnit, drop: false });
+    const edOut = createEditor(output, { language: 'json', storage: ctx.storage, fontSize: ctx.fontSize, indentUnit: ctx.indentUnit, readOnly: true, drop: false, toolbar: ['wrap', 'fontSize', 'find', 'fullscreen'] });
+    const OUT_LANG = { json: 'json', xml: 'xml', yaml: 'yaml', csv: 'plain' };
     let result = { text: '', ext: 'json', mime: 'application/json', label: 'JSON' };
     let activeTab = 'text';
     const offs = [];
@@ -68,6 +73,7 @@ export default {
 
     const setOutput = (text, ext, mime, label) => {
       result = { text, ext, mime, label };
+      edOut.setLanguage(OUT_LANG[ext] || 'plain');
       output.value = text; q('fmt').textContent = label;
     };
     const showLossy = res => {
@@ -81,9 +87,8 @@ export default {
       if (r.snippet) msg.append(el('pre', { class: 'jf-snippet' }, r.snippet));
       if (r.offset != null) {
         input.focus(); input.setSelectionRange(r.offset, Math.min(r.offset + 1, input.value.length));
-        // Programmatic selection does not always scroll a textarea: bring the error line into view.
-        const lh = parseFloat(getComputedStyle(input).lineHeight) || 18, y = ((r.line || 1) - 1) * lh;
-        if (y < input.scrollTop || y > input.scrollTop + input.clientHeight - lh) input.scrollTop = Math.max(0, y - input.clientHeight / 2);
+        // Programmatic selection does not always scroll a textarea: bring the error position into view.
+        edIn.reveal(r.offset);
       }
     };
     /** Wrap a UI handler: any exception (RangeError, depth guard, cancel, ...) becomes a visible message. */
@@ -360,6 +365,7 @@ export default {
     updateSizeWarn();
     return () => {
       offs.forEach(f => f());
+      edIn.destroy(); edOut.destroy();
       if (cancelWorker) { try { cancelWorker(); } catch { /* ignore */ } }
       tree.destroy();
     };

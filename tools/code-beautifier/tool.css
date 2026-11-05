@@ -3,10 +3,10 @@
 .tool-code-beautifier .cb-check { height: 34px; }
 .tool-code-beautifier .hint { margin: 0 0 10px; }
 .tool-code-beautifier #cb-msg { margin-bottom: 12px; }
-.tool-code-beautifier .cb-panels .textarea { min-height: 360px; }
+.tool-code-beautifier .cb-panels { --ed-min-height: 360px; }
 .tool-code-beautifier .cb-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; min-height: 22px; }
 @media (max-width: 560px) {
   .tool-code-beautifier .cb-options .field { flex: 1 1 130px; }
   .tool-code-beautifier .cb-options .btn { flex: 1 1 auto; }
-  .tool-code-beautifier .cb-panels .textarea { min-height: 220px; }
+  .tool-code-beautifier .cb-panels { --ed-min-height: 220px; }
 }

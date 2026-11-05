@@ -1,0 +1,47 @@
+.tool-git-command-generator [hidden] { display: none !important; }
+.tool-git-command-generator .gg { display: flex; flex-direction: column; gap: 14px; }
+.tool-git-command-generator .gg-banner { margin: 0; padding: 8px 12px; border: 1px solid var(--info); border-radius: 8px; background: var(--info-soft); color: var(--info); }
+.tool-git-command-generator .gg-top { align-items: flex-end; }
+.tool-git-command-generator .gg-grow { flex: 1 1 220px; min-width: 0; }
+.tool-git-command-generator .gg-cols { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; margin-top: 12px; }
+.tool-git-command-generator .gg-summary { margin: 0; color: var(--text-muted); }
+.tool-git-command-generator .gg-form { display: flex; flex-direction: column; gap: 12px; }
+.tool-git-command-generator .gg-help, .tool-git-command-generator .gg-muted { color: var(--text-muted); font-size: 12.5px; margin: 4px 0 0; }
+.tool-git-command-generator .gg-err { margin-top: 4px; padding: 5px 9px; border-radius: 6px; background: var(--danger-soft); color: var(--danger); font-size: 12.5px; }
+.tool-git-command-generator [aria-invalid="true"] { border-color: var(--danger); }
+.tool-git-command-generator .gg-danger { border: 2px solid var(--danger); background: var(--danger-soft); color: var(--text); border-radius: 8px; padding: 10px 12px; }
+.tool-git-command-generator .gg-danger p { margin: 6px 0 0; }
+.tool-git-command-generator .gg-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tool-git-command-generator .gg-why, .tool-git-command-generator .gg-comment { color: var(--text-muted); font-size: 12.5px; margin-bottom: 3px; }
+.tool-git-command-generator .gg-cmdrow { display: flex; gap: 8px; align-items: stretch; }
+.tool-git-command-generator .gg-cmd { flex: 1; min-width: 0; display: block; padding: 8px 10px; background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; font-family: var(--mono); font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
+.tool-git-command-generator .gg-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tool-git-command-generator .gg-flags { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
+.tool-git-command-generator .gg-flags dt { margin: 0; } .tool-git-command-generator .gg-flags dd { margin: 0; color: var(--text-muted); font-size: 13px; }
+.tool-git-command-generator code { font-family: var(--mono); font-size: 12.5px; }
+.tool-git-command-generator h4 { margin: 8px 0 2px; font-size: 13px; }
+.tool-git-command-generator .gg-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.tool-git-command-generator .gg-check { display: block; }
+.tool-git-command-generator .gg-tabs { margin: 0; }
+.tool-git-command-generator .gg-cheat { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tool-git-command-generator .gg-cheat-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; background: var(--surface-2); }
+.tool-git-command-generator .gg-cheat-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.tool-git-command-generator .gg-table th, .tool-git-command-generator .gg-table td { vertical-align: top; font-size: 13px; }
+.tool-git-command-generator .gg-diagram { border-top: 1px solid var(--border); padding-top: 8px; }
+.tool-git-command-generator .gg-ascii { margin: 6px 0 0; padding: 8px 10px; background: var(--code-bg); border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; }
+.tool-git-command-generator .gg-svg { width: 100%; max-width: 420px; height: auto; display: block; }
+.tool-git-command-generator .gg-node { fill: var(--surface); stroke: var(--text); stroke-width: 2; }
+.tool-git-command-generator .gg-node.gg-faded { stroke-dasharray: 4 3; stroke: var(--text-muted); fill: var(--surface-2); }
+.tool-git-command-generator .gg-node.gg-new { stroke: var(--success); stroke-width: 4; }
+.tool-git-command-generator .gg-node.gg-source { stroke: var(--primary); stroke-width: 4; }
+.tool-git-command-generator .gg-edge { stroke: var(--text-muted); stroke-width: 2; }
+.tool-git-command-generator .gg-dashed { stroke-dasharray: 4 3; }
+.tool-git-command-generator .gg-label { fill: var(--text); font: 600 13px var(--mono); }
+.tool-git-command-generator .gg-cap { fill: var(--text-muted); font-size: 11px; }
+.tool-git-command-generator .gg-branch { fill: var(--primary-soft); stroke: var(--primary); }
+.tool-git-command-generator .gg-btext { fill: var(--text); font: 600 12px var(--mono); }
+.tool-git-command-generator .gg-fav { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; background: var(--surface-2); }
+.tool-git-command-generator .gg-fav-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tool-git-command-generator .gg-fav-btns { display: inline-flex; gap: 6px; }
+@media (max-width: 860px) { .tool-git-command-generator .gg-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .tool-git-command-generator .gg-tabs .tab { padding: 8px 8px; font-size: 13px; } .tool-git-command-generator .gg-flags { grid-template-columns: 1fr; } }

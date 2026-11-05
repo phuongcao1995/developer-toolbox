@@ -1,0 +1,135 @@
+<div class="fh-wrap">
+  <section class="panel fh-options" aria-label="Hash options">
+    <div class="panel-body fh-opt-grid">
+      <fieldset class="fh-fieldset">
+        <legend class="label">Algorithms</legend>
+        <div class="row" id="fh-algos">
+          <label class="check"><input type="checkbox" value="MD5"> MD5</label>
+          <label class="check"><input type="checkbox" value="SHA-1"> SHA-1</label>
+          <label class="check"><input type="checkbox" value="SHA-256" checked> SHA-256</label>
+          <label class="check"><input type="checkbox" value="SHA-384"> SHA-384</label>
+          <label class="check"><input type="checkbox" value="SHA-512"> SHA-512</label>
+        </div>
+        <p class="hint">MD5 and SHA-1 are broken for security; use them only to match legacy checksums.</p>
+      </fieldset>
+      <div class="field">
+        <label for="fh-format">Output format</label>
+        <select class="select" id="fh-format">
+          <option value="hex">Hex (lowercase)</option>
+          <option value="HEX">Hex (UPPERCASE)</option>
+          <option value="base64">Base64</option>
+        </select>
+      </div>
+      <div class="fh-hmac">
+        <label class="check"><input type="checkbox" id="fh-hmac"> HMAC (keyed hash)</label>
+        <div class="fh-hmac-fields" id="fh-hmac-fields" hidden>
+          <div class="field">
+            <label for="fh-key-kind">Key format</label>
+            <select class="select" id="fh-key-kind"><option value="text">Text (UTF-8)</option><option value="hex">Hex bytes</option></select>
+          </div>
+          <div class="field fh-grow">
+            <label for="fh-key">Secret key (never saved)</label>
+            <input class="input mono" id="fh-key" type="password" autocomplete="off" spellcheck="false" placeholder="Secret key">
+          </div>
+          <label class="check"><input type="checkbox" id="fh-key-show"> Show key</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel fh-compare" aria-label="Compare with an expected hash">
+    <div class="panel-body">
+      <div class="field">
+        <label for="fh-expected">Expected hash (optional) &mdash; paste a hex or Base64 digest to verify; the algorithm is detected from its length</label>
+        <div class="row fh-nowrap">
+          <input class="input mono" id="fh-expected" spellcheck="false" autocomplete="off" placeholder="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855">
+          <button class="btn" data-action="expected-clear" type="button"><i data-lucide="eraser"></i> Clear</button>
+        </div>
+      </div>
+      <p class="hint" id="fh-expected-info" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="text" role="tab" type="button"><i data-lucide="type"></i> Text</button>
+    <button class="tab" data-tab="files" role="tab" type="button"><i data-lucide="files"></i> Files</button>
+    <button class="tab" data-tab="verify" role="tab" type="button"><i data-lucide="shield-check"></i> Verify checksum file</button>
+  </div>
+
+  <div class="fh-progress" id="fh-progress" hidden>
+    <div class="row fh-nowrap">
+      <progress id="fh-bar" class="fh-bar" max="100" value="0" aria-label="Hashing progress"></progress>
+      <button class="btn btn-danger btn-sm" data-action="cancel" type="button"><i data-lucide="x"></i> Cancel</button>
+    </div>
+    <p class="hint" id="fh-progress-label" aria-live="off"></p>
+  </div>
+  <div id="fh-msg" role="status" aria-live="polite" hidden></div>
+
+  <!-- TEXT -->
+  <section data-panel="text">
+    <div class="field">
+      <label for="fh-text">Text to hash (UTF-8)</label>
+      <textarea class="textarea code fh-text" id="fh-text" spellcheck="false" placeholder="Type or paste text. Hashes update as you type."></textarea>
+    </div>
+    <p class="hint" id="fh-text-info"></p>
+    <div id="fh-text-results" class="fh-results" aria-live="polite"></div>
+  </section>
+
+  <!-- FILES -->
+  <section data-panel="files" hidden>
+    <div class="dropzone" id="fh-drop">
+      <p>Drop one or more files here (hashed locally, never uploaded) or</p>
+      <button class="btn btn-primary" data-action="files-pick" type="button"><i data-lucide="file-up"></i> Choose files</button>
+    </div>
+    <div class="toolbar fh-gap">
+      <button class="btn btn-primary" data-action="files-hash" type="button" id="fh-hash-btn"><i data-lucide="hash"></i> Hash files</button>
+      <button class="btn" data-action="files-clear" type="button"><i data-lucide="eraser"></i> Clear all</button>
+      <span class="hint" id="fh-files-info"></span>
+    </div>
+    <p class="hint">Files under 64 MB use the browser&rsquo;s WebCrypto; larger files are hashed incrementally in pure JavaScript in 8 MB slices so progress and Cancel work (typically slower).</p>
+    <div id="fh-identical" class="fh-gap" role="status" aria-live="polite" hidden></div>
+    <div id="fh-file-results" class="fh-results" aria-live="polite"></div>
+  </section>
+
+  <!-- VERIFY -->
+  <section data-panel="verify" hidden>
+    <div class="grid-2">
+      <div class="stack">
+        <div class="field">
+          <label for="fh-v-text">Checksum file contents (<code>hash  filename</code> lines; GNU and BSD styles)</label>
+          <textarea class="textarea code fh-vtext" id="fh-v-text" spellcheck="false" placeholder="e3b0c442...b855  empty.txt&#10;SHA256 (photo.jpg) = 9f86d081..."></textarea>
+        </div>
+        <div class="row">
+          <button class="btn" data-action="v-load" type="button"><i data-lucide="file-text"></i> Load checksum file&hellip;</button>
+          <button class="btn" data-action="v-clear-text" type="button"><i data-lucide="eraser"></i> Clear</button>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="dropzone" id="fh-v-drop">
+          <p>Drop the files to check here or</p>
+          <button class="btn btn-primary" data-action="v-pick" type="button"><i data-lucide="file-up"></i> Choose files</button>
+        </div>
+        <p class="hint" id="fh-v-files-info">No files selected. Files are matched by name (directory parts are ignored).</p>
+        <div class="row">
+          <button class="btn btn-primary" data-action="v-run" type="button"><i data-lucide="shield-check"></i> Verify</button>
+          <button class="btn" data-action="v-clear-files" type="button"><i data-lucide="eraser"></i> Clear files</button>
+        </div>
+      </div>
+    </div>
+    <div id="fh-v-summary" class="fh-gap" role="status" aria-live="polite" hidden></div>
+    <div id="fh-v-results" class="fh-gap" aria-live="polite"></div>
+  </section>
+
+  <section class="panel fh-export fh-gap" id="fh-export" aria-label="Copy and export" hidden>
+    <div class="panel-body">
+      <div class="row">
+        <button class="btn" data-action="copy-text" type="button"><i data-lucide="copy"></i> Copy as text</button>
+        <button class="btn" data-action="copy-json" type="button"><i data-lucide="braces"></i> Copy JSON</button>
+        <button class="btn" data-action="dl-json" type="button"><i data-lucide="download"></i> Download JSON</button>
+        <label class="fh-inline" for="fh-sum-algo">Checksum file algorithm</label>
+        <select class="select fh-narrow" id="fh-sum-algo"></select>
+        <button class="btn" data-action="dl-sum" type="button"><i data-lucide="file-check"></i> Download checksum file</button>
+      </div>
+    </div>
+  </section>
+</div>

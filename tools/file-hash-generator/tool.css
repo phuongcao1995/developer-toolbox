@@ -1,0 +1,44 @@
+.tool-file-hash-generator .fh-wrap { display: flex; flex-direction: column; gap: 12px; }
+.tool-file-hash-generator .fh-opt-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.tool-file-hash-generator .fh-hmac { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; }
+.tool-file-hash-generator .fh-hmac-fields { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.tool-file-hash-generator .fh-hmac-fields[hidden] { display: none; }
+.tool-file-hash-generator .fh-grow { flex: 1 1 220px; }
+.tool-file-hash-generator .fh-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.tool-file-hash-generator .fh-fieldset legend { padding: 0; margin-bottom: 6px; }
+.tool-file-hash-generator .fh-nowrap { flex-wrap: nowrap; }
+.tool-file-hash-generator .fh-nowrap .btn { flex: none; }
+.tool-file-hash-generator .fh-gap { margin-top: 12px; }
+.tool-file-hash-generator .fh-narrow { width: auto; min-width: 110px; }
+.tool-file-hash-generator .fh-inline { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-left: 8px; }
+.tool-file-hash-generator .fh-text { min-height: 130px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
+.tool-file-hash-generator .fh-vtext { min-height: 170px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
+.tool-file-hash-generator .fh-results { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.tool-file-hash-generator .fh-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.tool-file-hash-generator .fh-name { word-break: break-all; margin-right: auto; font-size: 13px; }
+.tool-file-hash-generator .fh-rows { display: flex; flex-direction: column; gap: 8px; }
+.tool-file-hash-generator .fh-row { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+.tool-file-hash-generator .fh-algo { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.tool-file-hash-generator .fh-hash { font-family: var(--mono); font-size: 12.5px; word-break: break-all; background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 5px 8px; color: var(--text); }
+.tool-file-hash-generator .fh-hash:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+.tool-file-hash-generator .fh-status { white-space: nowrap; font-size: 12px; font-weight: 600; padding: 3px 9px; }
+.tool-file-hash-generator .fh-err { color: var(--danger); font-size: 13px; }
+.tool-file-hash-generator .fh-ok { color: var(--success); font-weight: 600; }
+.tool-file-hash-generator .fh-bar { flex: 1; min-width: 0; height: 14px; accent-color: var(--primary); }
+.tool-file-hash-generator .fh-progress { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); margin-bottom: 12px; }
+.tool-file-hash-generator .fh-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.tool-file-hash-generator .fh-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tool-file-hash-generator .fh-table th, .tool-file-hash-generator .fh-table td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.tool-file-hash-generator .fh-table th { background: var(--surface-2); font-size: 12px; color: var(--text-muted); }
+.tool-file-hash-generator .fh-cell-name { word-break: break-all; }
+.tool-file-hash-generator .fh-cell-detail { font-family: var(--mono); font-size: 12px; word-break: break-all; }
+.tool-file-hash-generator #fh-msg:not([hidden]) { margin-bottom: 4px; }
+@media (max-width: 760px) {
+  .tool-file-hash-generator .fh-opt-grid { grid-template-columns: 1fr; }
+  .tool-file-hash-generator .fh-row { grid-template-columns: 1fr auto; }
+  .tool-file-hash-generator .fh-algo { grid-column: 1 / -1; }
+  .tool-file-hash-generator .fh-hash { grid-column: 1 / -1; }
+  .tool-file-hash-generator .fh-row .btn { justify-self: start; }
+  .tool-file-hash-generator .fh-inline { margin-left: 0; }
+  .tool-file-hash-generator .grid-2 { grid-template-columns: 1fr; }
+}

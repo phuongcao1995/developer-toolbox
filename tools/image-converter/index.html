@@ -1,0 +1,74 @@
+<div class="ic-wrap">
+  <div class="dropzone" id="ic-drop">
+    <p>Drop images here, paste from the clipboard (Ctrl+V), or</p>
+    <button class="btn btn-primary" data-action="pick" type="button"><i data-lucide="image-plus"></i> Choose images</button>
+    <p class="hint">PNG, JPEG, WebP, GIF, BMP, AVIF and SVG in; up to 25 MB and 50 megapixels each. Everything is converted locally in your browser.</p>
+  </div>
+
+  <section class="panel" aria-label="Conversion settings">
+    <div class="panel-body ic-settings">
+      <div class="field">
+        <label for="ic-format">Convert to</label>
+        <select class="select" id="ic-format"></select>
+      </div>
+      <div class="field" id="ic-quality-field">
+        <label for="ic-quality">Quality: <output id="ic-quality-out" for="ic-quality">85</output></label>
+        <input type="range" id="ic-quality" min="1" max="100" step="1" value="85">
+      </div>
+      <div class="field">
+        <label for="ic-resize">Resize</label>
+        <select class="select" id="ic-resize">
+          <option value="none">Keep original size</option>
+          <option value="percent">By percentage</option>
+          <option value="width">By width (keep aspect)</option>
+          <option value="height">By height (keep aspect)</option>
+          <option value="max">Max dimension (longest side)</option>
+          <option value="box">Fit into width &times; height</option>
+        </select>
+      </div>
+      <div class="field" data-for="percent" hidden><label for="ic-percent">Percent (1&ndash;1000)</label><input class="input" id="ic-percent" type="number" min="1" max="1000" value="50"></div>
+      <div class="field" data-for="width box max" hidden><label for="ic-width" id="ic-width-label">Width (px)</label><input class="input" id="ic-width" type="number" min="1" max="16384" value="1024"></div>
+      <div class="field" data-for="height box" hidden><label for="ic-height">Height (px)</label><input class="input" id="ic-height" type="number" min="1" max="16384" value="1024"></div>
+      <div class="field" data-for="box" hidden><label for="ic-fit">Fit mode</label>
+        <select class="select" id="ic-fit"><option value="contain">Contain (whole image, keep aspect)</option><option value="cover">Cover (fill box, crop edges)</option><option value="stretch">Stretch (ignore aspect)</option></select></div>
+      <div class="field ic-check" data-for="percent width height max box" hidden><label class="check"><input type="checkbox" id="ic-noup" checked> Don&rsquo;t upscale small images</label></div>
+      <div class="field">
+        <label for="ic-bg">Background colour</label>
+        <div class="row"><input class="input ic-color" id="ic-bg" type="color" value="#ffffff">
+          <label class="check"><input type="checkbox" id="ic-flatten"> Fill transparency for all formats</label></div>
+        <span class="hint">JPEG has no transparency, so transparent areas always get this colour.</span>
+      </div>
+      <div class="field">
+        <label for="ic-template">File name template</label>
+        <input class="input" id="ic-template" value="{name}" autocomplete="off" spellcheck="false">
+        <span class="hint">Tokens: {name} {w} {h} {format} {n} {date}. The extension is added automatically.</span>
+      </div>
+    </div>
+    <div class="panel-body ic-notes">
+      <p class="hint"><strong>Metadata:</strong> re-encoding through a canvas removes EXIF/GPS/colour-profile data. The EXIF rotation is applied to the pixels first, so photos keep their orientation. Animated GIF/WebP/APNG files keep only their first frame. &ldquo;Same as input&rdquo; keeps the original file when re-encoding would make it bigger (and nothing is resized).</p>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <button class="btn btn-primary" data-action="convert" type="button" id="ic-convert"><i data-lucide="refresh-cw"></i> Convert</button>
+    <button class="btn btn-danger" data-action="cancel" type="button" id="ic-cancel" hidden><i data-lucide="x"></i> Cancel</button>
+    <button class="btn" data-action="zip" type="button" id="ic-zip"><i data-lucide="file-archive"></i> Download all (ZIP)</button>
+    <button class="btn" data-action="clear" type="button"><i data-lucide="eraser"></i> Clear all</button>
+    <span class="hint" id="ic-summary"></span>
+  </div>
+  <div class="ic-progress" id="ic-progress" hidden>
+    <progress id="ic-bar" max="100" value="0" aria-label="Conversion progress"></progress>
+    <span class="hint" id="ic-progress-label" aria-live="off"></span>
+  </div>
+  <div id="ic-msg" role="status" aria-live="polite" hidden></div>
+  <div id="ic-list" class="ic-list" aria-live="polite"></div>
+
+  <section class="panel ic-compare" id="ic-compare" hidden aria-label="Before and after comparison">
+    <div class="panel-head"><h3 id="ic-compare-title">Compare</h3><button class="btn btn-sm" data-action="compare-close" type="button">Close</button></div>
+    <div class="panel-body stack">
+      <div class="ic-cmp" id="ic-cmp"><img id="ic-cmp-before" alt="Original image"><img id="ic-cmp-after" alt="Converted image"></div>
+      <div class="field"><label for="ic-cmp-range">Slide to reveal: original on the left, converted on the right</label>
+        <input type="range" id="ic-cmp-range" min="0" max="100" value="50"></div>
+    </div>
+  </section>
+</div>

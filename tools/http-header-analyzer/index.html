@@ -1,0 +1,63 @@
+<div class="ha">
+  <div class="toolbar ha-bar">
+    <div class="field"><label for="ha-mode">Type</label>
+      <select id="ha-mode" class="select"><option value="auto">Auto-detect</option><option value="request">Request headers</option><option value="response">Response headers</option></select></div>
+    <div class="field"><label for="ha-https">Served over</label>
+      <select id="ha-https" class="select"><option value="unknown">Unknown</option><option value="yes">HTTPS</option><option value="no">Plain HTTP</option></select></div>
+    <label class="check"><input type="checkbox" id="ha-mask" checked> Mask sensitive values (Authorization, cookies, tokens)</label>
+    <label class="check"><input type="checkbox" id="ha-remember" checked> Remember options</label>
+    <span class="spacer"></span>
+    <button class="btn" id="ha-sample-res" type="button">Sample response</button>
+    <button class="btn" id="ha-sample-req" type="button">Sample request</button>
+    <button class="btn" id="ha-upload" type="button"><i data-lucide="upload"></i> Open file</button>
+    <button class="btn" id="ha-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+    <input type="file" id="ha-file" accept=".txt,.http,.headers,text/plain" hidden aria-label="Open a headers file">
+  </div>
+
+  <section class="panel ha-input" id="ha-drop">
+    <div class="panel-head"><h3><label for="ha-text">Paste headers</label></h3>
+      <span class="hint">HTTP/1.1 text, curl -i / -v output, a curl command, DevTools copy, fetch() copy or plain "Name: value" lines. Everything stays in your browser.</span></div>
+    <textarea class="textarea code ha-text" id="ha-text" spellcheck="false" autocomplete="off" placeholder="HTTP/1.1 200 OK&#10;Content-Type: text/html; charset=utf-8&#10;Cache-Control: max-age=3600&#10;..."></textarea>
+  </section>
+
+  <div id="ha-summary" class="ha-summary" aria-live="polite"></div>
+  <div id="ha-notes" class="ha-notes"></div>
+
+  <div class="tabs ha-tabs" aria-label="Results">
+    <button class="tab active" type="button" data-tab="headers">Headers</button>
+    <button class="tab" type="button" data-tab="security">Security review</button>
+    <button class="tab" type="button" data-tab="issues">Issues</button>
+    <button class="tab" type="button" data-tab="export">Export</button>
+  </div>
+
+  <div data-panel="headers">
+    <div class="toolbar">
+      <div class="field ha-filter"><label for="ha-filter">Filter headers</label><input id="ha-filter" class="input" type="search" placeholder="name, category or text" autocomplete="off"></div>
+    </div>
+    <div class="table-wrap"><table class="table ha-table"><caption class="sr-only">Parsed headers</caption>
+      <thead><tr><th scope="col">Name</th><th scope="col">Value</th><th scope="col">Category</th><th scope="col">Explanation</th></tr></thead>
+      <tbody id="ha-rows"></tbody></table></div>
+    <p id="ha-rows-empty" class="hint" hidden>No headers match.</p>
+  </div>
+
+  <div data-panel="security" hidden>
+    <div class="alert alert-info" id="ha-disclaimer"></div>
+    <div id="ha-security"></div>
+  </div>
+
+  <div data-panel="issues" hidden>
+    <div id="ha-issues"></div>
+  </div>
+
+  <div data-panel="export" hidden>
+    <div class="toolbar">
+      <button class="btn" id="ha-copy-md" type="button"><i data-lucide="copy"></i> Copy Markdown</button>
+      <button class="btn" id="ha-dl-md" type="button"><i data-lucide="download"></i> Download .md</button>
+      <button class="btn" id="ha-copy-json" type="button"><i data-lucide="copy"></i> Copy JSON</button>
+      <button class="btn" id="ha-dl-json" type="button"><i data-lucide="download"></i> Download .json</button>
+    </div>
+    <p class="hint">The report follows the "Mask sensitive values" setting. Untick it only if you are sure the report will not be shared.</p>
+    <label class="sr-only" for="ha-report">Report preview</label>
+    <textarea class="textarea code ha-report" id="ha-report" readonly spellcheck="false"></textarea>
+  </div>
+</div>

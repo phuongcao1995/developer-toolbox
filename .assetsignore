@@ -2,6 +2,10 @@ wrangler.jsonc
 .assetsignore
 .git
 .gitignore
+.claude
 node_modules
 docs
+tests
+package.json
+package-lock.json
 README.md

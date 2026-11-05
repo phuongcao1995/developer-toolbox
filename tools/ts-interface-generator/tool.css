@@ -1,0 +1,22 @@
+.tool-ts-interface-generator .tsg-options { align-items: flex-end; margin-bottom: 8px; }
+.tool-ts-interface-generator .tsg-options .field { min-width: 150px; }
+.tool-ts-interface-generator .tsg-more { margin-bottom: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); padding: 6px 12px 10px; }
+.tool-ts-interface-generator .tsg-more summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-muted); padding: 4px 0; }
+.tool-ts-interface-generator .tsg-checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px 16px; margin: 8px 0; }
+.tool-ts-interface-generator .tsg-nums { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.tool-ts-interface-generator .tsg-num { width: 76px; }
+.tool-ts-interface-generator .tsg-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tool-ts-interface-generator .hint { margin: 0; }
+.tool-ts-interface-generator #tsg-note { margin: 0 0 10px; }
+.tool-ts-interface-generator .tsg-panels { --ed-min-height: 380px; }
+.tool-ts-interface-generator .tsg-ext { width: auto; min-width: 84px; padding: 3px 8px; font-size: 12px; }
+.tool-ts-interface-generator #tsg-msg { margin-top: 12px; }
+.tool-ts-interface-generator .tsg-err-pre { display: block; margin: 6px 0 0; padding: 6px 8px; font-family: var(--mono); font-size: 12px; background: var(--code-bg); color: var(--text); border-radius: 4px; overflow-x: auto; white-space: pre; }
+.tool-ts-interface-generator .tsg-err-btn { margin-top: 8px; }
+.tool-ts-interface-generator .tsg-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; min-height: 22px; }
+.tool-ts-interface-generator .tsg-warnings { margin: 8px 0 0; padding-left: 20px; color: var(--warn); font-size: 13px; }
+.tool-ts-interface-generator .tsg-warnings:empty { display: none; }
+@media (max-width: 560px) {
+  .tool-ts-interface-generator .tsg-options .field { flex: 1 1 130px; }
+  .tool-ts-interface-generator .tsg-panels { --ed-min-height: 220px; }
+}

@@ -1,0 +1,63 @@
+.tool-sql-query-analyzer [hidden] { display: none !important; }
+.tool-sql-query-analyzer .qa { display: flex; flex-direction: column; gap: 12px; }
+.tool-sql-query-analyzer .qa-banner { margin: 0; padding: 8px 12px; border: 1px solid var(--warn); border-radius: 8px; background: var(--warn-soft); color: var(--warn); }
+.tool-sql-query-analyzer .qa-options { align-items: flex-end; }
+.tool-sql-query-analyzer .qa-options .field { min-width: 150px; }
+.tool-sql-query-analyzer .qa-main { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+.tool-sql-query-analyzer .qa-input .ed, .tool-sql-query-analyzer .qa-input textarea { min-height: 380px; }
+.tool-sql-query-analyzer .qa-count { color: var(--text-muted); font-size: 12px; }
+.tool-sql-query-analyzer .qa-results { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.tool-sql-query-analyzer .qa-cards { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.tool-sql-query-analyzer .qa-card { flex: 0 0 auto; min-width: 170px; text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.tool-sql-query-analyzer .qa-card:hover { border-color: var(--primary); }
+.tool-sql-query-analyzer .qa-card.active { border-color: var(--primary); background: var(--primary-soft); box-shadow: inset 3px 0 0 var(--primary); }
+.tool-sql-query-analyzer .qa-card:focus-visible, .tool-sql-query-analyzer .qa-jump:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.tool-sql-query-analyzer .qa-card-meta, .tool-sql-query-analyzer .qa-sub { color: var(--text-muted); font-size: 12px; }
+.tool-sql-query-analyzer .qa-sub { display: block; margin-top: 2px; }
+.tool-sql-query-analyzer .qa-card-badges, .tool-sql-query-analyzer .qa-chips, .tool-sql-query-analyzer .qa-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.tool-sql-query-analyzer .qa-tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: thin; }
+.tool-sql-query-analyzer .qa-tabs .tab { white-space: nowrap; }
+.tool-sql-query-analyzer .qa-pane { max-height: 75vh; overflow: auto; min-width: 0; font-size: 13px; }
+.tool-sql-query-analyzer .qa-pane:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.tool-sql-query-analyzer h4 { margin: 14px 0 6px; font-size: 13px; }
+.tool-sql-query-analyzer h4:first-child { margin-top: 0; }
+.tool-sql-query-analyzer code { font-family: var(--mono); font-size: 12px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.tool-sql-query-analyzer .qa-muted { color: var(--text-muted); }
+.tool-sql-query-analyzer .qa-note { margin: 0 0 10px; padding: 8px 10px; background: var(--info-soft); color: var(--info); border-radius: 6px; font-size: 12px; }
+.tool-sql-query-analyzer .qa-banner-inline { margin: 0 0 12px; padding: 8px 12px; border: 1px solid var(--warn); border-radius: 8px; background: var(--warn-soft); color: var(--warn); }
+.tool-sql-query-analyzer .qa-warn { margin: 6px 0 0; }
+.tool-sql-query-analyzer .qa-list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tool-sql-query-analyzer .qa-tree { margin: 4px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 3px; }
+.tool-sql-query-analyzer .qa-item { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; background: var(--surface-2); }
+.tool-sql-query-analyzer .qa-item p { margin: 6px 0 0; }
+.tool-sql-query-analyzer .qa-find-warn { border-left: 4px solid var(--warn); }
+.tool-sql-query-analyzer .qa-find-info { border-left: 4px solid var(--info); }
+.tool-sql-query-analyzer .qa-jump { display: block; width: 100%; text-align: left; padding: 2px 0; border: 0; background: transparent; color: var(--text); font: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.tool-sql-query-analyzer .qa-jump:hover { color: var(--primary); }
+.tool-sql-query-analyzer .qa-codewrap { display: flex; gap: 8px; align-items: flex-start; margin-top: 6px; }
+.tool-sql-query-analyzer .qa-code { flex: 1; min-width: 0; margin: 0; padding: 8px 10px; background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
+.tool-sql-query-analyzer .qa-preview { max-height: 360px; overflow: auto; }
+.tool-sql-query-analyzer .qa-plan-input { width: 100%; font-family: var(--mono); font-size: 12px; }
+.tool-sql-query-analyzer .qa-details { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; background: var(--surface-2); }
+.tool-sql-query-analyzer .qa-details summary { cursor: pointer; font-weight: 600; }
+.tool-sql-query-analyzer .qa-small th, .tool-sql-query-analyzer .qa-small td { padding: 4px 8px; text-align: left; font-size: 12px; }
+.tool-sql-query-analyzer .qa-fig { margin: 0 0 12px; }
+.tool-sql-query-analyzer .qa-fig figcaption { font-weight: 600; margin-bottom: 4px; }
+.tool-sql-query-analyzer .qa-svg { width: 100%; max-width: 560px; height: auto; display: block; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.tool-sql-query-analyzer .qa-node { fill: var(--surface-2); stroke: var(--text); stroke-width: 1.5; }
+.tool-sql-query-analyzer .qa-node-cte, .tool-sql-query-analyzer .qa-node-subquery { stroke-dasharray: 4 3; }
+.tool-sql-query-analyzer .qa-node-label { fill: var(--text); font: 600 12px var(--mono); }
+.tool-sql-query-analyzer .qa-edge { stroke: var(--text-muted); stroke-width: 2; fill: none; }
+.tool-sql-query-analyzer .qa-edge.qa-outer { stroke-dasharray: 7 4; }
+.tool-sql-query-analyzer .qa-edge.qa-cross { stroke-dasharray: 2 4; }
+.tool-sql-query-analyzer .qa-arrowhead { fill: var(--text-muted); }
+.tool-sql-query-analyzer .qa-edge-bg { fill: var(--surface); stroke: var(--border-strong); }
+.tool-sql-query-analyzer .qa-edge-label { fill: var(--text); font: 600 10.5px var(--mono); }
+.tool-sql-query-analyzer .qa-venns { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0; }
+.tool-sql-query-analyzer .qa-vfig { margin: 0; max-width: 150px; text-align: center; font-size: 11px; color: var(--text-muted); }
+.tool-sql-query-analyzer .qa-venn { width: 140px; height: auto; }
+.tool-sql-query-analyzer .qa-ring { fill: none; stroke: var(--text); stroke-width: 1.5; }
+.tool-sql-query-analyzer .qa-fill { fill: var(--primary); fill-opacity: 0.35; }
+.tool-sql-query-analyzer .qa-vl { fill: var(--text); font: 700 12px var(--mono); }
+@media (max-width: 900px) { .tool-sql-query-analyzer .qa-main { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .tool-sql-query-analyzer .qa-options .field { flex: 1 1 130px; } .tool-sql-query-analyzer .qa-tabs .tab { padding: 8px 10px; } .tool-sql-query-analyzer .qa-card { min-width: 150px; } }

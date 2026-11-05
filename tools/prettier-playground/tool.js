@@ -1,6 +1,8 @@
 // Prettier Playground UI. Prettier 3 (standalone build + per-language plugins) is loaded lazily from jsDelivr.
-import { copyText, downloadFile, toast, pickFile, enableDrop, readFileAsText, showMessage, withLoading, enableTabIndent,
+import { copyText, downloadFile, toast, pickFile, enableDrop, readFileAsText, showMessage, withLoading,
   loadScript, debounce, renderIcons } from '../../assets/js/components/ui.js';
+import { createEditor } from '../../assets/js/components/editor.js';
+import { createSplit } from '../../assets/js/components/split.js';
 import * as L from './logic.js';
 import { SAMPLES } from './samples.js';
 
@@ -18,8 +20,16 @@ export default {
     for (const [id, l] of Object.entries(L.LANGUAGES)) els.lang.append(new Option(l.label, id));
     els.lang.value = ctx.storage.get('lang', 'javascript');
     if (!L.LANGUAGES[els.lang.value]) els.lang.value = 'javascript';
-    els.input.style.fontSize = els.output.style.fontSize = `${ctx.fontSize}px`;
-    enableTabIndent(els.input, ctx.indentUnit);
+    // Shared editor (gutter, highlighting for json/css/html/js-family, Tab/Enter helpers, find & replace). The tool keeps its own
+    // Upload/Clear/Copy/Download buttons and drop zone, so the editors only get the view tools.
+    const EDITOR_LANG = { javascript: 'javascript', jsx: 'javascript', typescript: 'typescript', tsx: 'typescript', css: 'css', scss: 'scss', less: 'less', html: 'html', vue: 'html',
+      json: 'json', jsonc: 'jsonc', json5: 'jsonc', yaml: 'yaml', graphql: 'graphql', markdown: 'markdown' };
+    const edLang = () => EDITOR_LANG[els.lang.value] || 'plain';
+    const edOpts = { language: edLang(), storage: ctx.storage, fontSize: ctx.fontSize, indentUnit: ctx.indentUnit, drop: false };
+    const edIn = createEditor(els.input, edOpts);
+    const edOut = createEditor(els.output, { ...edOpts, readOnly: true, toolbar: ['wrap', 'fontSize', 'find', 'fullscreen'] });
+    const split = createSplit($('.pp-panels'), { direction: 'horizontal', storage: ctx.storage, storageKey: 'panels', labels: ['input', 'output'] });
+    const syncLang = () => { edIn.setLanguage(edLang()); edOut.setLanguage(edLang()); };
     let disposed = false;
 
     // ----- options <-> form -----
@@ -91,7 +101,7 @@ export default {
       try {
         els.input.value = await readFileAsText(file);
         const l = L.detectLanguageByName(file.name);
-        if (l) { els.lang.value = l; ctx.storage.set('lang', l); } else toast('Unknown file type - keeping the selected language', 'info');
+        if (l) { els.lang.value = l; ctx.storage.set('lang', l); syncLang(); } else toast('Unknown file type - keeping the selected language', 'info');
         els.output.value = ''; showMessage(els.msg, null);
         if (els.live.checked) format({ silent: true });
       } catch { showMessage(els.msg, 'error', 'Could not read that file.'); }
@@ -103,7 +113,7 @@ export default {
     const disposers = [
       on(els.format, 'click', () => format()),
       on(els.live, 'change', () => ctx.storage.set('live', els.live.checked)),
-      on(els.lang, 'change', () => { ctx.storage.set('lang', els.lang.value); if (els.live.checked) format({ silent: true }); }),
+      on(els.lang, 'change', () => { ctx.storage.set('lang', els.lang.value); syncLang(); if (els.live.checked) format({ silent: true }); }),
       ...optionInputs.map(i => on(i, 'change', () => { ctx.storage.set('options', readOptions()); if (els.live.checked) format({ silent: true }); })),
       on(els.input, 'input', liveFormat),
       on($('#pp-sample'), 'click', () => { els.input.value = SAMPLES[els.lang.value] || ''; format(); }),
@@ -134,6 +144,6 @@ export default {
       enableDrop($('#pp-drop'), loadFile),
     ];
     renderIcons(root);
-    return () => { disposed = true; runId++; disposers.forEach(d => d()); };
+    return () => { disposed = true; runId++; disposers.forEach(d => d()); split.destroy(); edIn.destroy(); edOut.destroy(); };
   },
 };

@@ -1,0 +1,79 @@
+<div class="tsg">
+  <div class="toolbar tsg-options">
+    <div class="field"><label for="tsg-target">Output</label>
+      <select id="tsg-target" class="select">
+        <option value="typescript">TypeScript</option>
+        <option value="zod">Zod schema</option>
+        <option value="jsdoc">JSDoc typedef</option>
+      </select></div>
+    <div class="field"><label for="tsg-format">Input format</label>
+      <select id="tsg-format" class="select">
+        <option value="auto">Auto-detect</option>
+        <option value="json">One JSON document</option>
+        <option value="multi">Multiple documents / JSON Lines</option>
+        <option value="schema">JSON Schema</option>
+      </select></div>
+    <div class="field"><label for="tsg-root">Root name</label>
+      <input id="tsg-root" class="input" type="text" value="Root" maxlength="60" autocomplete="off" spellcheck="false"></div>
+    <div class="field" id="tsg-style-field"><label for="tsg-style">Declaration</label>
+      <select id="tsg-style" class="select">
+        <option value="interface">interface</option>
+        <option value="type">type alias</option>
+      </select></div>
+    <div class="field"><label for="tsg-null">Null values</label>
+      <select id="tsg-null" class="select">
+        <option value="union">T | null</option>
+        <option value="optional">Optional property, drop null</option>
+        <option value="omit">Drop null</option>
+      </select></div>
+  </div>
+  <details class="tsg-more" open>
+    <summary>Options</summary>
+    <div class="tsg-checks">
+      <label class="check"><input type="checkbox" id="tsg-export" checked> export keyword</label>
+      <label class="check"><input type="checkbox" id="tsg-readonly"> readonly</label>
+      <label class="check"><input type="checkbox" id="tsg-optional" checked> Missing in some array items = optional (?)</label>
+      <label class="check"><input type="checkbox" id="tsg-merge" checked> Merge array element shapes</label>
+      <label class="check"><input type="checkbox" id="tsg-samples"> Top-level array = samples of one type</label>
+      <label class="check"><input type="checkbox" id="tsg-date"> ISO date strings as Date</label>
+      <label class="check"><input type="checkbox" id="tsg-quote"> Always quote keys</label>
+      <label class="check"><input type="checkbox" id="tsg-comments" checked> Schema descriptions as comments</label>
+    </div>
+    <div class="tsg-nums">
+      <label class="check"><input type="checkbox" id="tsg-union"> String unions when</label>
+      <div class="field tsg-num"><label for="tsg-union-max" class="tsg-sr">Maximum distinct string values</label>
+        <input id="tsg-union-max" class="input" type="number" min="1" max="50" value="5" aria-label="Maximum distinct string values"></div>
+      <span class="hint">distinct values or fewer (needs 2+ occurrences)</span>
+      <label class="check"><input type="checkbox" id="tsg-index"> Index signature from</label>
+      <div class="field tsg-num"><label for="tsg-index-min" class="tsg-sr">Minimum number of numeric-like keys</label>
+        <input id="tsg-index-min" class="input" type="number" min="1" max="1000" value="5" aria-label="Minimum number of numeric-like keys"></div>
+      <span class="hint">numeric-like keys or more</span>
+    </div>
+  </details>
+  <p class="hint" id="tsg-note"></p>
+
+  <div class="grid-2 tsg-panels">
+    <section class="panel" id="tsg-drop">
+      <div class="panel-head">
+        <h3 id="tsg-in-title">JSON input</h3>
+        <button class="btn btn-sm" id="tsg-upload" type="button"><i data-lucide="upload"></i> Upload</button>
+        <button class="btn btn-sm" id="tsg-sample" type="button"><i data-lucide="file-json"></i> Sample</button>
+        <button class="btn btn-sm" id="tsg-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+      </div>
+      <textarea class="textarea code" id="tsg-input" spellcheck="false" placeholder="Paste JSON, several JSON documents, JSON Lines or a JSON Schema, or drop a file here" aria-label="JSON input"></textarea>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Output</h3>
+        <button class="btn btn-sm" id="tsg-copy" type="button"><i data-lucide="copy"></i> Copy</button>
+        <label class="tsg-sr" for="tsg-ext">File type</label>
+        <select id="tsg-ext" class="select tsg-ext"></select>
+        <button class="btn btn-sm" id="tsg-download" type="button"><i data-lucide="download"></i> Download</button>
+      </div>
+      <textarea class="textarea code" id="tsg-output" spellcheck="false" readonly placeholder="Generated code appears here" aria-label="Generated code"></textarea>
+    </section>
+  </div>
+  <div id="tsg-msg" class="alert" hidden></div>
+  <div class="tsg-stats" id="tsg-stats" aria-live="polite"></div>
+  <ul class="tsg-warnings" id="tsg-warnings" aria-live="polite"></ul>
+</div>

@@ -1,0 +1,95 @@
+<div class="hec">
+  <div class="tabs" role="tablist" aria-label="HTML entity converter sections">
+    <button class="tab active" type="button" data-tab="convert">Convert</button>
+    <button class="tab" type="button" data-tab="reference">Entity reference</button>
+  </div>
+
+  <div data-panel="convert">
+    <div class="toolbar hec-options">
+      <div class="field"><label for="hec-scope">Encode</label>
+        <select id="hec-scope" class="select">
+          <option value="special">Only special characters</option>
+          <option value="nonascii" selected>Special + all non-ASCII</option>
+          <option value="all">Everything (every character)</option>
+        </select></div>
+      <div class="field"><label for="hec-safe">Encode for</label>
+        <select id="hec-safe" class="select">
+          <option value="default">General: &amp; &lt; &gt; " '</option>
+          <option value="text">Text content: &amp; &lt; &gt;</option>
+          <option value="attribute">Attribute value: &amp; &lt; &gt; " ' `</option>
+        </select></div>
+      <div class="field"><label for="hec-numeric">Numeric form</label>
+        <select id="hec-numeric" class="select">
+          <option value="decimal">Decimal &amp;#169;</option>
+          <option value="hex">Hex &amp;#xA9;</option>
+          <option value="hexlower">Hex lowercase &amp;#xa9;</option>
+        </select></div>
+      <div class="field"><label for="hec-context">Decode context</label>
+        <select id="hec-context" class="select">
+          <option value="text">Text content</option>
+          <option value="attribute">Attribute value</option>
+        </select></div>
+    </div>
+    <div class="row hec-checks">
+      <label class="check"><input type="checkbox" id="hec-named" checked> Prefer named entities (&amp;copy;)</label>
+      <label class="check"><input type="checkbox" id="hec-keep"> Do not double-encode existing entities</label>
+      <label class="check"><input type="checkbox" id="hec-invisible" checked> Show invisible characters in preview</label>
+    </div>
+    <p class="hint" id="hec-note"></p>
+    <div id="hec-msg" class="alert" hidden></div>
+
+    <div class="grid-2 hec-panels">
+      <section class="panel" id="hec-drop-text">
+        <div class="panel-head">
+          <h3 id="hec-text-title">Text</h3>
+          <button class="btn btn-sm" id="hec-upload" type="button"><i data-lucide="upload"></i> Upload</button>
+          <button class="btn btn-sm" id="hec-copy-text" type="button"><i data-lucide="copy"></i> Copy</button>
+          <button class="btn btn-sm" id="hec-dl-text" type="button"><i data-lucide="download"></i> Download</button>
+          <button class="btn btn-sm" id="hec-clear" type="button"><i data-lucide="trash-2"></i> Clear</button>
+        </div>
+        <textarea class="textarea code" id="hec-text" spellcheck="false" placeholder="Type or paste plain text here: it is encoded live" aria-label="Plain text"></textarea>
+      </section>
+      <section class="panel" id="hec-drop-ent">
+        <div class="panel-head">
+          <h3 id="hec-ent-title">HTML entities</h3>
+          <button class="btn btn-sm" id="hec-copy-ent" type="button"><i data-lucide="copy"></i> Copy</button>
+          <button class="btn btn-sm" id="hec-dl-ent" type="button"><i data-lucide="download"></i> Download</button>
+          <button class="btn btn-sm" id="hec-again" type="button" title="Decode the text again (for double-encoded input)"><i data-lucide="repeat"></i> Decode again</button>
+        </div>
+        <textarea class="textarea code" id="hec-ent" spellcheck="false" placeholder="Or paste entity-encoded text here: it is decoded live" aria-label="HTML entity encoded text"></textarea>
+      </section>
+    </div>
+
+    <div class="hec-hints" id="hec-hints" aria-live="polite"></div>
+    <div class="hec-stats" id="hec-stats" aria-live="polite"></div>
+
+    <section class="panel hec-preview-panel">
+      <div class="panel-head"><h3>Rendered preview (plain text, never interpreted as HTML)</h3></div>
+      <pre class="hec-preview" id="hec-preview" tabindex="0" aria-label="Decoded text preview" aria-live="polite"></pre>
+    </section>
+  </div>
+
+  <div data-panel="reference" hidden>
+    <div class="toolbar hec-ref-options">
+      <div class="field hec-grow"><label for="hec-q">Search (name, character, number, U+ code, description)</label>
+        <input class="input" id="hec-q" type="search" autocomplete="off" placeholder="e.g. copy, 169, U+20AC, arrow, greek"></div>
+      <div class="field"><label for="hec-cat">Category</label>
+        <select id="hec-cat" class="select"><option value="">All categories</option></select></div>
+      <div class="field"><label for="hec-style">Insert / copy as</label>
+        <select id="hec-style" class="select">
+          <option value="name">Named &amp;copy;</option>
+          <option value="decimal">Decimal &amp;#169;</option>
+          <option value="hex">Hex &amp;#xA9;</option>
+          <option value="char">The character itself</option>
+        </select></div>
+    </div>
+    <p class="hint" id="hec-ref-count" aria-live="polite"></p>
+    <div class="table-wrap hec-table-wrap">
+      <table class="table hec-table">
+        <caption class="hec-sr">HTML character entities</caption>
+        <thead><tr><th scope="col">Char</th><th scope="col">Name</th><th scope="col">Number</th><th scope="col">Hex</th><th scope="col">Description</th><th scope="col">Actions</th></tr></thead>
+        <tbody id="hec-rows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>

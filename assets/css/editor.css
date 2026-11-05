@@ -1,0 +1,142 @@
+/* Shared editor (assets/js/components/editor.js) and splitter (split.js). Colours come from themes.css tokens only.
+   Link this file once from index.html. Tools may tune it with --ed-min-height on a parent. */
+
+/* ---- syntax tokens (contrast >= 4.5:1 on --code-bg and --surface in both themes) ---- */
+:root, :root[data-theme="light"] {
+  --syn-keyword: #4f46c8; --syn-string: #a31d4a; --syn-number: #9a4a00; --syn-comment: #5c6677; --syn-function: #0b6a8a;
+  --syn-operator: #9a3412; --syn-punctuation: var(--text-muted); --syn-identifier: var(--text); --syn-property: #0f6b4f;
+  --syn-tag: #1d5fb8; --syn-attribute: #7b3fb3; --syn-regexp: #8a2a7a;
+}
+:root[data-theme="dark"] {
+  --syn-keyword: #9ea8ff; --syn-string: #ff9bb8; --syn-number: #ffb86b; --syn-comment: #8a94a8; --syn-function: #5fd0ee;
+  --syn-operator: #ffa57a; --syn-punctuation: var(--text-muted); --syn-identifier: var(--text); --syn-property: #5ee0b0;
+  --syn-tag: #7cb7ff; --syn-attribute: #d2a8ff; --syn-regexp: #f0a0ff;
+}
+
+/* ---- layout ---- */
+.ed { --ed-fs: var(--editor-font-size, 13px); --ed-lh: 20px; --ed-pad-y: 8px; --ed-pad-x: 10px; --ed-tab: 2; --ed-sbw: 0px; --ed-sbh: 0px;
+  position: relative; display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; background: var(--code-bg); color: var(--text); }
+.ed-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; padding: 2px 6px; min-height: 30px; background: var(--surface-2);
+  border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+.ed-bar-empty { min-height: 0; padding: 0; border: 0; }
+.ed-bar-empty:not(:has(.ed-notice:not(:empty), .ed-pos:not(:empty))) { display: none; }
+.ed-spacer { flex: 1 1 8px; }
+.ed-pos { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ed-notice { color: var(--warn); }
+.ed-msg { color: var(--success); }
+.ed-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 28px; height: 26px; padding: 0 6px; border: 1px solid transparent;
+  border-radius: var(--radius-sm, 6px); background: transparent; color: var(--text-muted); font: 600 12px var(--font, system-ui); cursor: pointer; white-space: nowrap; }
+.ed-btn:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.ed-btn:disabled { opacity: .45; cursor: not-allowed; }
+.ed-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+.ed-btn[aria-pressed="true"] { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+.ed-btn svg { width: 15px; height: 15px; }
+.ed-btn-wide { border-color: var(--border-strong); background: var(--surface); color: var(--text); padding: 0 10px; }
+.ed-btn-text { font-family: var(--mono); }
+
+.ed-body { position: relative; display: flex; flex: 1 1 auto; min-height: var(--ed-min-height, 280px); overflow: hidden; background: var(--code-bg); }
+.ed-body:focus-within { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.ed-stage { position: relative; flex: 1 1 auto; min-width: 0; }
+
+.ed-gutter { display: none; position: relative; flex: none; overflow: hidden; margin-bottom: var(--ed-sbh); background: var(--surface-2); color: var(--text-muted);
+  border-right: 1px solid var(--border); user-select: none; -webkit-user-select: none; cursor: pointer; font: var(--ed-fs)/var(--ed-lh) var(--mono); }
+.ed-has-gutter .ed-gutter { display: block; }
+.ed-gutter-inner { position: absolute; top: 0; left: 0; right: 10px; margin: 0; padding: 0; text-align: right; font: inherit; line-height: var(--ed-lh); white-space: pre; background: none; border: 0; }
+
+/* Ligatures / kerning would break at span boundaries in the overlay but not in the textarea: switch them off in both. */
+.ed .ed-ta, .ed-hl-inner, .ed-gutter, .ed-mirror { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; font-kerning: none; }
+
+/* The textarea sits on top of the highlight layer with identical metrics. */
+.ed .ed-body .ed-stage .ed-ta {
+  position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; max-height: none; margin: 0; padding: var(--ed-pad-y) var(--ed-pad-x); border: 0; border-radius: 0; box-shadow: none;
+  background: transparent; color: var(--text); font: var(--ed-fs)/var(--ed-lh) var(--mono); letter-spacing: normal; tab-size: var(--ed-tab); -moz-tab-size: var(--ed-tab);
+  white-space: pre; overflow: auto; overflow-wrap: normal; word-break: normal; text-align: left; resize: none; outline: none; z-index: 2; flex: none;
+}
+.ed-wrap .ed-body .ed-stage .ed-ta { white-space: pre-wrap; overflow-wrap: break-word; overflow-x: hidden; }
+.ed .ed-ta::placeholder { color: var(--text-faint); -webkit-text-fill-color: var(--text-faint); opacity: 1; }
+.ed .ed-ta::selection { background: color-mix(in srgb, var(--primary) 35%, transparent); }
+.ed-hl-on .ed-ta { color: transparent; -webkit-text-fill-color: transparent; caret-color: var(--text); }
+.ed-hl-on .ed-ta::placeholder { -webkit-text-fill-color: var(--text-faint); }
+/* IME composition / huge documents between repaints: show the textarea's own text, hide the (stale) layer. */
+.ed-composing .ed-ta, .ed-stale .ed-ta { color: var(--text); -webkit-text-fill-color: var(--text); }
+.ed-composing .ed-hl, .ed-stale .ed-hl { visibility: hidden; }
+
+.ed-hl { position: absolute; top: 0; left: 0; right: var(--ed-sbw); bottom: var(--ed-sbh); overflow: hidden; pointer-events: none; z-index: 1; color: var(--text); background: transparent; }
+.ed-hl-inner { position: absolute; top: 0; left: 0; margin: 0; padding: 0 var(--ed-pad-x); border: 0; background: none; color: inherit; font: var(--ed-fs)/var(--ed-lh) var(--mono);
+  letter-spacing: normal; tab-size: var(--ed-tab); -moz-tab-size: var(--ed-tab); white-space: pre; overflow-wrap: normal; word-break: normal; text-align: left; will-change: transform; }
+.ed-wrap .ed-hl-inner { right: 0; white-space: pre-wrap; overflow-wrap: break-word; }
+.ed-hl-inner span { font-weight: 400; font-style: normal; }
+.ed:not(.ed-hl-on) .ed-hl { display: none; }
+
+.ed-curline { position: absolute; top: 0; left: 0; right: var(--ed-sbw); height: var(--ed-lh); background: color-mix(in srgb, var(--primary) 8%, transparent); pointer-events: none; z-index: 0; opacity: 0; }
+.ed-body:focus-within .ed-curline { opacity: 1; }
+.ed-no-curline .ed-curline { display: none; }
+
+.ed-t-keyword { color: var(--syn-keyword); } .ed-t-string { color: var(--syn-string); } .ed-t-number { color: var(--syn-number); }
+.ed-t-comment { color: var(--syn-comment); font-style: italic !important; } .ed-t-function { color: var(--syn-function); } .ed-t-operator { color: var(--syn-operator); }
+.ed-t-punctuation { color: var(--syn-punctuation); } .ed-t-identifier { color: var(--syn-identifier); } .ed-t-property { color: var(--syn-property); }
+.ed-t-tag { color: var(--syn-tag); } .ed-t-attribute { color: var(--syn-attribute); } .ed-t-regexp { color: var(--syn-regexp); }
+
+.ed-mirror { position: absolute; left: -9999px; top: 0; visibility: hidden; pointer-events: none; padding: var(--ed-pad-y) var(--ed-pad-x) 0; font: var(--ed-fs)/var(--ed-lh) var(--mono);
+  white-space: pre-wrap; overflow-wrap: break-word; tab-size: var(--ed-tab); box-sizing: border-box; }
+
+/* ---- find bar ---- */
+.ed-find { display: flex; flex-direction: column; gap: 4px; padding: 6px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.ed-find-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.ed-find-pad { flex: none; width: 28px; }
+.ed-input { flex: 1 1 160px; min-width: 0; height: 28px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm, 6px); background: var(--surface); color: var(--text); font: 13px var(--mono); }
+.ed-input:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+.ed-input.ed-invalid { border-color: var(--danger); }
+.ed-count { min-width: 8ch; padding: 0 4px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.ed-count.ed-bad { color: var(--danger); white-space: normal; }
+
+/* ---- resize handle ---- */
+.ed-resizer { position: relative; flex: none; height: 10px; cursor: ns-resize; touch-action: none; background: var(--surface-2); border-top: 1px solid var(--border); }
+.ed-resizer::after { content: ""; position: absolute; left: 50%; top: 3px; width: 32px; height: 3px; margin-left: -16px; border-radius: 2px; background: var(--border-strong); }
+.ed-resizer:hover::after, .ed-resizer.active::after { background: var(--primary); }
+.ed-resizer:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+
+/* ---- states ---- */
+.ed.dragover { outline: 2px dashed var(--primary); outline-offset: -2px; background: var(--primary-soft); }
+.ed.dragover .ed-body, .ed.dragover .ed-gutter { background: var(--primary-soft); }
+.ed-fs, .ed:fullscreen { position: fixed; inset: 0; z-index: 80; width: auto; height: auto; background: var(--surface); }
+.ed:fullscreen { position: static; width: 100%; height: 100%; }
+.ed-fs .ed-body, .ed:fullscreen .ed-body { height: auto !important; flex: 1 1 auto !important; min-height: 0; }
+.ed-fs .ed-resizer, .ed:fullscreen .ed-resizer { display: none; }
+html.ed-lock { overflow: hidden; }
+.ed-readonly .ed-ta { cursor: text; }
+
+/* ---- touch / motion / forced colours ---- */
+@media (pointer: coarse) {
+  .ed-btn { min-width: 40px; height: 40px; }
+  .ed-input { height: 40px; }
+  .ed-resizer { height: 22px; } .ed-resizer::after { top: 9px; }
+  .ed-bar { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .ed *, .ed { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+@media (forced-colors: active) {
+  .ed-hl, .ed-curline { display: none; }
+  .ed .ed-ta { color: CanvasText; -webkit-text-fill-color: CanvasText; }
+  .ed-btn[aria-pressed="true"] { outline: 2px solid Highlight; }
+  .ed-body:focus-within { outline-color: Highlight; }
+}
+
+/* ---- splitter ---- */
+.split { --split-ratio: .5; --split-handle: 8px; display: grid; min-width: 0; min-height: 0; }
+.split.split-horizontal { grid-template-columns: minmax(0, calc(var(--split-ratio) * (100% - var(--split-handle)))) var(--split-handle) minmax(0, 1fr); }
+.split.split-horizontal, .split.split-vertical { gap: 0; }
+.split.split-vertical { grid-template-rows: minmax(0, calc(var(--split-ratio) * (100% - var(--split-handle)))) var(--split-handle) minmax(0, 1fr); }
+.split > .split-pane { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.split-handle { position: relative; background: var(--surface-2); touch-action: none; }
+.split-horizontal > .split-handle { cursor: col-resize; border-inline: 1px solid var(--border); }
+.split-vertical > .split-handle { cursor: row-resize; border-block: 1px solid var(--border); }
+.split-handle::after { content: ""; position: absolute; left: 50%; top: 50%; border-radius: 2px; background: var(--border-strong); transform: translate(-50%, -50%); }
+.split-horizontal > .split-handle::after { width: 3px; height: 32px; }
+.split-vertical > .split-handle::after { width: 32px; height: 3px; }
+.split-handle:hover::after, .split-handle.active::after { background: var(--primary); }
+.split-handle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+/* Narrow screens: stacked panels, no handle. */
+.split.split-stacked { display: flex; flex-direction: column; gap: 14px; }
+.split.split-stacked > .split-handle { display: none; }
+@media (pointer: coarse) { .split { --split-handle: 16px; } }
+@media (forced-colors: active) { .split-handle { background: ButtonFace; border-color: ButtonText; } .split-handle:focus-visible { outline-color: Highlight; } }

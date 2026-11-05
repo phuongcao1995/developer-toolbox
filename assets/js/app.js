@@ -220,7 +220,26 @@ function createLifecycle() {
   };
 }
 
-const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} timed out after ${ms / 1000}s`)), ms))]);
+/**
+ * Load a tool's stylesheet once. This is deliberately a module-level function: the <link> element lives in <head>
+ * for the rest of the session, and its onload/onerror handlers must not capture any per-mount state (the mount's
+ * lifecycle object holds the tool's cleanup closures, which reference the tool's DOM). Handlers are also cleared
+ * after the load so nothing stays attached to the element.
+ */
+const cssLoads = new Map();
+function loadToolCss(href) {
+  if (!cssLoads.has(href)) {
+    cssLoads.set(href, new Promise(resolve => {
+      const link = el('link', { rel: 'stylesheet', href });
+      const done = () => { link.onload = link.onerror = null; resolve(); };
+      link.onload = link.onerror = done;
+      document.head.append(link);
+    }));
+  }
+  return cssLoads.get(href);
+}
+
+const withTimeout =(p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} timed out after ${ms / 1000}s`)), ms))]);
 
 async function mountTool(tool, root, attempt = 0) {
   const token = ++mountToken;
@@ -231,11 +250,7 @@ async function mountTool(tool, root, attempt = 0) {
     const base = `tools/${tool.id}/`;
     const [html] = await Promise.all([
       withTimeout(fetch(base + 'index.html', { signal: life.controller.signal }).then(r => { if (!r.ok) throw new Error(`${base}index.html returned HTTP ${r.status}`); return r.text(); }), 15000, 'Loading the tool'),
-      new Promise(res => { // load tool CSS (once)
-        const href = base + 'tool.css';
-        if (document.querySelector(`link[href="${href}"]`)) return res();
-        const l = el('link', { rel: 'stylesheet', href }); l.onload = l.onerror = () => res(); document.head.append(l);
-      }),
+      loadToolCss(base + 'tool.css'),
     ]);
     // A retry bypasses a cached failed module fetch.
     const mod = await import(`../../${tool.entry}${attempt ? `?retry=${attempt}` : ''}`);

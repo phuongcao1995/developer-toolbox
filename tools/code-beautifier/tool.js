@@ -1,6 +1,8 @@
 // Code Beautifier UI. Formatting uses js-beautify (lazy CDN); JSON + minifiers come from logic.js.
 import { copyText, downloadFile, toast, pickFile, enableDrop, readFileAsText, showMessage, withLoading,
-  enableTabIndent, loadScript, formatBytes, renderIcons } from '../../assets/js/components/ui.js';
+  loadScript, formatBytes, renderIcons } from '../../assets/js/components/ui.js';
+import { createEditor } from '../../assets/js/components/editor.js';
+import { createSplit } from '../../assets/js/components/split.js';
 import * as L from './logic.js';
 
 const BEAUTIFY_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/';
@@ -24,12 +26,18 @@ export default {
     };
     els.indent.value = L.indentChoiceFromUnit(ctx.indentUnit);
     els.lang.value = ctx.storage.get('lang', 'js');
-    els.input.style.fontSize = els.output.style.fontSize = `${ctx.fontSize}px`;
-    enableTabIndent(els.input, ctx.indentUnit);
+    // Shared editor: line numbers, highlighting for the selected language, Tab/Enter helpers, find & replace (the tool keeps its own
+    // Upload/Clear/Copy/Download buttons and its own drop zone, so the editors only get the view tools).
+    const EDITOR_LANG = { js: 'javascript', css: 'css', html: 'html', json: 'json' };
+    const edIn = createEditor(els.input, { language: EDITOR_LANG[els.lang.value], storage: ctx.storage, fontSize: ctx.fontSize, indentUnit: ctx.indentUnit, drop: false });
+    const edOut = createEditor(els.output, { language: EDITOR_LANG[els.lang.value], storage: ctx.storage, fontSize: ctx.fontSize, indentUnit: ctx.indentUnit, readOnly: true, drop: false, toolbar: ['wrap', 'fontSize', 'find', 'fullscreen'] });
+    const split = createSplit($('.cb-panels'), { direction: 'horizontal', storage: ctx.storage, storageKey: 'panels', labels: ['input', 'output'] });
 
     let dialect = null; // 'scss' | 'less' when the loaded file was one (minify is refused for those)
     const lang = () => els.lang.value;
     const updateNote = () => {
+      const el = EDITOR_LANG[lang()];
+      edIn.setLanguage(el); edOut.setLanguage(el);
       els.note.textContent = `Beautify uses ${lang() === 'json' ? 'a built-in JSON formatter' : 'js-beautify (loaded from a CDN on first use)'}. Minify: ${MINIFY_NOTES[lang()]}`;
     };
     const setStats = (before, after, label) => {
@@ -110,6 +118,6 @@ export default {
       enableDrop($('#cb-drop'), loadFile),
     ];
     updateNote(); renderIcons(root);
-    return () => disposers.forEach(d => d());
+    return () => { disposers.forEach(d => d()); split.destroy(); edIn.destroy(); edOut.destroy(); };
   },
 };
