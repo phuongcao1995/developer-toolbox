@@ -1,6 +1,6 @@
 # Developer Toolbox
 
-36 everyday developer utilities in one responsive, framework-free web app. HTML5, CSS3 and vanilla ES modules: **no build step, no backend, no database.**
+37 everyday developer utilities in one responsive, framework-free web app. HTML5, CSS3 and vanilla ES modules: **no build step, no backend, no database.**
 Tools process your input in the browser. The few that use the network (API Client, optional URL import and webhook polling, CDN libraries) are listed under
 [External services](#dependencies-and-cdn-libraries).
 
@@ -29,7 +29,7 @@ The app is deployed as Cloudflare static assets (`wrangler.jsonc`); `.assetsigno
 | Category | Tools |
 |---|---|
 | JSON & Data (8) | JSON Formatter · Data Converter · JWT Decoder · Regex Tester · Saltbox · API Client · XML Formatter & Validator · YAML Formatter & Validator |
-| Text & Docs (6) | Diff Checker · Markdown Editor · Markdown Viewer · Code Beautifier · SQL Formatter · HTML Entity Converter |
+| Text & Docs (7) | Text Pad · Diff Checker · Markdown Editor · Markdown Viewer · Code Beautifier · SQL Formatter · HTML Entity Converter |
 | Code Development (4) | Prettier Playground · Code Image Generator · Base64 Converter · TypeScript Interface Generator |
 | URL, Time & Utilities (6) | URL Encoder / Decoder · Cron Generator · UUID Generator · Timestamp Converter · Git Command Generator · Chmod Calculator |
 | API & Database (6) | Webhook Inspector · Table Converter · HTTP Status Codes · SQL Query Analyzer · OpenAPI / Swagger Viewer · cURL Converter |

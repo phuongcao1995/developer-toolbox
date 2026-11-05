@@ -336,7 +336,7 @@ const NAV = [
 ];
 function buildSidebar() {
   const nav = $('#nav');
-  const link = (n, href, label, ic, count) => `<a class="nav-link" data-nav="${n}" href="${href}">${icon(ic)}<span>${escapeHtml(label)}</span>${count ? `<em class="count" data-count="${n}"></em>` : ''}</a>`;
+  const link = (n, href, label, ic, count) => `<a class="nav-link" data-nav="${n}" href="${href}" title="${escapeHtml(label)}">${icon(ic)}<span>${escapeHtml(label)}</span>${count ? `<em class="count" data-count="${n}"></em>` : ''}</a>`;
   nav.innerHTML =
     NAV.map(n => link(n.name, hrefTo(n.name), n.label, n.icon, !!n.count)).join('') +
     `<div class="nav-label">Categories</div>` +
@@ -470,7 +470,19 @@ function boot() {
   $('#theme-toggle').addEventListener('click', () => settings.set({ theme: currentTheme() === 'dark' ? 'light' : 'dark' }));
   $('#open-search').addEventListener('click', openPalette);
   $('#open-shortcuts')?.addEventListener('click', openShortcuts);
-  $('#menu-toggle').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+  // Desktop: collapse to an icon rail (remembered). Narrow screens: open/close the drawer.
+  const COLLAPSE_KEY = 'sidebar-collapsed', narrow = () => matchMedia('(max-width: 860px)').matches;
+  const setCollapsed = on => {
+    document.body.classList.toggle('sidebar-collapsed', on);
+    const t = $('#menu-toggle'); t.setAttribute('aria-expanded', String(!on));
+    t.title = on ? 'Expand sidebar' : 'Collapse sidebar';
+  };
+  setCollapsed(storage.get(COLLAPSE_KEY, false) === true);
+  $('#menu-toggle').addEventListener('click', () => {
+    if (narrow()) { document.body.classList.toggle('sidebar-open'); return; }
+    const on = !document.body.classList.contains('sidebar-collapsed');
+    setCollapsed(on); storage.set(COLLAPSE_KEY, on);
+  });
   $('#scrim').addEventListener('click', closeSidebar);
   $('#open-settings').addEventListener('click', () => router.go('settings'));
   document.addEventListener('keydown', onGlobalKey);

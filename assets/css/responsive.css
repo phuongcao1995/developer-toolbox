@@ -6,7 +6,13 @@
   .sidebar-open .sidebar { transform: none; visibility: visible; transition: transform .2s ease; }
   .sidebar-open .scrim { display: block; position: fixed; inset: 0; background: var(--overlay); z-index: 35; }
   .content { margin-left: 0; }
-  .menu-toggle { display: inline-flex; }
+  /* The drawer always shows the full menu, whatever the desktop collapse state is. */
+  .sidebar-collapsed { --sidebar-w: 248px; }
+  .sidebar-collapsed .logo { padding: 0 18px; justify-content: flex-start; }
+  .sidebar-collapsed .logo > span:not(.logo-mark), .sidebar-collapsed .nav-link > span { display: inline; }
+  .sidebar-collapsed .nav-link .count { display: inline; }
+  .sidebar-collapsed .nav-link { justify-content: flex-start; padding: 7px 10px; }
+  .sidebar-collapsed .nav-label { height: auto; padding: 14px 10px 4px; margin: 0; background: none; font-size: 11px; }
   .grid-2 { grid-template-columns: 1fr; }
   .main { padding: 16px; }
 }

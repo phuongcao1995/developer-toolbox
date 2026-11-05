@@ -1,0 +1,38 @@
+<div class="tp-wrap" id="tp-wrap">
+  <div class="tp-head">
+    <button class="btn btn-sm btn-ghost" data-action="toggle-bar" id="tp-toggle" aria-expanded="true" aria-controls="tp-bar"><i data-lucide="chevron-up"></i> <span>Hide toolbar</span></button>
+  </div>
+  <div class="tp-bar" id="tp-bar">
+    <div class="row tp-group">
+      <button class="btn btn-sm" data-action="copy"><i data-lucide="copy"></i> Copy</button>
+      <button class="btn btn-sm" data-action="download"><i data-lucide="download"></i> Download .txt</button>
+      <button class="btn btn-sm" data-action="open"><i data-lucide="folder-open"></i> Open</button>
+      <button class="btn btn-sm" data-action="clear"><i data-lucide="eraser"></i> Clear</button>
+    </div>
+    <div class="row tp-group">
+      <select class="select tp-select" id="tp-transform" aria-label="Transform text (selection or all)">
+        <option value="">Transform…</option>
+        <option value="upper">UPPERCASE</option><option value="lower">lowercase</option>
+        <option value="title">Title Case</option><option value="sentence">Sentence case</option>
+        <option value="trim">Trim trailing spaces</option><option value="collapse-spaces">Collapse spaces</option>
+        <option value="remove-blank-lines">Remove blank lines</option><option value="sort-lines">Sort lines</option>
+        <option value="unique-lines">Unique lines</option><option value="reverse-lines">Reverse lines</option>
+      </select>
+      <select class="select tp-select" id="tp-font" aria-label="Font">
+        <option value="sans">Sans</option><option value="serif">Serif</option><option value="mono">Mono</option>
+      </select>
+      <select class="select tp-select" id="tp-size" aria-label="Font size">
+        <option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option>
+        <option value="20">20 px</option><option value="24">24 px</option><option value="28">28 px</option>
+      </select>
+      <label class="check"><input type="checkbox" id="tp-narrow"> Narrow column</label>
+      <label class="check"><input type="checkbox" id="tp-spell" checked> Spellcheck</label>
+      <button class="btn btn-sm" data-action="focus" aria-pressed="false"><i data-lucide="maximize"></i> Focus mode</button>
+    </div>
+  </div>
+  <textarea class="tp-area" id="tp-area" aria-label="Text" placeholder="Start typing. Your text is saved automatically in this browser and never leaves it."></textarea>
+  <div class="tp-stats" id="tp-stats">
+    <span id="tp-s-words">0 words</span><span id="tp-s-chars">0 characters</span><span id="tp-s-lines">0 lines</span>
+    <span id="tp-s-read">0 min read</span><span class="tp-saved" id="tp-saved" role="status">Saved locally</span>
+  </div>
+</div>
