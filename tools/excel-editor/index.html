@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Sheet Editor</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <svg class="icon-sprite" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-new" viewBox="0 0 16 16"><path d="M4 1.5h5l3.5 3.5v9.5h-8.5z M9 1.5V5h3.5 M8 7.5v5 M5.5 10h5"/></symbol>
+      <symbol id="i-open" viewBox="0 0 16 16"><path d="M1.5 3.5h4.5l1.5 1.5h7v8.5h-13z M1.5 7h13"/></symbol>
+      <symbol id="i-download" viewBox="0 0 16 16"><path d="M8 1.5v9 M4.5 7l3.5 3.5L11.5 7 M2 12.5v2h12v-2"/></symbol>
+      <symbol id="i-undo" viewBox="0 0 16 16"><path d="M5.5 3.5L2 7l3.5 3.5 M2 7h8a4 4 0 0 1 0 8H7"/></symbol>
+      <symbol id="i-redo" viewBox="0 0 16 16"><path d="M10.5 3.5L14 7l-3.5 3.5 M14 7H6a4 4 0 0 0 0 8h3"/></symbol>
+      <symbol id="i-align-left" viewBox="0 0 16 16"><path d="M2 3h12 M2 6.5h8 M2 10h12 M2 13.5h8"/></symbol>
+      <symbol id="i-align-center" viewBox="0 0 16 16"><path d="M2 3h12 M4 6.5h8 M2 10h12 M4 13.5h8"/></symbol>
+      <symbol id="i-align-right" viewBox="0 0 16 16"><path d="M2 3h12 M6 6.5h8 M2 10h12 M6 13.5h8"/></symbol>
+      <symbol id="i-valign-top" viewBox="0 0 16 16"><path d="M2 2h12 M8 13.5V5 M5 8l3-3 3 3"/></symbol>
+      <symbol id="i-valign-middle" viewBox="0 0 16 16"><path d="M2 8h12 M8 1.5v4 M6 3.5l2 2 2-2 M8 14.5v-4 M6 12.5l2-2 2 2"/></symbol>
+      <symbol id="i-valign-bottom" viewBox="0 0 16 16"><path d="M2 14h12 M8 2.5V11 M5 8l3 3 3-3"/></symbol>
+      <symbol id="i-wrap" viewBox="0 0 16 16"><path d="M2 3.5h12 M2 7.5h9.5a2.5 2.5 0 0 1 0 5H8 M9.5 10.5l-2 2 2 2 M2 12.5h3"/></symbol>
+      <symbol id="i-merge" viewBox="0 0 16 16"><path d="M1.5 2.5h13v11h-13z M5 8h6 M9 6l2 2-2 2 M7 6L5 8l2 2"/></symbol>
+      <symbol id="i-borders" viewBox="0 0 16 16"><path d="M2 2h12v12H2z M8 2v12 M2 8h12" stroke-dasharray="2 1.5"/><path d="M2 14h12"/></symbol>
+      <symbol id="i-rows" viewBox="0 0 16 16"><path d="M1.5 2.5h13v11h-13z M1.5 6.2h13 M1.5 9.8h13"/></symbol>
+      <symbol id="i-sort-asc" viewBox="0 0 16 16"><path d="M4 2.5v11 M1.5 11l2.5 2.5L6.5 11 M9 3.5h5 M9 7.5h4 M9 11.5h2.5"/></symbol>
+      <symbol id="i-sort-desc" viewBox="0 0 16 16"><path d="M4 2.5v11 M1.5 11l2.5 2.5L6.5 11 M9 3.5h2.5 M9 7.5h4 M9 11.5h5"/></symbol>
+      <symbol id="i-filter" viewBox="0 0 16 16"><path d="M1.5 2.5h13L9.5 8.5v5l-3 1.5V8.5z"/></symbol>
+      <symbol id="i-find" viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4.5 4.5"/></symbol>
+      <symbol id="i-check" viewBox="0 0 16 16"><path d="M1.5 2.5h13v11h-13z M4.5 8l2.2 2.2L11.5 5.5"/></symbol>
+      <symbol id="i-dupes" viewBox="0 0 16 16"><path d="M5 1.5h8.5V10H5z M2.5 4.5V13.5H11"/></symbol>
+      <symbol id="i-freeze" viewBox="0 0 16 16"><path d="M1.5 2.5h13v11h-13z M1.5 6h13 M5.5 2.5v11" /><path d="M1.5 6h13" stroke-width="2.2"/></symbol>
+      <symbol id="i-clear" viewBox="0 0 16 16"><path d="M6 13.5h8 M9.5 2l4.5 4.5-6.5 6.5H5L2.5 10.5z M6.5 5l4.5 4.5"/></symbol>
+      <symbol id="i-fx" viewBox="0 0 16 16"><path d="M9 2.5c-2 0-2.5 1-2.8 3L5 13c-.3 1.5-1 2-2.5 2 M3.5 6.5h5 M9.5 8l4 5 M13.5 8l-4 5"/></symbol>
+      <symbol id="i-more" viewBox="0 0 16 16"><path d="M4 7l4 4 4-4"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="app" id="app">
+    <header class="appbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Sheet Editor</span>
+      </div>
+      <div class="file-info" id="file-info" aria-live="polite">
+        <span class="file-name" id="file-name">Untitled</span>
+        <span class="file-meta" id="file-meta"></span>
+        <span class="dirty-flag" id="dirty-flag" hidden>Unsaved changes</span>
+      </div>
+      <nav class="appbar-actions" aria-label="File">
+        <button type="button" class="tb" data-action="new" title="New workbook">
+          <svg class="ico"><use href="#i-new"/></svg><span class="tb-label">New</span>
+        </button>
+        <button type="button" class="tb" data-action="open" title="Open a file (Ctrl+O)">
+          <svg class="ico"><use href="#i-open"/></svg><span class="tb-label">Open</span>
+        </button>
+        <button type="button" class="tb tb-primary" data-action="save" title="Download (Ctrl+S)">
+          <svg class="ico"><use href="#i-download"/></svg><span class="tb-label">Download</span>
+        </button>
+        <span class="tb-sep" aria-hidden="true"></span>
+        <button type="button" class="tb" data-action="undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg class="ico"><use href="#i-undo"/></svg></button>
+        <button type="button" class="tb" data-action="redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg class="ico"><use href="#i-redo"/></svg></button>
+      </nav>
+      <input type="file" id="file-input" accept=".xlsx,.xlsm,.xls,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" hidden>
+    </header>
+
+    <div class="toolbar" role="toolbar" aria-label="Formatting and data">
+      <div class="tb-group" role="group" aria-label="Font">
+        <select id="font-name" class="tb-select" aria-label="Font" title="Font">
+          <option value="">Default font</option>
+          <option>Arial</option><option>Calibri</option><option>Cambria</option><option>Courier New</option>
+          <option>Georgia</option><option>Segoe UI</option><option>Tahoma</option><option>Times New Roman</option><option>Verdana</option>
+        </select>
+        <select id="font-size" class="tb-select narrow" aria-label="Font size" title="Font size">
+          <option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>14</option>
+          <option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>36</option>
+        </select>
+      </div>
+      <div class="tb-group" role="group" aria-label="Text style">
+        <button type="button" class="tb glyph" data-action="bold" aria-pressed="false" aria-label="Bold" title="Bold (Ctrl+B)"><b>B</b></button>
+        <button type="button" class="tb glyph" data-action="italic" aria-pressed="false" aria-label="Italic" title="Italic (Ctrl+I)"><i>I</i></button>
+        <button type="button" class="tb glyph" data-action="underline" aria-pressed="false" aria-label="Underline" title="Underline (Ctrl+U)"><u>U</u></button>
+        <label class="tb color-tb" title="Text colour">
+          <span class="glyph-a" aria-hidden="true">A</span><span class="swatch" id="text-color-swatch"></span>
+          <input type="color" id="text-color" value="#c62828" aria-label="Text colour">
+        </label>
+        <label class="tb color-tb" title="Fill colour">
+          <span class="glyph-fill" aria-hidden="true"></span><span class="swatch" id="fill-color-swatch"></span>
+          <input type="color" id="fill-color" value="#fff3b0" aria-label="Fill colour">
+        </label>
+      </div>
+      <div class="tb-group" role="group" aria-label="Alignment">
+        <button type="button" class="tb" data-action="align-left" aria-pressed="false" aria-label="Align left" title="Align left"><svg class="ico"><use href="#i-align-left"/></svg></button>
+        <button type="button" class="tb" data-action="align-center" aria-pressed="false" aria-label="Align centre" title="Align centre"><svg class="ico"><use href="#i-align-center"/></svg></button>
+        <button type="button" class="tb" data-action="align-right" aria-pressed="false" aria-label="Align right" title="Align right"><svg class="ico"><use href="#i-align-right"/></svg></button>
+        <button type="button" class="tb" data-action="valign-top" aria-pressed="false" aria-label="Align top" title="Align top"><svg class="ico"><use href="#i-valign-top"/></svg></button>
+        <button type="button" class="tb" data-action="valign-middle" aria-pressed="false" aria-label="Align middle" title="Align middle"><svg class="ico"><use href="#i-valign-middle"/></svg></button>
+        <button type="button" class="tb" data-action="valign-bottom" aria-pressed="false" aria-label="Align bottom" title="Align bottom"><svg class="ico"><use href="#i-valign-bottom"/></svg></button>
+        <button type="button" class="tb" data-action="wrap" aria-pressed="false" aria-label="Wrap text" title="Wrap text"><svg class="ico"><use href="#i-wrap"/></svg></button>
+        <button type="button" class="tb" data-action="merge" aria-pressed="false" aria-label="Merge or unmerge cells" title="Merge / unmerge cells"><svg class="ico"><use href="#i-merge"/></svg></button>
+        <button type="button" class="tb" data-action="borders-menu" aria-haspopup="menu" aria-label="Borders" title="Borders"><svg class="ico"><use href="#i-borders"/></svg><svg class="ico caret"><use href="#i-more"/></svg></button>
+      </div>
+      <div class="tb-group" role="group" aria-label="Number format">
+        <select id="number-format" class="tb-select" aria-label="Number format" title="How the value is displayed (does not change the value)">
+          <option value="General">General</option>
+          <option value="0">Number (0)</option>
+          <option value="#,##0.00">Number (1,234.00)</option>
+          <option value="0%">Percent</option>
+          <option value="0.00%">Percent (0.00%)</option>
+          <option value="#,##0 &quot;₫&quot;">Currency (₫)</option>
+          <option value="$#,##0.00">Currency ($)</option>
+          <option value="dd/mm/yyyy">Date (31/12/2024)</option>
+          <option value="yyyy-mm-dd">Date (2024-12-31)</option>
+          <option value="yyyy-mm-dd hh:mm">Date and time</option>
+          <option value="hh:mm:ss">Time</option>
+          <option value="0.00E+00">Scientific</option>
+          <option value="@">Text</option>
+          <option value="custom" hidden>Custom</option>
+        </select>
+        <button type="button" class="tb glyph small" data-action="decimals-less" aria-label="Fewer decimals" title="Fewer decimal places">.0←</button>
+        <button type="button" class="tb glyph small" data-action="decimals-more" aria-label="More decimals" title="More decimal places">.00→</button>
+        <button type="button" class="tb" data-action="clear-format" aria-label="Clear formatting" title="Clear formatting"><svg class="ico"><use href="#i-clear"/></svg></button>
+      </div>
+      <div class="tb-group" role="group" aria-label="Data">
+        <button type="button" class="tb" data-action="rows-menu" aria-haspopup="menu" aria-label="Rows and columns" title="Insert or delete rows and columns"><svg class="ico"><use href="#i-rows"/></svg><span class="tb-label">Rows &amp; columns</span><svg class="ico caret"><use href="#i-more"/></svg></button>
+        <button type="button" class="tb" data-action="sort-asc" aria-label="Sort A to Z" title="Sort A → Z by the active column"><svg class="ico"><use href="#i-sort-asc"/></svg></button>
+        <button type="button" class="tb" data-action="sort-desc" aria-label="Sort Z to A" title="Sort Z → A by the active column"><svg class="ico"><use href="#i-sort-desc"/></svg></button>
+        <button type="button" class="tb" data-action="filter" aria-label="Filter" title="Filter rows"><svg class="ico"><use href="#i-filter"/></svg></button>
+        <button type="button" class="tb" data-action="find" aria-label="Find and replace" title="Find and replace (Ctrl+F)"><svg class="ico"><use href="#i-find"/></svg></button>
+        <button type="button" class="tb" data-action="data-menu" aria-haspopup="menu" aria-label="Data tools" title="Validation, duplicates and more"><svg class="ico"><use href="#i-check"/></svg><span class="tb-label">Data</span><svg class="ico caret"><use href="#i-more"/></svg></button>
+        <button type="button" class="tb" data-action="freeze-menu" aria-haspopup="menu" aria-label="Freeze panes" title="Freeze rows or columns"><svg class="ico"><use href="#i-freeze"/></svg><span class="tb-label">Freeze</span><svg class="ico caret"><use href="#i-more"/></svg></button>
+      </div>
+    </div>
+
+    <div class="notice" id="notice" hidden>
+      <div class="notice-text" id="notice-text"></div>
+      <button type="button" class="btn btn-quiet" id="notice-details">Details</button>
+      <button type="button" class="notice-close" id="notice-close" aria-label="Dismiss notice">×</button>
+    </div>
+
+    <div class="formula-bar">
+      <input id="name-box" class="name-box" aria-label="Cell address. Type an address and press Enter to go there." spellcheck="false" autocomplete="off">
+      <svg class="ico fx" aria-hidden="true"><use href="#i-fx"/></svg>
+      <textarea id="formula-input" class="formula-input" rows="1" spellcheck="false" aria-label="Cell value or formula" data-keeps-edit></textarea>
+      <div class="value-info" id="value-info" aria-live="polite"></div>
+    </div>
+
+    <main class="grid-wrap" id="grid-wrap">
+      <div class="grid" id="grid"></div>
+      <div class="drop-zone" id="drop-zone" hidden>
+        <div class="drop-card">Drop an .xlsx, .xls or .csv file to open it</div>
+      </div>
+      <div class="empty-hint" id="empty-hint" hidden>
+        <p>Start typing in any cell, or open a file.</p>
+        <p class="empty-sub">Drag an .xlsx, .xls or .csv file here. Files never leave your computer.</p>
+        <button type="button" class="btn btn-primary" data-action="open">Open a file</button>
+      </div>
+    </main>
+
+    <footer class="bottom">
+      <div class="tabs-row">
+        <button type="button" class="tab-add" data-action="add-sheet" aria-label="Add sheet" title="Add sheet">+</button>
+        <div class="tabs" id="tabs" role="tablist" aria-label="Worksheets"></div>
+      </div>
+      <div class="status" id="status">
+        <span id="status-sheet"></span>
+        <span id="status-selection"></span>
+        <span id="status-stats" class="status-stats"></span>
+        <span id="status-message" class="status-message" aria-live="polite"></span>
+      </div>
+    </footer>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <div class="busy" id="busy" hidden><div class="busy-card"><span class="spinner" aria-hidden="true"></span><span class="busy-text"></span></div></div>
+
+  <script src="vendor/exceljs.min.js"></script>
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="js/load-vendor.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/formula.js"></script>
+  <script src="js/spreadsheet.js"></script>
+  <script src="js/file-manager.js"></script>
+  <script src="js/dialogs.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="js/toolbar.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -61,10 +61,12 @@ function applySettings() {
 }
 
 // ---------- Tool cards ----------
+// Standalone tools (own page, own UI) open in a new tab; everything else is a hash route inside the shell.
+const toolLinkAttrs = tool => tool.standalone ? { href: tool.href, target: '_blank', rel: 'noopener' } : { href: hrefTo('tool', tool.id) };
 function toolCard(tool, ranges = [], badge = '') {
   const fav = favorites.has(tool.id);
   const cat = getCategory(tool.category);
-  const card = el('a', { class: 'tool-card', href: hrefTo('tool', tool.id) },
+  const card = el('a', { class: 'tool-card', ...toolLinkAttrs(tool) },
     el('div', { class: 'tool-card-icon', html: icon(tool.icon) }),
     el('div', { class: 'tool-card-body' },
       el('div', { class: 'tool-card-title' }, highlight(tool.name, ranges)),
@@ -197,6 +199,12 @@ async function viewTool(id, rerender = false) {
       html: `${icon('star')}<span>${fav ? 'Favorited' : 'Favorite'}</span>`,
       onclick: e => { const on = favorites.toggle(id); const b = e.currentTarget;
         b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); b.querySelector('span').textContent = on ? 'Favorited' : 'Favorite'; renderSidebarCounts(); } }));
+  if (tool.standalone) {
+    page.append(head, el('div', { class: 'panel' }, el('div', { class: 'panel-body stack' },
+      el('p', {}, `${tool.name} is a standalone app with its own interface. It opens in its own tab, runs entirely in your browser and does not upload your files.`),
+      el('div', { class: 'row' }, el('a', { class: 'btn btn-primary', href: tool.href, target: '_blank', rel: 'noopener', html: `${icon('external-link')}<span>Open ${escapeHtml(tool.name)}</span>` })))));
+    return { title: tool.name, node: page };
+  }
   const root = el('div', { class: `tool-root tool-${id}` }, el('div', { class: 'loading-block' }, el('span', { class: 'spinner' }), 'Loading tool…'));
   page.append(head, root);
   // Mount asynchronously so the shell paints first.
@@ -384,7 +392,7 @@ function openPalette() {
       onclick: () => { cat = c.id; idx = 0; draw(); input.focus(); } }, c.name)));
     const q = input.value.trim();
     items = q ? searchToolsDetailed(q, cat) : suggestions();
-    list.replaceChildren(...(items.length ? items.map((r, i) => el('a', { class: 'palette-item', id: `palette-opt-${i}`, href: hrefTo('tool', r.tool.id), role: 'option', 'aria-selected': 'false', tabindex: '-1',
+    list.replaceChildren(...(items.length ? items.map((r, i) => el('a', { class: 'palette-item', id: `palette-opt-${i}`, ...toolLinkAttrs(r.tool), role: 'option', 'aria-selected': 'false', tabindex: '-1',
       onclick: () => palette?.close(), onmousemove: () => { if (idx !== i) setActive(i); } },
       el('span', { html: icon(r.tool.icon) }),
       el('div', { class: 'palette-text' }, el('strong', {}, highlight(r.tool.name, r.ranges)), el('small', {}, r.tool.description)),

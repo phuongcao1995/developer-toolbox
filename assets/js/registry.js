@@ -14,6 +14,10 @@ const DEFAULT_UPDATED = '2026-11-03';
 const t = (id, name, description, category, icon, keywords) =>
   ({ id, name, description, category, icon, keywords, entry: `tools/${id}/tool.js`, version: '1.0', updated: DEFAULT_UPDATED, note: '' });
 
+/** A standalone tool: a self-contained page under tools/<id>/ with its own UI and libraries. The shell only links to it. */
+const link = (id, name, description, category, icon, keywords, href = `tools/${id}/index.html`) =>
+  ({ id, name, description, category, icon, keywords, href, standalone: true, version: '1.0', updated: DEFAULT_UPDATED, note: '' });
+
 export const TOOLS = [
   t('json-formatter', 'JSON Formatter', 'Format, minify, validate and explore JSON; convert to XML, CSV or YAML.', 'data', 'braces', ['json', 'beautify', 'minify', 'validate', 'tree', 'xml', 'csv', 'yaml']),
   t('cyberchef', 'Data Converter', 'CyberChef-style pipeline: Base64, URL, Hex, HTML entities, SHA-256, MD5, UTF-8.', 'data', 'chef-hat', ['cyberchef', 'encode', 'decode', 'hash', 'sha256', 'md5', 'hex', 'pipeline']),
@@ -57,6 +61,9 @@ export const TOOLS = [
   t('html-css-js-playground', 'HTML/CSS/JS Playground', 'Write HTML, CSS and JavaScript with a live sandboxed preview, a console and project export.', 'web', 'square-terminal', ['html', 'css', 'javascript', 'playground', 'sandbox', 'preview', 'codepen', 'console', 'zip']),
   t('color-converter', 'Color Converter', 'Convert colours between HEX, RGB, HSL, HWB, Lab, LCH, OKLab and OKLCH, build palettes and check WCAG contrast.', 'web', 'palette', ['color', 'colour', 'hex', 'rgb', 'hsl', 'oklch', 'contrast', 'wcag', 'palette', 'gradient', 'colorblind']),
   t('http-header-analyzer', 'HTTP Header Analyzer', 'Parse and explain HTTP request or response headers and review security headers, cookies, CORS and caching.', 'web', 'shield-check', ['http', 'headers', 'security', 'csp', 'hsts', 'cors', 'cookie', 'cache-control', 'curl', 'response']),
+  // Standalone apps (own UI and libraries, opened in their own tab).
+  link('excel-editor', 'Excel Editor', 'Standalone spreadsheet editor: open, edit and save .xlsx, .xls and .csv with formulas, formatting and multiple sheets.', 'files', 'table-2', ['excel', 'spreadsheet', 'xlsx', 'xls', 'csv', 'sheet', 'formula', 'grid']),
+  link('word-editor', 'Word Editor', 'Standalone word processor (Folio): open, edit and save .docx documents, with tables, images, lists and find & replace.', 'text', 'file-type-2', ['word', 'docx', 'document', 'doc', 'editor', 'folio', 'writer', 'office']),
   t('curl-converter', 'cURL Converter', 'Convert cURL commands to fetch, axios, Python, Go, PHP, Node, HTTPie and PowerShell, or build a cURL command from a form.', 'api', 'terminal-square', ['curl', 'fetch', 'axios', 'python requests', 'go', 'php', 'httpie', 'powershell', 'http request', 'convert']),
 ];
 
@@ -91,7 +98,7 @@ export function validateRegistry(tools = TOOLS, categories = CATEGORIES) {
     if (seen.has(x.id)) problems.push(`Duplicate tool id: ${x.id}`);
     seen.add(x.id);
     if (!cats.has(x.category)) problems.push(`${x.id}: unknown category "${x.category}"`);
-    for (const f of ['name', 'description', 'icon', 'entry']) if (!x[f]) problems.push(`${x.id}: missing ${f}`);
+    for (const f of ['name', 'description', 'icon', x.standalone ? 'href' : 'entry']) if (!x[f]) problems.push(`${x.id}: missing ${f}`);
     if (!Array.isArray(x.keywords) || !x.keywords.length) problems.push(`${x.id}: needs keywords`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(x.updated || '')) problems.push(`${x.id}: updated must be YYYY-MM-DD`);
   }

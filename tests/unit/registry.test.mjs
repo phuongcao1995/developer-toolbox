@@ -1,6 +1,7 @@
 // Run: node tests/unit/registry.test.mjs   (from the project root)
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import { TOOLS, validateRegistry, searchToolsDetailed, searchTools, editDistance } from '../../assets/js/registry.js';
 
 let pass = 0;
@@ -9,7 +10,22 @@ const top = q => searchTools(q)[0]?.id;
 
 test('registry is valid', () => assert.deepEqual(validateRegistry(), []));
 test('every tool has its files', () => {
-  for (const t of TOOLS) for (const f of ['index.html', 'tool.js', 'tool.css']) assert.ok(existsSync(`tools/${t.id}/${f}`), `${t.id}/${f}`);
+  for (const t of TOOLS.filter(x => !x.standalone)) for (const f of ['index.html', 'tool.js', 'tool.css']) assert.ok(existsSync(`tools/${t.id}/${f}`), `${t.id}/${f}`);
+});
+test('standalone tools link to an existing page and have no entry', () => {
+  const s = TOOLS.filter(x => x.standalone);
+  assert.ok(s.length >= 2);
+  for (const t of s) { assert.ok(existsSync(t.href), t.href); assert.equal(t.entry, undefined); }
+});
+test('standalone pages reference only local, existing scripts and styles', () => {
+  for (const t of TOOLS.filter(x => x.standalone)) {
+    const html = readFileSync(t.href, 'utf8');
+    for (const m of html.matchAll(/<(?:script|link)[^>]+(?:src|href)="([^"]+)"/g)) {
+      if (/^(data:|#)/.test(m[1])) continue;
+      assert.ok(!/^https?:/.test(m[1]), `${t.id} loads external resource ${m[1]}`);
+      assert.ok(existsSync(join(dirname(t.href), m[1])), `${t.id}: missing ${m[1]}`);
+    }
+  }
 });
 test('validator catches problems', () => {
   const bad = [{ id: 'a', name: 'A', description: 'd', category: 'nope', icon: 'x', entry: 'e', keywords: [], updated: 'x' }, { id: 'a', name: 'A' }];

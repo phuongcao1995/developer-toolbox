@@ -1,6 +1,6 @@
 # Developer Toolbox
 
-37 everyday developer utilities in one responsive, framework-free web app. HTML5, CSS3 and vanilla ES modules: **no build step, no backend, no database.**
+39 everyday developer utilities in one responsive, framework-free web app. HTML5, CSS3 and vanilla ES modules: **no build step, no backend, no database.**
 Tools process your input in the browser. The few that use the network (API Client, optional URL import and webhook polling, CDN libraries) are listed under
 [External services](#dependencies-and-cdn-libraries).
 
@@ -29,12 +29,14 @@ The app is deployed as Cloudflare static assets (`wrangler.jsonc`); `.assetsigno
 | Category | Tools |
 |---|---|
 | JSON & Data (8) | JSON Formatter · Data Converter · JWT Decoder · Regex Tester · Saltbox · API Client · XML Formatter & Validator · YAML Formatter & Validator |
-| Text & Docs (7) | Text Pad · Diff Checker · Markdown Editor · Markdown Viewer · Code Beautifier · SQL Formatter · HTML Entity Converter |
+| Text & Docs (8) | Text Pad · Word Editor* · Diff Checker · Markdown Editor · Markdown Viewer · Code Beautifier · SQL Formatter · HTML Entity Converter |
 | Code Development (4) | Prettier Playground · Code Image Generator · Base64 Converter · TypeScript Interface Generator |
 | URL, Time & Utilities (6) | URL Encoder / Decoder · Cron Generator · UUID Generator · Timestamp Converter · Git Command Generator · Chmod Calculator |
 | API & Database (6) | Webhook Inspector · Table Converter · HTTP Status Codes · SQL Query Analyzer · OpenAPI / Swagger Viewer · cURL Converter |
-| Files & Media (3) | Image Converter · File Hash Generator · QR Code Generator & Reader |
+| Files & Media (4) | Excel Editor* · Image Converter · File Hash Generator · QR Code Generator & Reader |
 | Web Development (3) | HTML/CSS/JS Playground · Color Converter · HTTP Header Analyzer |
+
+\* **Standalone apps.** Excel Editor and Word Editor (Folio) are self-contained pages in `tools/excel-editor/` and `tools/word-editor/` with their own interface and bundled libraries (ExcelJS, SheetJS, JSZip, CFB, mammoth). The toolbox only links to them (they open in a new tab) and shares no code or UI with them. To add another one, use `link(...)` instead of `t(...)` in `assets/js/registry.js`.
 
 Highlights: JSON (tree explorer, JSONPath, JSON Schema validation, diff, TypeScript, sample data) · JWT (security warnings, claim descriptions, signature verification
 that never implies the claims are valid) · API Client (collections, environments, auth helpers, cURL and Postman import/export) · Regex (47 templates, mistake checker,
