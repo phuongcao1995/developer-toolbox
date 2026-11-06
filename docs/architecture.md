@@ -136,7 +136,7 @@ Categories: JSON & Data, Text & Docs, Code Development, URL/Time & Utilities, AP
 1. Create `tools/<id>/` with `index.html`, `tool.css`, `tool.js` and, for anything with logic, `logic.js`. Scope every CSS selector under `.tool-<id>`.
 2. In `tool.js`, `export default { mount(root, ctx) { ... return cleanup; } }`. Use `ctx.storage` for persistence, `ctx.signal` for network calls, and `ctx.onCleanup` for anything long-lived.
 3. Put pure logic in `logic.js` and add `tests/unit/<id>.test.mjs` (plain `node:assert`; import `../../tools/<id>/logic.js`).
-4. Add one entry to `TOOLS` in `assets/js/registry.js`. Pick a category and a Lucide icon name that exists in the pinned Lucide version (0.468).
+4. Add one entry to `TOOLS` in `assets/js/registry.js`. Pick a category and a Lucide icon name that exists in the pinned Lucide version (0.468), then run `node scripts/build-icons.mjs` to add it to `assets/js/icons.js`.
 5. If the tool needs a third-party library, vendor it under `assets/js/vendor/` with its licence rather than loading it from a CDN, and load it lazily with `ctx.ui.loadScript`.
 6. Run `npm test`, then `npm run serve` and `npm run test:browser`. The sweep fails if the new tool logs an error, overflows at 375 px, has no icon, or has unlabelled controls.
 
@@ -149,7 +149,7 @@ Everything runs locally except the items below. If a CDN is unreachable the affe
 
 | Library | Used by | Source |
 |---|---|---|
-| Lucide 0.468 (icons) | the shell | unpkg |
+| Lucide 0.468 (icons) | the shell | bundled: only the icons used, inline in `assets/js/icons.js` (no CDN) |
 | marked 12.0.2, DOMPurify 3.1.6, highlight.js 11.9.0 | Markdown Editor and Viewer | jsDelivr, cdnjs (lazy) |
 | Mermaid 10.9.1 | Markdown Editor and Viewer (only when a diagram is present) | jsDelivr (lazy) |
 | js-beautify 1.15.1 | Code Beautifier (HTML, CSS, JS) | cdnjs (lazy) |

@@ -26,6 +26,25 @@
 
   class FileError extends Error {}
 
+  /* The two big libraries are loaded on demand (the app starts fetching them right after it is ready), so the editor is usable
+     before ~1.9 MB of scripts have arrived. */
+  const LIBRARY_FILES = { ExcelJS: 'vendor/exceljs.min.js', XLSX: 'vendor/xlsx.full.min.js' };
+  const libraryLoads = {};
+  function loadLibrary(name) {
+    if (root[name]) return Promise.resolve(root[name]);
+    if (!libraryLoads[name]) {
+      libraryLoads[name] = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = LIBRARY_FILES[name];
+        s.onload = () => (root[name] ? resolve(root[name]) : reject(new Error(name + ' did not initialise')));
+        s.onerror = () => reject(new Error('Could not load ' + LIBRARY_FILES[name]));
+        document.head.appendChild(s);
+      }).catch((e) => { delete libraryLoads[name]; throw new FileError((name === 'XLSX' ? 'SheetJS' : 'ExcelJS') + ' could not be loaded (' + e.message + '). Reload the page and try again.'); });
+    }
+    return libraryLoads[name];
+  }
+  const ensureLibraries = (names) => Promise.all(names.map(loadLibrary));
+
   function requireLibrary(name) {
     if (!root[name]) {
       throw new FileError((name === 'XLSX' ? 'SheetJS' : 'ExcelJS') + ' is not loaded. Check your connection or install the libraries in the vendor folder (see README).');
@@ -434,6 +453,7 @@
   }
 
   async function writeXlsx(wb) {
+    await ensureLibraries(['ExcelJS']);
     const ExcelJS = requireLibrary('ExcelJS');
     const ewb = new ExcelJS.Workbook();
     ewb.creator = 'Sheet Editor';
@@ -618,6 +638,7 @@
   }
 
   async function loadWorkbook(info) {
+    if (info.format === 'xlsx' || info.format === 'xlsm' || info.format === 'xls') await ensureLibraries(['XLSX', 'ExcelJS']);
     if (info.format === 'xlsx' || info.format === 'xlsm') return readXlsx(info);
     if (info.format === 'xls') return readXls(info);
     throw new FileError('Use the CSV import options to open "' + info.name + '".');
@@ -625,6 +646,6 @@
 
   SheetApp.fileManager = {
     FileError, FORMAT_LABELS, inspectFile, loadWorkbook, prepareCsv, csvToWorkbook,
-    writeXlsx, writeXls, writeCsv, exportWarnings,
+    writeXlsx, writeXls, writeCsv, exportWarnings, ensureLibraries,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

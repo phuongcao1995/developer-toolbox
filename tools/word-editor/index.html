@@ -308,8 +308,7 @@
 <script src="vendor/jszip.min.js"></script>
 <!-- CFB: reads the OLE compound-file container of legacy .doc files (text extraction only) -->
 <script src="vendor/cfb.min.js"></script>
-<!-- mammoth: fallback .docx importer, used only if Folio's own parser fails on a file -->
-<script src="vendor/mammoth.browser.min.js"></script>
+<!-- mammoth (fallback .docx importer, ~640 KB) is loaded on demand from vendor/ by js/docx-import.js -->
 
 <!-- ================= Application modules (order matters) ================= -->
 <script src="js/util.js"></script>

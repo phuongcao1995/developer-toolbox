@@ -23,7 +23,7 @@
     <button class="btn" id="yf-toJson" type="button"><i data-lucide="braces"></i> YAML &rarr; JSON</button>
     <button class="btn" id="yf-fromJson" type="button"><i data-lucide="file-code"></i> JSON &rarr; YAML</button>
   </div>
-  <p class="hint yf-hint"><strong>Limitation:</strong> the parser (js-yaml, YAML 1.2 core with the safe schema) does not keep comments, so Format removes them. Only standard types are supported: custom tags such as <code>!!js/function</code> are rejected and nothing in the document is ever executed. Everything runs in your browser.</p>
+  <details class="help yf-hint"><summary><strong>Limitation:</strong> comments are removed on Format.</summary>The parser (js-yaml, YAML 1.2 core with the safe schema) does not keep comments, so Format removes them. Only standard types are supported: custom tags such as <code>!!js/function</code> are rejected and nothing in the document is ever executed. Everything runs in your browser.</details>
 
   <div class="yf-status">
     <div id="yf-msg" class="alert" hidden></div>

@@ -6,6 +6,7 @@ wrangler.jsonc
 node_modules
 docs
 tests
+scripts
 package.json
 package-lock.json
 README.md

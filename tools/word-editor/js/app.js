@@ -85,8 +85,8 @@
     if (typeof JSZip === 'undefined') missing.push('JSZip (needed to open and save .docx)');
     if (typeof CFB === 'undefined') missing.push('CFB (needed to read legacy .doc)');
     if (missing.length) {
-      ui.notice(`<strong>Some libraries failed to load from the CDN:</strong> ${missing.join(', ')}. ` +
-        'You can still type, but opening and saving files won\u2019t work. Check your internet connection and reload the page.', 'error');
+      ui.notice(`<strong>Some libraries failed to load:</strong> ${missing.join(', ')}. ` +
+        'You can still type, but opening and saving files won\u2019t work. Reload the page and try again.', 'error');
     }
   }
 

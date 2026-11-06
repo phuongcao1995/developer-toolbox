@@ -1,0 +1,7 @@
+# Cloudflare static assets: long-lived caching for third-party libraries (they only change when upgraded on purpose).
+/assets/js/vendor/*
+  Cache-Control: public, max-age=604800
+/tools/excel-editor/vendor/*
+  Cache-Control: public, max-age=604800
+/tools/word-editor/vendor/*
+  Cache-Control: public, max-age=604800

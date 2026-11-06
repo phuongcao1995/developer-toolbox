@@ -9,7 +9,7 @@ Tools process your input in the browser. The few that use the network (API Clien
 ES modules and `fetch` need HTTP, not `file://`. Serve the project folder with any static server:
 
 ```bash
-python -m http.server 8080     # or:  npx serve .   /   php -S localhost:8080
+npm run serve                    # a tiny no-cache server (any static server also works)
 ```
 
 Open <http://localhost:8080>. Routing is hash-based (`#/tool/json-formatter`), so a refresh or a pasted link works on any static host.
@@ -77,7 +77,7 @@ docs/                       architecture.md · IMPROVEMENT_REPORT.md · TEST_REP
    t('my-tool', 'My Tool', 'One-sentence description.', 'utility', 'wrench', ['keyword', 'another'])
    ```
 
-   The id must match the folder name, the category must exist in `CATEGORIES`, and the icon must be a Lucide name. `npm test` fails if the registry is invalid or a file is missing.
+   The id must match the folder name, the category must exist in `CATEGORIES`, and the icon must be a Lucide name. After using a new icon run `node scripts/build-icons.mjs` to add it to `assets/js/icons.js` (`tests/unit/icons.test.mjs` fails if one is missing). `npm test` fails if the registry is invalid or a file is missing.
 5. Run `npm test`, then `npm run serve` and `npm run test:browser`. The browser sweep fails if the new tool logs an error, overflows at 375 px, has no icon, or has unlabelled controls.
 
 ## Dependencies and CDN libraries
@@ -87,7 +87,7 @@ shows a clear message and everything else keeps working.
 
 | Library | Used by | Source |
 |---|---|---|
-| Lucide 0.468 (icons) | the shell | unpkg |
+| Lucide 0.468 (icons) | the shell | bundled: only the icons used, inline in `assets/js/icons.js` (no CDN) |
 | marked 12.0.2, DOMPurify 3.1.6, highlight.js 11.9.0 | Markdown Editor and Viewer | jsDelivr, cdnjs |
 | Mermaid 10.9.1 | Markdown Editor and Viewer, only when a diagram is present | jsDelivr |
 | js-beautify 1.15.1 | Code Beautifier (HTML, CSS, JavaScript) | cdnjs |

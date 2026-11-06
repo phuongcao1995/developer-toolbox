@@ -22,13 +22,13 @@
   .search-trigger kbd { display: none; }
   .avatar { display: none; }
   .tool-grid, .cat-grid { grid-template-columns: 1fr; }
-  .hero { padding: 18px; } .hero h1 { font-size: 21px; }
-  .tool-head { flex-wrap: wrap; }
-  .fav-toggle span { display: none; }
+  .hero { padding: 12px 14px; }
   .modal-overlay { padding-top: 6vh; }
 }
 
 @media (pointer: coarse) {
   .btn { min-height: 40px; } .btn-icon { min-width: 40px; min-height: 40px; }
-  .chip, .tab { min-height: 36px; }
+  .chip, .tab { min-height: 40px; }
+  .input, .select { min-height: 40px; }
+  .check { min-height: 32px; }
 }

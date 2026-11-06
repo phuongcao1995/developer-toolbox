@@ -35,14 +35,14 @@
         <textarea class="textarea code" id="urlenc-out" aria-label="Output text" spellcheck="false" placeholder="Result"></textarea>
       </div>
     </div>
-    <div class="card urlenc-help">
-      <h3>Which one should I use?</h3>
+    <details class="card urlenc-help help-card">
+      <summary>Which one should I use?</summary>
       <p><strong>Component (encodeURIComponent)</strong> encodes everything except <code>A-Z a-z 0-9 - _ . ! ~ * ' ( )</code>.
         Use it for a single query value, path segment or key: <code>a&amp;b=c</code> becomes <code>a%26b%3Dc</code>.</p>
       <p><strong>Full URL (encodeURI)</strong> keeps URL structure characters <code>: / ? # [ ] @ ! $ &amp; ' ( ) * + , ; =</code>
         untouched and only escapes unsafe ones such as spaces and non-ASCII. Use it on a whole URL, never on a value.</p>
       <p><strong>Form encoding</strong> is the <code>application/x-www-form-urlencoded</code> flavour used by HTML forms: spaces become <code>+</code> instead of <code>%20</code>.</p>
-    </div>
+    </details>
   </section>
 
   <section data-panel="parse" hidden>

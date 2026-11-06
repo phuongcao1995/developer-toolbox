@@ -2,6 +2,8 @@
 
 A spreadsheet editor that runs entirely in your browser. Open `.xlsx`, `.xls` and `.csv` files, edit them in a familiar grid, and download the result. There is no server and no build step, and files never leave your computer.
 
+> **In the Developer Toolbox copy** both libraries (ExcelJS and SheetJS) are bundled in `vendor/` and are loaded on demand, so the editor starts before they arrive. The CDN fallback described below was removed.
+
 ## Getting started
 
 1. Open `index.html` in a modern browser (Chrome, Edge, Firefox or Safari). Double-clicking the file works; so does any static web server.

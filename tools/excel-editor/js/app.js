@@ -66,14 +66,12 @@
     },
 
     checkLibraries() {
-      const missing = [];
-      if (!root.ExcelJS) missing.push('ExcelJS (needed for .xlsx)');
-      if (!root.XLSX) missing.push('SheetJS (needed for .xls and number formats)');
-      if (missing.length) {
-        this.showNotice('warn', 'Some file formats are unavailable because ' + missing.join(' and ') + ' could not be loaded. CSV files still work.', [
-          'Connect to the internet and reload, or download the libraries into the vendor folder (see README) to work offline.',
+      // The two big libraries load in the background after the editor is ready; warn only if that fails.
+      FM.ensureLibraries(['XLSX', 'ExcelJS']).catch(() => {
+        this.showNotice('warn', 'Some file formats are unavailable because ExcelJS (.xlsx) or SheetJS (.xls and number formats) could not be loaded. CSV files still work.', [
+          'Reload the page. If this keeps happening, check that the vendor folder next to index.html is present.',
         ]);
-      }
+      });
     },
 
     /* ---------- Editing ---------- */
@@ -263,7 +261,7 @@
         await U.nextFrame();
         let blob;
         if (choice.format === 'xlsx') blob = await FM.writeXlsx(this.wb);
-        else if (choice.format === 'xls') blob = FM.writeXls(this.wb);
+        else if (choice.format === 'xls') { await FM.ensureLibraries(['XLSX']); blob = FM.writeXls(this.wb); }
         else blob = FM.writeCsv(this.wb, choice.csv);
         U.downloadBlob(blob, choice.filename);
         // Only a lossless download counts as saving the work.

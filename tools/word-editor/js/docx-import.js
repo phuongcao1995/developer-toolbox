@@ -969,7 +969,22 @@
   /* ---------------------------------------------------------------------- */
   /* Fallback: mammoth.js (semantic import, fewer formatting details)       */
   /* ---------------------------------------------------------------------- */
+  /* mammoth is only the fallback importer (about 640 KB), so it is fetched the first time it is needed. */
+  let mammothLoad = null;
+  function loadMammoth() {
+    if (typeof mammoth !== 'undefined') return Promise.resolve();
+    if (!mammothLoad) {
+      mammothLoad = new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = 'vendor/mammoth.browser.min.js';
+        s.onload = resolve; s.onerror = resolve; // a failure is reported by the check below
+        document.head.appendChild(s);
+      });
+    }
+    return mammothLoad;
+  }
   async function importWithMammoth(buffer) {
+    await loadMammoth();
     if (typeof mammoth === 'undefined') throw new ImportError('The fallback .docx reader (mammoth.js) did not load.');
     const result = await mammoth.convertToHtml({ arrayBuffer: buffer }, {
       styleMap: ["p[style-name='Quote'] => blockquote:fresh", "p[style-name='Title'] => h1:fresh"],

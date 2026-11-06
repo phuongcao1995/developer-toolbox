@@ -1,4 +1,5 @@
 // Shared UI helpers used by the shell and by every tool.
+import { ICONS } from '../icons.js';
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -32,9 +33,30 @@ export const debounce = (fn, ms = 200) => {
   return d;
 };
 
-/** Re-render Lucide icons for any <i data-lucide> inside `root` (no-op if CDN failed). */
-export function renderIcons(root) {
-  try { window.lucide?.createIcons(root ? { nameAttr: 'data-lucide', attrs: {}, root } : undefined); } catch { /* ignore */ }
+/** Replace every icon placeholder (an <i> with a data-lucide attribute) inside `root` with its inline SVG (icons live in assets/js/icons.js; no CDN). */
+const SVG_NS = 'http://www.w3.org/2000/svg', iconTemplates = new Map(), warned = new Set();
+function iconTemplate(name) {
+  let t = iconTemplates.get(name);
+  if (t === undefined) {
+    const inner = ICONS[name];
+    if (inner) {
+      t = document.createElementNS(SVG_NS, 'svg');
+      for (const [k, v] of Object.entries({ xmlns: SVG_NS, width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) t.setAttribute(k, v);
+      t.innerHTML = inner;
+    } else t = null;
+    iconTemplates.set(name, t);
+  }
+  return t;
+}
+export function renderIcons(root = document) {
+  for (const i of root.querySelectorAll('i[data-lucide]')) {
+    const name = i.getAttribute('data-lucide'), tpl = iconTemplate(name);
+    if (!tpl) { if (!warned.has(name)) { warned.add(name); console.warn(`Unknown icon "${name}" (run node scripts/build-icons.mjs)`); } continue; }
+    const svg = tpl.cloneNode(true);
+    svg.setAttribute('class', `lucide lucide-${name}${i.className ? ' ' + i.className : ''}`);
+    for (const a of i.attributes) if (a.name !== 'data-lucide' && a.name !== 'class') svg.setAttribute(a.name, a.value);
+    i.replaceWith(svg);
+  }
 }
 export const icon = (name, cls = '') => `<i data-lucide="${escapeHtml(name)}" class="${cls}"></i>`;
 

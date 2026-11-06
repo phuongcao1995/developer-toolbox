@@ -84,27 +84,23 @@ const section = (title, content, extra) => el('section', { class: 'section' },
 
 // ---------- Views ----------
 function viewDashboard() {
-  const favs = favorites.list().map(getTool), rec = recent.list().slice(0, 4).map(getTool);
+  const favs = favorites.list().map(getTool), recentAll = recent.list().map(getTool);
+  // Each tool appears once on the page: Favorites, then Recently used, then Most used.
+  const rec = recentAll.filter(t => !favs.includes(t)).slice(0, 4);
   const used = usage.all(), totals = usage.totals();
-  // "Most used" only appears once a tool has been opened at least twice, and never repeats the recent row.
-  const frequent = usage.top(8).filter(t => used[t.id].count >= 2 && !rec.includes(t)).slice(0, 4);
+  const frequent = usage.top(8).filter(t => used[t.id].count >= 2 && !rec.includes(t) && !favs.includes(t)).slice(0, 4);
   const updated = TOOLS.filter(t => t.note).sort((a, b) => b.updated.localeCompare(a.updated)).slice(0, 4);
   const frag = document.createDocumentFragment();
+  // Search and shortcuts live in the top bar, so the header is just a title and one summary line.
+  const topTool = totals.opens ? usage.top(1)[0] : null;
   frag.append(el('div', { class: 'hero' },
-    el('h1', {}, 'Welcome to Developer Toolbox'),
-    el('p', {}, `${TOOLS.length} everyday developer utilities that run in your browser. Tools process your input locally; the few that use the network are listed under About.`),
-    el('div', { class: 'row' },
-      el('button', { class: 'hero-search', onclick: openPalette, html: `${icon('search')}<span>Search tools…</span><kbd>Ctrl K</kbd>` }),
-      el('button', { class: 'btn btn-ghost', onclick: openShortcuts, html: `${icon('keyboard')}<span>Shortcuts</span><kbd>?</kbd>` }))));
-  if (totals.opens) {
-    const topTool = usage.top(1)[0];
-    frag.append(el('p', { class: 'usage-line' }, `${totals.opens} ${totals.opens === 1 ? 'open' : 'opens'} across ${totals.tools} ${totals.tools === 1 ? 'tool' : 'tools'}`,
-      topTool ? [' · most used: ', el('a', { href: hrefTo('tool', topTool.id) }, topTool.name)] : ''));
-  }
+    el('h1', {}, 'Developer Toolbox'),
+    el('p', {}, `${TOOLS.length} tools that run in your browser; your input stays local (see About for the few that use the network).`,
+      totals.opens ? [` · ${totals.opens} ${totals.opens === 1 ? 'open' : 'opens'} across ${totals.tools} ${totals.tools === 1 ? 'tool' : 'tools'}`, topTool ? [', most used: ', el('a', { href: hrefTo('tool', topTool.id) }, topTool.name)] : ''] : '')));
   if (favs.length) frag.append(section('Favorites', toolGrid(favs)));
   if (rec.length) frag.append(section('Recently used', toolGrid(rec), el('a', { href: hrefTo('recent'), class: 'link' }, 'View all')));
   if (frequent.length) frag.append(section('Most used', toolGrid(frequent, t => `${used[t.id].count} opens`)));
-  if (!favs.length && !rec.length) {
+  if (!favs.length && !recentAll.length) {
     const starters = ['json-formatter', 'jwt-decoder', 'regex-tester', 'diff-checker'].map(getTool).filter(Boolean);
     frag.append(section('Good places to start', toolGrid(starters), el('span', { class: 'hint' }, 'Star a tool to pin it here.')));
   }
@@ -194,11 +190,12 @@ async function viewTool(id, rerender = false) {
   const page = el('div', { class: 'tool-page' });
   const head = el('div', { class: 'tool-head' },
     el('div', { class: 'tool-head-icon', html: icon(tool.icon) }),
-    el('div', { class: 'tool-head-text' }, el('h1', {}, tool.name), el('p', {}, tool.description)),
-    el('button', { class: `btn fav-toggle${fav ? ' active' : ''}`, 'aria-pressed': fav,
-      html: `${icon('star')}<span>${fav ? 'Favorited' : 'Favorite'}</span>`,
+    el('div', { class: 'tool-head-text' }, el('h1', {}, tool.name), el('p', { title: tool.description }, tool.description)),
+    el('button', { class: `btn btn-icon fav-toggle${fav ? ' active' : ''}`, 'aria-pressed': fav, title: fav ? 'Remove from favorites' : 'Add to favorites',
+      html: `${icon('star')}<span class="sr-only">${fav ? 'Favorited' : 'Favorite'}</span>`,
       onclick: e => { const on = favorites.toggle(id); const b = e.currentTarget;
-        b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); b.querySelector('span').textContent = on ? 'Favorited' : 'Favorite'; renderSidebarCounts(); } }));
+        b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); b.title = on ? 'Remove from favorites' : 'Add to favorites';
+        b.querySelector('span').textContent = on ? 'Favorited' : 'Favorite'; renderSidebarCounts(); } }));
   if (tool.standalone) {
     page.append(head, el('div', { class: 'panel' }, el('div', { class: 'panel-body stack' },
       el('p', {}, `${tool.name} is a standalone app with its own interface. It opens in its own tab, runs entirely in your browser and does not upload your files.`),
@@ -494,8 +491,7 @@ function boot() {
   $('#scrim').addEventListener('click', closeSidebar);
   $('#open-settings').addEventListener('click', () => router.go('settings'));
   document.addEventListener('keydown', onGlobalKey);
+  renderIcons(); // the static shell markup (top bar, logo)
   router.start();
-  // Lucide loads async from CDN; refresh icons once it is ready.
-  window.addEventListener('load', () => renderIcons());
 }
 boot();

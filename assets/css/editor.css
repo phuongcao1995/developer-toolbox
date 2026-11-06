@@ -24,7 +24,7 @@
 .ed-pos { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ed-notice { color: var(--warn); }
 .ed-msg { color: var(--success); }
-.ed-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 28px; height: 26px; padding: 0 6px; border: 1px solid transparent;
+.ed-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 28px; height: 28px; padding: 0 6px; border: 1px solid transparent;
   border-radius: var(--radius-sm, 6px); background: transparent; color: var(--text-muted); font: 600 12px var(--font, system-ui); cursor: pointer; white-space: nowrap; }
 .ed-btn:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
 .ed-btn:disabled { opacity: .45; cursor: not-allowed; }

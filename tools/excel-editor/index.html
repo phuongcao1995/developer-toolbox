@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Sheet Editor</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -176,9 +176,6 @@
   <div class="toasts" id="toasts" aria-live="polite"></div>
   <div class="busy" id="busy" hidden><div class="busy-card"><span class="spinner" aria-hidden="true"></span><span class="busy-text"></span></div></div>
 
-  <script src="vendor/exceljs.min.js"></script>
-  <script src="vendor/xlsx.full.min.js"></script>
-  <script src="js/load-vendor.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/formula.js"></script>
   <script src="js/spreadsheet.js"></script>
