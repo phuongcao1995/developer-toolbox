@@ -29,7 +29,7 @@ The app is deployed as Cloudflare static assets (`wrangler.jsonc`); `.assetsigno
 | Category | Tools |
 |---|---|
 | JSON & Data (8) | JSON Formatter · Data Converter · JWT Decoder · Regex Tester · Saltbox · API Client · XML Formatter & Validator · YAML Formatter & Validator |
-| Text & Docs (8) | Text Pad · Word Editor* · Diff Checker · Markdown Editor · Markdown Viewer · Code Beautifier · SQL Formatter · HTML Entity Converter |
+| Text & Docs (9) | Text Pad · Test Case Manager · Word Editor* · Diff Checker · Markdown Editor · Markdown Viewer · Code Beautifier · SQL Formatter · HTML Entity Converter |
 | Code Development (4) | Prettier Playground · Code Image Generator · Base64 Converter · TypeScript Interface Generator |
 | URL, Time & Utilities (6) | URL Encoder / Decoder · Cron Generator · UUID Generator · Timestamp Converter · Git Command Generator · Chmod Calculator |
 | API & Database (6) | Webhook Inspector · Table Converter · HTTP Status Codes · SQL Query Analyzer · OpenAPI / Swagger Viewer · cURL Converter |
@@ -93,6 +93,7 @@ shows a clear message and everything else keeps working.
 | js-beautify 1.15.1 | Code Beautifier (HTML, CSS, JavaScript) | cdnjs |
 | Prettier 3.3.3 and plugins | Prettier Playground | jsDelivr |
 | js-yaml 4.1.1, qrcode-generator 2.0.4, jsQR 1.4.0 | YAML Formatter, OpenAPI Viewer, QR Code | **vendored** in `assets/js/vendor/` with licences |
+| SheetJS 0.20.3 | Test Case Manager (.xlsx import/export) | **vendored** in `assets/js/vendor/`, loaded only when an .xlsx file is read or written |
 
 Other network use: the API Client sends the requests you ask for (the target must allow CORS; there is **no proxy**), the OpenAPI Viewer can fetch a spec from a URL you
 enter, and the Webhook Inspector can poll a service you supply (its demo mode is simulated). The Code Image Generator, Image Converter, QR Code, File Hash Generator and
@@ -127,6 +128,7 @@ with a pure-JS hash path for large files), but those fallbacks have not been exe
   mismatches, and keys are never stored.
 - **Secrets**: the API Client and Webhook Inspector redact sensitive headers in stored history by default; the JWT tool, Saltbox and the hash tools do not persist keys.
   Request URLs and bodies in API Client history are stored as typed, and environment secret values are stored unencrypted in `localStorage`; the UI says so.
+- **Test Case Manager** keeps its test cases in this browser's IndexedDB (not `localStorage`), so "Clear history" does not remove them; delete them in the tool or clear site data. Imported cells are rendered as text only, and exported CSV cells that start with `=`, `+`, `-` or `@` get a leading `'` so spreadsheets do not run them as formulas.
 - **Heuristic tools** (SQL analysis, security header review, regex mistake checker, Git danger notes) are static advice. They never run queries, commands or requests,
   and each says so on screen.
 - **Open items**: CDN scripts are loaded without Subresource Integrity hashes and there is no Content-Security-Policy for the app itself. Several tools remember their last

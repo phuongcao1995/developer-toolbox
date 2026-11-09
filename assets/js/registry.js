@@ -29,6 +29,7 @@ export const TOOLS = [
   t('diff-checker', 'Diff Checker', 'Compare two texts side-by-side or unified with highlighted changes.', 'text', 'git-compare', ['diff', 'compare', 'difference', 'merge']),
   t('markdown-editor', 'Markdown Editor', 'Write Markdown with live preview, split view, and HTML/Markdown export.', 'text', 'pen-line', ['markdown', 'md', 'editor', 'preview', 'html']),
   t('text-pad', 'Text Pad', 'Distraction-free writing pad that autosaves in your browser, with live word count, case and line tools, focus mode and .txt export.', 'text', 'notebook-pen', ['text', 'type', 'write', 'notepad', 'writebox', 'scratchpad', 'notes', 'word count', 'autosave', 'focus']),
+  t('test-case-manager', 'Test Case Manager', 'Write, organise and track test cases, then import or export them as Excel, CSV or JSON. Everything stays in your browser.', 'text', 'clipboard-check', ['test', 'testing', 'qa', 'test case', 'testcase', 'import', 'export', 'excel', 'csv', 'checklist']),
   t('markdown-viewer', 'Markdown Viewer', 'Open .md files with rendered output, table of contents and code highlighting.', 'text', 'book-open', ['markdown', 'md', 'viewer', 'reader', 'toc']),
   t('code-beautifier', 'Code Beautifier', 'Format or minify HTML, CSS, JavaScript and JSON with configurable indentation.', 'text', 'wand-2', ['beautify', 'format', 'minify', 'html', 'css', 'javascript']),
   t('sql-formatter', 'SQL Formatter', 'Format and minify SQL, with configurable indentation and keyword case.', 'text', 'database', ['sql', 'format', 'query', 'select', 'minify']),

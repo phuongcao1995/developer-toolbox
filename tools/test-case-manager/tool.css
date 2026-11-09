@@ -1,0 +1,96 @@
+/* Main page (scoped). Modal content lives outside the tool root, so its rules use the .tcm-modal prefix instead. */
+.tool-test-case-manager .tcm-bar .tcm-search { width: 220px; }
+.tool-test-case-manager .tcm-bar .tcm-filter { width: auto; min-width: 130px; }
+.tool-test-case-manager .tcm-note { margin-bottom: 12px; }
+.tool-test-case-manager .tcm-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 12px; border: 1px solid var(--primary); background: var(--primary-soft); border-radius: var(--radius-sm); }
+.tool-test-case-manager .tcm-bulk-select { width: auto; height: 28px; font-size: 12px; }
+
+.tool-test-case-manager .tcm-table { table-layout: auto; }
+.tool-test-case-manager .tcm-table th { white-space: nowrap; }
+.tool-test-case-manager .tcm-table td { vertical-align: middle; }
+.tool-test-case-manager .tcm-table tr.selected td { background: var(--primary-soft); }
+.tool-test-case-manager .tcm-c-check { width: 36px; text-align: center !important; }
+.tool-test-case-manager .tcm-c-check input { width: 16px; height: 16px; cursor: pointer; }
+.tool-test-case-manager .tcm-c-id { white-space: nowrap; width: 1%; }
+.tool-test-case-manager .tcm-c-title { width: 100%; min-width: 180px; }
+.tool-test-case-manager .tcm-c-priority { white-space: nowrap; }
+.tool-test-case-manager .tcm-c-actions { white-space: nowrap; width: 1%; text-align: right !important; }
+.tool-test-case-manager .tcm-sort { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px; margin: -2px -4px; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; border-radius: 4px; }
+.tool-test-case-manager .tcm-sort:hover { color: var(--primary); }
+.tool-test-case-manager .tcm-sort:focus-visible, .tool-test-case-manager .tcm-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+.tool-test-case-manager .tcm-sort svg { width: 13px; height: 13px; }
+.tool-test-case-manager .tcm-link { display: block; max-width: 100%; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.tool-test-case-manager .tcm-link:hover { color: var(--primary); text-decoration: underline; }
+.tool-test-case-manager .tcm-status { width: auto; min-width: 106px; height: 28px; padding: 0 6px; font-size: 12px; font-weight: 600; }
+.tool-test-case-manager .tcm-status.s-pass { color: var(--success); }
+.tool-test-case-manager .tcm-status.s-fail { color: var(--danger); }
+.tool-test-case-manager .tcm-status.s-blocked { color: var(--warn); }
+.tool-test-case-manager .tcm-status.s-notrun { color: var(--text-muted); }
+.tool-test-case-manager .tcm-status option { color: var(--text); font-weight: 400; }
+
+.tool-test-case-manager .tcm-empty svg { width: 32px; height: 32px; color: var(--text-muted); }
+.tool-test-case-manager .tcm-empty-actions { justify-content: center; margin-top: 12px; }
+.tool-test-case-manager .tcm-pager { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+.tool-test-case-manager .tcm-pager[hidden], .tool-test-case-manager .tcm-bulk[hidden] { display: none; }
+
+@media (max-width: 720px) {
+  .tool-test-case-manager .tcm-bar .tcm-search { width: 100%; order: 1; }
+  .tool-test-case-manager .tcm-bar .spacer { display: none; }
+  .tool-test-case-manager .tcm-bar .tcm-filter { flex: 1; order: 2; }
+  .tool-test-case-manager .tcm-table-wrap { border: 0; }
+  .tool-test-case-manager .tcm-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .tool-test-case-manager .tcm-table, .tool-test-case-manager .tcm-table tbody { display: block; }
+  .tool-test-case-manager .tcm-table tr {
+    display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "chk id act" "chk title title" "chk pri stat";
+    gap: 6px 10px; align-items: center; margin-bottom: 8px; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  }
+  .tool-test-case-manager .tcm-table td { display: block; padding: 0; border: 0; width: auto; min-width: 0; background: none !important; }
+  .tool-test-case-manager .tcm-table tr.selected { border-color: var(--primary); background: var(--primary-soft); }
+  .tool-test-case-manager .tcm-c-check { grid-area: chk; }
+  .tool-test-case-manager .tcm-c-id { grid-area: id; }
+  .tool-test-case-manager .tcm-c-title { grid-area: title; }
+  .tool-test-case-manager .tcm-c-priority { grid-area: pri; }
+  .tool-test-case-manager .tcm-c-status { grid-area: stat; justify-self: end; }
+  .tool-test-case-manager .tcm-c-actions { grid-area: act; }
+}
+
+/* Modals */
+.tcm-modal .tcm-grid3 { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; }
+.tcm-modal .tcm-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tcm-modal .tcm-form { display: flex; flex-direction: column; gap: 12px; }
+.tcm-modal .tcm-form .textarea { min-height: 0; resize: vertical; }
+.tcm-modal .tcm-err { min-height: 0; font-size: 12px; color: var(--danger); }
+.tcm-modal .tcm-err:empty { display: none; }
+.tcm-modal [aria-invalid="true"] { border-color: var(--danger); }
+.tcm-modal .tcm-steps { display: flex; flex-direction: column; gap: 8px; }
+.tcm-modal .tcm-steps:empty { display: none; }
+.tcm-modal .tcm-step { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: start; }
+.tcm-modal .tcm-step-n { padding-top: 8px; font-size: 12px; font-weight: 600; color: var(--text-muted); text-align: right; }
+.tcm-modal .tcm-step-btns { display: flex; gap: 2px; }
+.tcm-modal .tcm-add-step { align-self: flex-start; }
+.tcm-modal .tcm-foot { display: flex; justify-content: flex-end; gap: 8px; }
+.tcm-modal .tcm-scope { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; border: 0; }
+.tcm-modal .tcm-drop { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 16px; border: 2px dashed var(--border-strong); border-radius: 10px; color: var(--text-muted); text-align: center; cursor: pointer; }
+.tcm-modal .tcm-drop:hover, .tcm-modal .tcm-drop:focus-visible, .tcm-modal .tcm-drop.dragover { border-color: var(--primary); background: var(--primary-soft); outline: none; }
+.tcm-modal .tcm-drop svg { width: 28px; height: 28px; }
+.tcm-modal .tcm-drop p { margin: 0; }
+.tcm-modal .tcm-tpl { gap: 6px 8px; }
+.tcm-modal .tcm-fileline { gap: 8px 12px; }
+.tcm-modal .tcm-map { border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.tcm-modal .tcm-map summary { padding: 8px 12px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.tcm-modal .tcm-mapgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px 14px; padding: 4px 12px 12px; }
+.tcm-modal .tcm-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.tcm-modal .tcm-stat { display: flex; flex-direction: column; min-width: 92px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.tcm-modal .tcm-stat strong { font-size: 18px; line-height: 1.2; }
+.tcm-modal .tcm-stat span { font-size: 12px; color: var(--text-muted); }
+.tcm-modal .tcm-stat.ok strong, .tcm-modal .tcm-ok { color: var(--success); }
+.tcm-modal .tcm-stat.bad strong, .tcm-modal .tcm-bad { color: var(--danger); }
+.tcm-modal .tcm-stat.warn strong, .tcm-modal .tcm-warn { color: var(--warn); }
+.tcm-modal .tcm-options { gap: 12px 24px; align-items: flex-end; }
+.tcm-modal .tcm-dup { min-width: 220px; }
+.tcm-modal .tcm-preview { max-height: 320px; }
+.tcm-modal .tcm-row-bad td { background: var(--danger-soft); }
+.tcm-modal .tcm-more { margin: 0; padding: 8px 10px; }
+@media (max-width: 640px) {
+  .tcm-modal .tcm-grid3, .tcm-modal .tcm-grid2 { grid-template-columns: 1fr; }
+}

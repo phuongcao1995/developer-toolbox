@@ -1,0 +1,32 @@
+<div class="tcm">
+  <div class="toolbar tcm-bar">
+    <button class="btn btn-primary" type="button" data-action="add"><i data-lucide="plus"></i> Add test case</button>
+    <button class="btn" type="button" data-action="import"><i data-lucide="upload"></i> Import</button>
+    <button class="btn" type="button" data-action="export"><i data-lucide="download"></i> Export</button>
+    <span class="spacer"></span>
+    <input class="input tcm-search" id="tcm-q" type="search" placeholder="Search test cases…" aria-label="Search test cases" autocomplete="off">
+    <select class="select tcm-filter" id="tcm-status" aria-label="Filter by status"></select>
+    <select class="select tcm-filter" id="tcm-priority" aria-label="Filter by priority"></select>
+  </div>
+
+  <div class="alert alert-warn tcm-note" id="tcm-note" role="status" hidden></div>
+
+  <div class="tcm-bulk" id="tcm-bulk" role="region" aria-label="Bulk actions" hidden>
+    <strong id="tcm-selected">0 selected</strong>
+    <select class="select tcm-bulk-select" id="tcm-bulk-status" aria-label="Set status for selected"></select>
+    <select class="select tcm-bulk-select" id="tcm-bulk-priority" aria-label="Set priority for selected"></select>
+    <button class="btn btn-sm" type="button" data-action="export-selected"><i data-lucide="download"></i> Export selected</button>
+    <button class="btn btn-sm btn-danger" type="button" data-action="delete-selected"><i data-lucide="trash-2"></i> Delete</button>
+    <button class="btn btn-sm btn-ghost" type="button" data-action="clear-selection"><i data-lucide="x"></i> Clear selection</button>
+  </div>
+
+  <div id="tcm-body" aria-live="polite"><div class="loading-block"><span class="spinner"></span> Loading test cases…</div></div>
+
+  <div class="tcm-pager" id="tcm-pager" hidden>
+    <span id="tcm-count"></span>
+    <span class="spacer"></span>
+    <button class="btn btn-sm" type="button" data-action="prev" aria-label="Previous page"><i data-lucide="chevron-left"></i></button>
+    <span id="tcm-page"></span>
+    <button class="btn btn-sm" type="button" data-action="next" aria-label="Next page"><i data-lucide="chevron-right"></i></button>
+  </div>
+</div>

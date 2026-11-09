@@ -23,7 +23,7 @@ assets/
       split.js              resizable two-panel splitter
     shared/                 pure modules reused by several tools (jsonpath, json-schema, json-diff, ts-interfaces,
                             curl, sql-analyzer, sql-json); no DOM, unit-tested in Node
-    vendor/                 third-party libraries that are checked in, with their licences (js-yaml, qrcode-generator, jsQR)
+    vendor/                 third-party libraries that are checked in, with their licences (js-yaml, qrcode-generator, jsQR, SheetJS)
   icons/favicon.svg
 tools/<id>/                 one independent child project per tool (index.html, tool.js, tool.css, logic.js, ...)
 tests/
@@ -155,6 +155,7 @@ Everything runs locally except the items below. If a CDN is unreachable the affe
 | js-beautify 1.15.1 | Code Beautifier (HTML, CSS, JS) | cdnjs (lazy) |
 | Prettier 3.3.3 and plugins | Prettier Playground | jsDelivr (lazy) |
 | js-yaml 4.1.1, qrcode-generator 2.0.4, jsQR 1.4.0 | YAML Formatter and OpenAPI Viewer, QR Code | **vendored** in `assets/js/vendor/` |
+| SheetJS 0.20.3 | Test Case Manager | **vendored**, loaded on demand for .xlsx only |
 
 None of the CDN scripts has a Subresource Integrity hash and there is no Content Security Policy yet (an open item in `TEST_REPORT.md`).
 Network requests made on the user's behalf: the API Client (requests the user sends, CORS applies, there is no proxy), the OpenAPI Viewer's optional "From URL",

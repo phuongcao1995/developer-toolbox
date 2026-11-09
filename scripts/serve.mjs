@@ -12,8 +12,8 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 
 createServer(async (req, res) => {
   try {
-    let path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([/\])+/, '');
-    if (path.split(/[/\]/).includes('..')) { res.writeHead(403).end('Forbidden'); return; }
+    let path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^[/\\]+/, '');
+    if (path.split(/[/\\]/).includes('..')) { res.writeHead(403).end('Forbidden'); return; }
     let file = join(root, path);
     if ((await stat(file).catch(() => null))?.isDirectory()) file = join(file, 'index.html');
     const body = await readFile(file);
