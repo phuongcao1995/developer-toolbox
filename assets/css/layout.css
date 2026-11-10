@@ -12,6 +12,8 @@
 .nav-link svg { width: 16px; height: 16px; flex: none; }
 .nav-link:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
 .nav-link.active { background: var(--primary-soft); color: var(--primary); }
+.nav-link[data-cat] svg { color: var(--cat-ink); }
+.nav-link[data-cat].active { background: var(--cat-soft); color: var(--cat-ink); }
 .count { margin-left: auto; font-style: normal; font-size: 11px; background: var(--surface-3); color: var(--text-muted); padding: 0 7px; border-radius: 99px; }
 .count:empty { display: none; }
 
@@ -51,14 +53,15 @@
 .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
 .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
 .cat-card { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); transition: border-color var(--t), transform var(--t); }
-.cat-card:hover { border-color: var(--primary); text-decoration: none; }
-.cat-card svg { width: 20px; height: 20px; color: var(--primary); }
+.cat-card:hover { border-color: color-mix(in srgb, var(--cat-accent) 55%, var(--border)); box-shadow: var(--shadow); text-decoration: none; }
+.cat-card > span:first-child { flex: none; width: 36px; height: 36px; border-radius: 9px; background: var(--cat-soft); color: var(--cat-ink); display: grid; place-items: center; }
+.cat-card svg { width: 19px; height: 19px; }
 .cat-card small { display: block; color: var(--text-muted); }
 
 /* Tool page */
 .tool-page { display: flex; flex-direction: column; gap: 12px; }
 .tool-head { display: flex; align-items: center; gap: 12px; }
-.tool-head-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; flex: none; }
+.tool-head-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--cat-soft); color: var(--cat-ink); display: grid; place-items: center; flex: none; }
 .tool-head-icon svg { width: 18px; height: 18px; }
 .tool-head-text { flex: 1; min-width: 0; }
 .tool-head h1 { font-size: 18px; line-height: 1.25; }

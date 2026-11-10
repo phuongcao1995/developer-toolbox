@@ -66,12 +66,12 @@ const toolLinkAttrs = tool => tool.standalone ? { href: tool.href, target: '_bla
 function toolCard(tool, ranges = [], badge = '') {
   const fav = favorites.has(tool.id);
   const cat = getCategory(tool.category);
-  const card = el('a', { class: 'tool-card', ...toolLinkAttrs(tool) },
+  const card = el('a', { class: 'tool-card', 'data-cat': tool.category, ...toolLinkAttrs(tool) },
     el('div', { class: 'tool-card-icon', html: icon(tool.icon) }),
     el('div', { class: 'tool-card-body' },
       el('div', { class: 'tool-card-title' }, highlight(tool.name, ranges)),
       el('div', { class: 'tool-card-desc' }, tool.description),
-      el('span', { class: 'badge' }, cat?.name || ''), badge ? el('span', { class: 'card-note' }, badge) : null),
+      el('span', { class: 'badge badge-cat' }, cat?.name || ''), badge ? el('span', { class: 'card-note' }, badge) : null),
     el('button', { class: `fav-btn${fav ? ' active' : ''}`, 'aria-label': fav ? 'Remove from favorites' : 'Add to favorites', 'aria-pressed': fav, title: 'Favorite',
       html: icon('star'), onclick: e => { e.preventDefault(); e.stopPropagation(); favorites.toggle(tool.id); route(router.current, true); } }));
   return card;
@@ -107,7 +107,7 @@ function viewDashboard() {
   if (updated.length) frag.append(section('Recently updated', toolGrid(updated, t => `${t.updated}: ${t.note}`)));
   frag.append(section('Browse by category', el('div', { class: 'cat-grid' }, CATEGORIES.map(c => {
     const n = TOOLS.filter(t => t.category === c.id).length;
-    return el('a', { class: 'cat-card', href: hrefTo('category', c.id) }, el('span', { html: icon(c.icon) }), el('div', {}, el('strong', {}, c.name), el('small', {}, `${n} tools`)));
+    return el('a', { class: 'cat-card', 'data-cat': c.id, href: hrefTo('category', c.id) }, el('span', { html: icon(c.icon) }), el('div', {}, el('strong', {}, c.name), el('small', {}, `${n} tools`)));
   }))));
   return { title: 'Dashboard', node: frag };
 }
@@ -120,7 +120,7 @@ function viewCatalog({ category = null, ids = null, title, empty }) {
   const results = el('div');
   const draw = () => {
     chips.replaceChildren(...[{ id: null, name: 'All' }, ...CATEGORIES].map(c =>
-      el('button', { class: `chip${activeCat === c.id ? ' active' : ''}`, 'aria-pressed': activeCat === c.id, onclick: () => { activeCat = c.id; draw(); } }, c.name)));
+      el('button', { class: `chip${activeCat === c.id ? ' active' : ''}`, 'data-cat': c.id, 'aria-pressed': activeCat === c.id, onclick: () => { activeCat = c.id; draw(); } }, c.name)));
     let list = searchToolsDetailed(input.value, activeCat);
     if (ids) list = list.filter(r => ids.includes(r.tool.id));
     results.replaceChildren(list.length
@@ -188,7 +188,7 @@ async function viewTool(id, rerender = false) {
   if (!rerender) { recent.push(id); usage.hit(id); } // count real navigations only, not re-renders
   const fav = favorites.has(id);
   const page = el('div', { class: 'tool-page' });
-  const head = el('div', { class: 'tool-head' },
+  const head = el('div', { class: 'tool-head', 'data-cat': tool.category },
     el('div', { class: 'tool-head-icon', html: icon(tool.icon) }),
     el('div', { class: 'tool-head-text' }, el('h1', {}, tool.name), el('p', { title: tool.description }, tool.description)),
     el('button', { class: `btn btn-icon fav-toggle${fav ? ' active' : ''}`, 'aria-pressed': fav, title: fav ? 'Remove from favorites' : 'Add to favorites',
@@ -341,11 +341,11 @@ const NAV = [
 ];
 function buildSidebar() {
   const nav = $('#nav');
-  const link = (n, href, label, ic, count) => `<a class="nav-link" data-nav="${n}" href="${href}" title="${escapeHtml(label)}">${icon(ic)}<span>${escapeHtml(label)}</span>${count ? `<em class="count" data-count="${n}"></em>` : ''}</a>`;
+  const link = (n, href, label, ic, count, cat) => `<a class="nav-link"${cat ? ` data-cat="${escapeHtml(cat)}"` : ''} data-nav="${n}" href="${href}" title="${escapeHtml(label)}">${icon(ic)}<span>${escapeHtml(label)}</span>${count ? `<em class="count" data-count="${n}"></em>` : ''}</a>`;
   nav.innerHTML =
     NAV.map(n => link(n.name, hrefTo(n.name), n.label, n.icon, !!n.count)).join('') +
     `<div class="nav-label">Categories</div>` +
-    CATEGORIES.map(c => link('category/' + c.id, hrefTo('category', c.id), c.name, c.icon)).join('') +
+    CATEGORIES.map(c => link('category/' + c.id, hrefTo('category', c.id), c.name, c.icon, false, c.id)).join('') +
     `<div class="nav-label">App</div>` +
     link('settings', hrefTo('settings'), 'Settings', 'settings') + link('about', hrefTo('about'), 'About', 'info');
   renderIcons(nav);
@@ -385,11 +385,11 @@ function openPalette() {
     [...list.querySelectorAll('[role=option]')].forEach((n, k) => { const on = k === idx; n.classList.toggle('active', on); n.setAttribute('aria-selected', on); if (on) { input.setAttribute('aria-activedescendant', n.id); n.scrollIntoView?.({ block: 'nearest' }); } });
   };
   const draw = () => {
-    chips.replaceChildren(...[{ id: null, name: 'All' }, ...CATEGORIES].map(c => el('button', { class: `chip${cat === c.id ? ' active' : ''}`, 'aria-pressed': cat === c.id, tabindex: '-1',
+    chips.replaceChildren(...[{ id: null, name: 'All' }, ...CATEGORIES].map(c => el('button', { class: `chip${cat === c.id ? ' active' : ''}`, 'data-cat': c.id, 'aria-pressed': cat === c.id, tabindex: '-1',
       onclick: () => { cat = c.id; idx = 0; draw(); input.focus(); } }, c.name)));
     const q = input.value.trim();
     items = q ? searchToolsDetailed(q, cat) : suggestions();
-    list.replaceChildren(...(items.length ? items.map((r, i) => el('a', { class: 'palette-item', id: `palette-opt-${i}`, ...toolLinkAttrs(r.tool), role: 'option', 'aria-selected': 'false', tabindex: '-1',
+    list.replaceChildren(...(items.length ? items.map((r, i) => el('a', { class: 'palette-item', 'data-cat': r.tool.category, id: `palette-opt-${i}`, ...toolLinkAttrs(r.tool), role: 'option', 'aria-selected': 'false', tabindex: '-1',
       onclick: () => palette?.close(), onmousemove: () => { if (idx !== i) setActive(i); } },
       el('span', { html: icon(r.tool.icon) }),
       el('div', { class: 'palette-text' }, el('strong', {}, highlight(r.tool.name, r.ranges)), el('small', {}, r.tool.description)),

@@ -53,10 +53,15 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--surface-2); color: var(--text-muted); font-size: 11px; font-weight: 500; }
 .badge-success { background: var(--success-soft); color: var(--success); } .badge-warn { background: var(--warn-soft); color: var(--warn); }
 .badge-danger { background: var(--danger-soft); color: var(--danger); } .badge-info { background: var(--info-soft); color: var(--info); }
+/* Category label: same colours as the category's icon tile. The label text names the category, so colour is never the only cue. */
+.badge-cat { background: var(--cat-soft); color: var(--cat-ink); font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
 .chip { display: inline-flex; align-items: center; min-height: 28px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); padding: 0 12px; border-radius: 99px; font: 500 12px var(--font); cursor: pointer; }
 .chip:hover { border-color: var(--border-strong); }
 .chip.active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+.chip[data-cat].active { background: var(--cat-soft); border-color: var(--cat-accent); color: var(--cat-ink); }
+.chip[data-cat] { padding: 0 10px 0 9px; }
+.chip[data-cat]::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--cat-accent); margin-right: 6px; flex: none; }
 
 .alert { padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid; font-size: 13px; white-space: pre-wrap; word-break: break-word; }
 .alert-error { background: var(--danger-soft); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
@@ -75,9 +80,12 @@ table.table { width: 100%; border-collapse: collapse; font-size: 13px; }
 mark, .hl { background: var(--mark); color: inherit; border-radius: 2px; }
 
 /* Catalog cards */
-.tool-card { position: relative; display: flex; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); transition: border-color var(--t), box-shadow var(--t); }
-.tool-card:hover { border-color: var(--primary); box-shadow: var(--shadow); text-decoration: none; }
-.tool-card-icon { flex: none; width: 38px; height: 38px; border-radius: 9px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; }
+/* The card stays on the neutral surface; the category colour appears only on the icon tile, the label and the hover border. */
+.tool-card { position: relative; display: flex; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); transition: border-color var(--t), box-shadow var(--t), transform var(--t); }
+.tool-card:hover { border-color: color-mix(in srgb, var(--cat-accent) 55%, var(--border)); box-shadow: var(--shadow); text-decoration: none; }
+@media (prefers-reduced-motion: no-preference) { .tool-card:hover, .cat-card:hover { transform: translateY(-1px); } }
+.tool-card-icon { flex: none; width: 38px; height: 38px; border-radius: 9px; background: var(--cat-soft); color: var(--cat-ink); display: grid; place-items: center; transition: transform var(--t); }
+@media (prefers-reduced-motion: no-preference) { .tool-card:hover .tool-card-icon { transform: scale(1.06); } }
 .tool-card-icon svg { width: 19px; height: 19px; }
 .tool-card-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; align-items: flex-start; padding-right: 22px; }
 .tool-card-title { font-weight: 600; }
@@ -107,7 +115,7 @@ mark, .hl { background: var(--mark); color: inherit; border-radius: 2px; }
 .palette-item { display: flex; gap: 12px; align-items: center; padding: 8px 10px; border-radius: var(--radius-sm); color: var(--text); }
 .palette-item:hover { text-decoration: none; }
 .palette-item.active, .palette-item:hover { background: var(--primary-soft); }
-.palette-item svg { width: 18px; height: 18px; color: var(--primary); }
+.palette-item svg { width: 18px; height: 18px; color: var(--cat-ink); }
 .palette-item small { display: block; color: var(--text-muted); }
 .palette-input { margin-bottom: 10px; height: 40px; }
 

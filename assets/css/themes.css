@@ -11,6 +11,14 @@
   --code-bg: #f4f6fa; --mark: #fff0a8; --add-bg: #dff5e6; --del-bg: #fde3e6;
   --shadow: 0 1px 2px rgba(20,30,50,.06), 0 4px 14px rgba(20,30,50,.06);
   --overlay: rgba(15,20,35,.45);
+  /* Category colours. soft = tinted background, ink = icon/label text, accent = hover border. Every ink/soft pair is >= 4.8:1. */
+  --cat-data-soft: #e7eefe;    --cat-data-ink: #285edc;    --cat-data-accent: #2257d3;
+  --cat-text-soft: #f1e7fe;    --cat-text-ink: #8435de;    --cat-text-accent: #7522d3;
+  --cat-code-soft: #e7fdfe;    --cat-code-ink: #14777b;    --cat-code-accent: #22cdd3;
+  --cat-utility-soft: #fef9e7; --cat-utility-ink: #7f6a15; --cat-utility-accent: #d3af22;
+  --cat-api-soft: #fee7f1;     --cat-api-ink: #c11f6b;     --cat-api-accent: #d32275;
+  --cat-files-soft: #e7feee;   --cat-files-ink: #157f35;   --cat-files-accent: #22d357;
+  --cat-web-soft: #feeae7;     --cat-web-ink: #bd341f;     --cat-web-accent: #d33a22;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -24,4 +32,22 @@
   --code-bg: #10141c; --mark: #5b4b0a; --add-bg: #12351f; --del-bg: #411a20;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
   --overlay: rgba(0,0,0,.6);
+  /* Category colours (dark): every ink/soft pair is >= 6:1. */
+  --cat-data-soft: #1d2a49;    --cat-data-ink: #89aaf5;    --cat-data-accent: #3c6cdd;
+  --cat-text-soft: #2c2149;    --cat-text-ink: #c192f6;    --cat-text-accent: #873cdd;
+  --cat-code-soft: #1d4049;    --cat-code-ink: #4cebf0;    --cat-code-accent: #3cd7dd;
+  --cat-utility-soft: #3d3a29; --cat-utility-ink: #f0d04c; --cat-utility-accent: #ddbc3c;
+  --cat-api-soft: #3d2138;     --cat-api-ink: #f584b9;     --cat-api-accent: #dd3c87;
+  --cat-files-soft: #1d4132;   --cat-files-ink: #4cf07d;   --cat-files-accent: #3cdd6c;
+  --cat-web-soft: #3d2529;     --cat-web-ink: #f58f80;     --cat-web-accent: #dd513c;
 }
+
+/* An element with data-cat="<category id>" gets that category's colours through --cat-*. Elements without it fall back to the brand colour. */
+:root { --cat-soft: var(--primary-soft); --cat-ink: var(--primary); --cat-accent: var(--primary); }
+[data-cat="data"]    { --cat-soft: var(--cat-data-soft);    --cat-ink: var(--cat-data-ink);    --cat-accent: var(--cat-data-accent); }
+[data-cat="text"]    { --cat-soft: var(--cat-text-soft);    --cat-ink: var(--cat-text-ink);    --cat-accent: var(--cat-text-accent); }
+[data-cat="code"]    { --cat-soft: var(--cat-code-soft);    --cat-ink: var(--cat-code-ink);    --cat-accent: var(--cat-code-accent); }
+[data-cat="utility"] { --cat-soft: var(--cat-utility-soft); --cat-ink: var(--cat-utility-ink); --cat-accent: var(--cat-utility-accent); }
+[data-cat="api"]     { --cat-soft: var(--cat-api-soft);     --cat-ink: var(--cat-api-ink);     --cat-accent: var(--cat-api-accent); }
+[data-cat="files"]   { --cat-soft: var(--cat-files-soft);   --cat-ink: var(--cat-files-ink);   --cat-accent: var(--cat-files-accent); }
+[data-cat="web"]     { --cat-soft: var(--cat-web-soft);     --cat-ink: var(--cat-web-ink);     --cat-accent: var(--cat-web-accent); }
