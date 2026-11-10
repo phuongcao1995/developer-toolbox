@@ -8,12 +8,14 @@
   'use strict';
   const SheetApp = (root.SheetApp = root.SheetApp || {});
   const U = SheetApp.utils;
+  const F = SheetApp.formula;
   const { DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT } = SheetApp.spreadsheet;
 
   const HEADER_HEIGHT = 26;
   const RESIZE_ZONE = 5;
   const MIN_SIZE = 12;
   const EXTRA_RENDER = 2; // rows/cols rendered beyond the viewport for smoother scrolling
+  const REF_COLORS = ['#1a73e8', '#d93025', '#188038', '#9334e6', '#e8710a', '#129eaf']; // one per reference while a formula is edited
   const BORDER_CSS = {
     thin: '1px solid', medium: '2px solid', thick: '3px solid', dashed: '1px dashed', dotted: '1px dotted',
     hair: '1px dotted', double: '3px double', mediumDashed: '2px dashed', dashDot: '1px dashed',
@@ -159,6 +161,8 @@
       this.cornerHeader.addEventListener('click', () => this.selectAll());
       this.editor.addEventListener('keydown', (e) => this.onKeyDown(e));
       this.editor.addEventListener('input', () => this.onEditorInput());
+      this.editor.addEventListener('keyup', () => { if (this.editing) this.updateAssist(); });
+      this.editor.addEventListener('click', () => { if (this.editing) this.updateAssist(); });
       this.editor.addEventListener('compositionstart', () => { if (!this.editing) this.beginEdit('', true, false); });
       this.editor.addEventListener('copy', (e) => this.onCopy(e, false));
       this.editor.addEventListener('cut', (e) => this.onCopy(e, true));
@@ -213,7 +217,9 @@
       for (const r of sheet.hiddenRows) rows.set(r, 0);
       for (const r of sheet.filterHiddenRows) rows.set(r, 0);
       this.rowAxis.setSizes(rows);
-      this.colAxis.setSizes(sheet.colWidths);
+      const cols = new Map(sheet.colWidths);
+      for (const c of sheet.hiddenCols) cols.set(c, 0);
+      this.colAxis.setSizes(cols);
       this.rowHeadWidth = Math.max(44, String(sheet.rowCount).length * 8 + 20);
       this.clampSelection();
       if (this.pendingScroll) {
@@ -399,6 +405,7 @@
 
     renderNow() {
       const s = this.sheet;
+      this.cfStyle = SheetApp.condfmt ? SheetApp.condfmt.lookup(this.wb, this.wb.activeIndex) : null;
       const totalW = this.rowHeadWidth + this.colAxis.offset(s.colCount);
       const totalH = HEADER_HEIGHT + this.rowAxis.offset(s.rowCount);
       this.sizer.style.width = totalW + 'px';
@@ -471,7 +478,7 @@
         const inSel = c >= sel.range.c1 && c <= sel.range.c2;
         const label = U.colToLetters(c) + (filtered.has(c) ? ' ▾' : '');
         frag.append(U.el('div', {
-          class: 'hdr col' + (inSel ? (fullCols ? ' selected' : ' active') : '') + (filtered.has(c) ? ' filtered' : ''),
+          class: 'hdr col' + (inSel ? (fullCols ? ' selected' : ' active') : '') + (filtered.has(c) ? ' filtered' : '') + (this.colAxis.size(c + 1) === 0 && c + 1 < s.colCount ? ' before-hidden' : ''),
           style: { left: this.colAxis.offset(c) - xOff + 'px', width: w + 'px' },
           text: label,
         }));
@@ -564,6 +571,14 @@
         left: xOf(range.c1) + 'px', top: yOf(range.r1) + 'px',
         width: xOf(range.c2 + 1) - xOf(range.c1) - 1 + 'px', height: yOf(range.r2 + 1) - yOf(range.r1) - 1 + 'px',
       });
+      if (this.editing && this.editing.refs.length) {
+        this.editing.refs.forEach((r, i) => {
+          if (r.sheetName !== null && r.sheetName.toLowerCase() !== s.name.toLowerCase()) return;
+          const box = { r1: Math.min(r.r1, r.r2), r2: Math.min(Math.max(r.r1, r.r2), s.rowCount - 1), c1: Math.min(r.c1, r.c2), c2: Math.min(Math.max(r.c1, r.c2), s.colCount - 1) };
+          if (box.r1 > box.r2 || box.c1 > box.c2 || !U.rangesIntersect(box, area)) return;
+          frag.append(U.el('div', { class: 'ref-box', style: { ...rectOf(box), borderColor: REF_COLORS[i % REF_COLORS.length] } }));
+        });
+      }
       if (this.clipboard && this.clipboard.sheetId === s.id && U.rangesIntersect(this.clipboard.data.range, area)) {
         frag.append(U.el('div', { class: 'copy-range', style: rectOf(this.clipboard.data.range) }));
       }
@@ -574,6 +589,14 @@
         frag.append(U.el('div', { class: 'sel-range', style: rectOf(sel.range) }));
       }
       if (U.rangesIntersect(activeRange, area)) frag.append(U.el('div', { class: 'sel-active', style: rectOf(activeRange) }));
+      if (this.fillDrag && this.fillDrag.preview && U.rangesIntersect(this.fillDrag.preview, area)) {
+        frag.append(U.el('div', { class: 'fill-preview', style: rectOf(this.fillDrag.preview) }));
+      }
+      // Fill handle: the small square at the bottom-right corner of the selection (drag it to autofill).
+      const sr = sel.range;
+      if (!this.editing && sr.r2 < s.rowCount - 1 && sr.c2 < s.colCount - 1 && sr.r2 >= r0 && sr.r2 <= r1 && sr.c2 >= c0 && sr.c2 <= c1) {
+        frag.append(U.el('div', { class: 'fill-handle', style: { left: xOf(sr.c2 + 1) - 5 + 'px', top: yOf(sr.r2 + 1) - 5 + 'px' } }));
+      }
       pane.replaceChildren(frag);
     }
 
@@ -582,6 +605,8 @@
       if (!cell && !isMerge) return null;
       const display = this.wb.getDisplay(sheetIndex, r, c);
       const info = cellStyleCss(cell && cell.style, display.kind);
+      const cf = this.cfStyle && cell ? this.cfStyle(r, c) : null;
+      if (cf) Object.assign(info.css, cf);
       const node = U.el('div', {
         class: 'cell' + (display.kind === 'error' ? ' is-error' : '') + (display.warning ? ' has-warning' : '') + (isMerge ? ' is-merge' : ''),
         style: { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', ...info.css },
@@ -616,8 +641,9 @@
 
     updateCursor(e) {
       if (this.drag) return;
-      const hit = this.hitTest(...Object.values(this.stagePoint(e)));
-      this.stage.style.cursor = hit.area === 'colresize' ? 'col-resize' : hit.area === 'rowresize' ? 'row-resize' : '';
+      const p = this.stagePoint(e);
+      const hit = this.hitTest(p.x, p.y);
+      this.stage.style.cursor = hit.area === 'colresize' ? 'col-resize' : hit.area === 'rowresize' ? 'row-resize' : this.nearFillHandle(p.x, p.y) ? 'crosshair' : '';
     }
 
     onPointerDown(e) {
@@ -625,12 +651,13 @@
       const { x, y } = this.stagePoint(e);
       const hit = this.hitTest(x, y);
       if (this.editing) {
-        if (this.editing.text.startsWith('=') && hit.area === 'cell') return; // keep editing formulas
+        if (hit.area === 'cell' && this.editing.text.startsWith('=') && this.startPointing(e, hit)) return; // clicking a cell inserts its reference
         this.commitEdit(0, 0);
       }
       e.preventDefault();
       this.focus();
       if (hit.area === 'colresize' || hit.area === 'rowresize') { this.startResize(e, hit); return; }
+      if (hit.area === 'cell' && e.pointerType !== 'touch' && this.nearFillHandle(x, y)) { this.startFill(); return; }
       if (e.pointerType === 'touch') {
         if (hit.area === 'cell') {
           const now = Date.now();
@@ -670,6 +697,75 @@
       };
       document.addEventListener('pointermove', move);
       document.addEventListener('pointerup', up);
+    }
+
+    /** True when (x, y) in stage coordinates is on the selection's fill handle. */
+    nearFillHandle(x, y) {
+      if (this.editing || this.drag || this.fillDrag) return false;
+      const m = this.metrics();
+      if (x < m.rh || y < HEADER_HEIGHT) return false;
+      const r = this.getSelection().range;
+      if (r.r2 >= this.sheet.rowCount - 1 || r.c2 >= this.sheet.colCount - 1) return false;
+      const rect = this.rangeStageRect(r);
+      return Math.abs(x - (rect.x + rect.w)) <= 6 && Math.abs(y - (rect.y + rect.h)) <= 6;
+    }
+
+    /** Which way and how far a fill drag reaches when the pointer is over cell (row, col). */
+    fillTarget(src, row, col) {
+      const down = Math.max(0, row - src.r2), up = Math.max(0, src.r1 - row);
+      const right = Math.max(0, col - src.c2), left = Math.max(0, src.c1 - col);
+      const v = Math.max(down, up), h = Math.max(right, left);
+      if (!v && !h) return null;
+      if (v >= h) return up > down ? { dir: 'up', count: up, preview: { ...src, r1: src.r1 - up, r2: src.r1 - 1 } } : { dir: 'down', count: down, preview: { ...src, r1: src.r2 + 1, r2: src.r2 + down } };
+      return left > right ? { dir: 'left', count: left, preview: { ...src, c1: src.c1 - left, c2: src.c1 - 1 } } : { dir: 'right', count: right, preview: { ...src, c1: src.c2 + 1, c2: src.c2 + right } };
+    }
+
+    startFill() {
+      const src = this.getSelection().range;
+      this.fillDrag = { src, target: null, preview: null };
+      this.stage.style.cursor = 'crosshair';
+      const move = (ev) => {
+        const p = this.stagePoint(ev);
+        this.autoScroll(p);
+        const h = this.hitTest(U.clamp(p.x, this.rowHeadWidth + 1, this.scroller.clientWidth - 1), U.clamp(p.y, HEADER_HEIGHT + 1, this.scroller.clientHeight - 1));
+        if (h.area !== 'cell') return;
+        const grown = { row: Math.min(h.row, this.sheet.rowCount - 1), col: Math.min(h.col, this.sheet.colCount - 1) };
+        this.fillDrag.target = this.fillTarget(src, grown.row, grown.col);
+        this.fillDrag.preview = this.fillDrag.target ? this.fillDrag.target.preview : null;
+        this.renderNow();
+      };
+      const up = () => {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        const t = this.fillDrag && this.fillDrag.target;
+        this.fillDrag = null;
+        this.stage.style.cursor = '';
+        if (t) this.fill(src, t.dir, t.count, false); else this.renderNow();
+      };
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+    }
+
+    /** Autofills and selects the result. */
+    fill(src, dir, count, copyOnly) {
+      const range = this.wb.fillRange(this.wb.activeIndex, src, dir, count, { copyOnly });
+      if (range) this.selectRange(range, { row: range.r1, col: range.c1 }); else this.renderNow();
+      this.focus();
+      return range;
+    }
+
+    /** Ctrl+D / Ctrl+R: copy the first row (column) of the selection over the rest, or the row above (column to the left) for a single row (column). */
+    fillSelection(vertical) {
+      const r = this.getSelection().range;
+      const size = vertical ? r.r2 - r.r1 : r.c2 - r.c1;
+      if (size > 0) {
+        const src = vertical ? { ...r, r2: r.r1 } : { ...r, c2: r.c1 };
+        this.wb.fillRange(this.wb.activeIndex, src, vertical ? 'down' : 'right', size, { copyOnly: true });
+      } else if (vertical ? r.r1 > 0 : r.c1 > 0) {
+        const src = vertical ? { ...r, r1: r.r1 - 1, r2: r.r1 - 1 } : { ...r, c1: r.c1 - 1, c2: r.c1 - 1 };
+        this.wb.fillRange(this.wb.activeIndex, src, vertical ? 'down' : 'right', 1, { copyOnly: true });
+      }
+      this.renderNow();
     }
 
     autoScroll(p) {
@@ -847,10 +943,15 @@
         default: break;
       }
       if (ctrl && (e.key === 'a' || e.key === 'A')) { handled(); this.selectAll(); }
+      if (ctrl && e.code === 'Semicolon') { handled(); this.insertNow(shift); }
+      if (ctrl && shift && (e.key === 'v' || e.key === 'V')) this.pasteValuesOnly = true; // the paste event follows; keep the browser default
+      if (ctrl && !shift && (e.key === 'd' || e.key === 'D')) { handled(); this.fillSelection(true); }
+      if (ctrl && !shift && (e.key === 'r' || e.key === 'R')) { handled(); this.fillSelection(false); }
       // Printable keys reach the textarea; the input event then starts editing.
     }
 
     onEditingKey(e) {
+      if (this.assistKey(e)) return;
       const ed = this.editing;
       const done = (dr, dc) => { e.preventDefault(); this.commitEdit(dr, dc); };
       if (e.key === 'Enter' && (e.altKey || (e.ctrlKey && !e.shiftKey))) {
@@ -887,7 +988,13 @@
           if (dc > 0) col = merge.c2;
           if (dc < 0) col = merge.c1;
         }
-        col = U.clamp(col + dc, 0, U.MAX_COLS - 1);
+        const colStep = Math.sign(dc);
+        for (let i = 0; i < Math.abs(dc); i++) {
+          let next = col + colStep;
+          while (next > 0 && next < s.colCount - 1 && this.colAxis.size(next) === 0) next += colStep;
+          if (next < 0 || next >= U.MAX_COLS || this.colAxis.size(next) === 0) break;
+          col = next;
+        }
         const step = Math.sign(dr);
         for (let i = 0; i < Math.abs(dr); i++) {
           let next = row + step;
@@ -931,6 +1038,153 @@
 
     isEditing() { return !!this.editing; }
 
+    /* ---------- Formula assistance: point-and-click references, colour boxes, F4 and function suggestions ---------- */
+
+    /** The text box the user is typing in: the cell editor, or the formula bar when editing started there. */
+    activeInput() {
+      return this.editing && this.editing.viaBar ? document.getElementById('formula-input') || this.editor : this.editor;
+    }
+
+    /** Replaces the text being edited (keeping the cell editor and the formula bar in step) and places the caret/selection. */
+    setEditText(text, selStart, selEnd) {
+      const ed = this.editing;
+      ed.text = text;
+      this.editor.value = text;
+      const input = this.activeInput();
+      if (input !== this.editor) input.value = text;
+      input.setSelectionRange(selStart, selEnd === undefined ? selStart : selEnd);
+      this.positionEditor();
+      this.handlers.onEditInput(text);
+    }
+
+    /** Recomputes the coloured reference boxes and the function suggestions for the formula being edited. */
+    updateAssist() {
+      const ed = this.editing;
+      if (!ed) return;
+      const found = ed.text.startsWith('=') ? F.findReferences(ed.text).map((r) => r.ref) : [];
+      const key = found.map((r) => [r.sheetName, r.r1, r.c1, r.r2, r.c2].join(',')).join(';');
+      const changed = key !== ed.refsKey;
+      ed.refs = found; ed.refsKey = key;
+      const input = this.activeInput();
+      const caret = input.selectionStart == null ? ed.text.length : input.selectionStart;
+      const fp = ed.text.startsWith('=') && input.selectionStart === input.selectionEnd ? F.functionPrefixAt(ed.text, caret) : null;
+      const items = fp ? F.suggestFunctions(fp.prefix) : [];
+      if (items.length && !(items.length === 1 && items[0] === fp.prefix.toUpperCase())) this.showSuggest(items, fp, input); else this.hideSuggest();
+      if (changed) this.renderNow();
+    }
+
+    showSuggest(items, fp, input) {
+      const ed = this.editing;
+      const prev = ed.suggest;
+      ed.suggest = { items, index: prev && items[prev.index] === prev.items[prev.index] ? prev.index : 0, start: fp.start, end: fp.end };
+      if (!this.suggestEl) {
+        this.suggestEl = U.el('ul', { class: 'fn-suggest', role: 'listbox', 'aria-label': 'Function suggestions' });
+        this.suggestEl.addEventListener('mousedown', (e) => {
+          const li = e.target.closest('li');
+          if (!li || !this.editing || !this.editing.suggest) return;
+          e.preventDefault();
+          this.acceptSuggest(Number(li.dataset.index));
+        });
+        document.body.append(this.suggestEl);
+      }
+      const list = this.suggestEl;
+      list.replaceChildren(...items.map((name, i) => U.el('li', { role: 'option', 'data-index': String(i), 'aria-selected': String(i === ed.suggest.index), class: i === ed.suggest.index ? 'active' : '' }, name)));
+      const rect = input.getBoundingClientRect();
+      list.style.left = Math.max(4, rect.left) + 'px';
+      list.style.top = rect.bottom + 2 + 'px';
+      list.hidden = false;
+    }
+
+    hideSuggest() {
+      if (this.suggestEl) this.suggestEl.hidden = true;
+      if (this.editing) this.editing.suggest = null;
+    }
+
+    acceptSuggest(index) {
+      const ed = this.editing;
+      const s = ed && ed.suggest;
+      if (!s || !s.items[index]) return;
+      const name = s.items[index];
+      const text = ed.text.slice(0, s.start) + name + '(' + ed.text.slice(s.end);
+      this.hideSuggest();
+      this.setEditText(text, s.start + name.length + 1);
+      this.updateAssist();
+      this.activeInput().focus();
+    }
+
+    /** Keys that belong to formula assistance (F4, and navigating the suggestion list). Returns true when the key was used. */
+    assistKey(e) {
+      const ed = this.editing;
+      if (!ed) return false;
+      if (e.key === 'F4' && ed.text.startsWith('=')) {
+        e.preventDefault();
+        const input = this.activeInput();
+        const r = F.cycleReference(ed.text, input.selectionStart, input.selectionEnd);
+        if (r) { this.setEditText(r.text, r.selStart, r.selEnd); ed.pointing = null; this.updateAssist(); }
+        return true;
+      }
+      const s = ed.suggest;
+      if (!s) return false;
+      const move = (delta) => {
+        e.preventDefault();
+        s.index = (s.index + delta + s.items.length) % s.items.length;
+        [...this.suggestEl.children].forEach((li, i) => { li.classList.toggle('active', i === s.index); li.setAttribute('aria-selected', String(i === s.index)); });
+      };
+      if (e.key === 'ArrowDown') { move(1); return true; }
+      if (e.key === 'ArrowUp') { move(-1); return true; }
+      if (e.key === 'Tab') { e.preventDefault(); this.acceptSuggest(s.index); return true; }
+      if (e.key === 'Escape') { e.preventDefault(); this.hideSuggest(); return true; }
+      return false;
+    }
+
+    /**
+     * While a formula is edited, clicking (or dragging over) cells writes their address into it, like Excel.
+     * Returns false when the caret is not where a reference can go; the click then commits the edit instead.
+     */
+    startPointing(e, hit) {
+      const ed = this.editing;
+      const input = this.activeInput();
+      const caret = input.selectionStart == null ? ed.text.length : input.selectionStart;
+      const continuing = !!ed.pointing && caret === ed.pointing.end && input.selectionStart === input.selectionEnd;
+      if (!continuing && !F.canInsertReference(ed.text, caret)) return false;
+      e.preventDefault();
+      const here = { row: hit.row, col: hit.col };
+      const anchor = continuing && e.shiftKey ? ed.pointing.anchor : here;
+      ed.pointing = { start: continuing ? ed.pointing.start : caret, end: continuing ? ed.pointing.end : caret, anchor };
+      this.hideSuggest();
+      this.pointAt(anchor, here);
+      input.focus({ preventScroll: true });
+      this.drag = { kind: 'point' };
+      const move = (ev) => {
+        const p = this.stagePoint(ev);
+        this.autoScroll(p);
+        const h = this.hitTest(U.clamp(p.x, this.rowHeadWidth + 1, this.scroller.clientWidth - 1), U.clamp(p.y, HEADER_HEIGHT + 1, this.scroller.clientHeight - 1));
+        if (h.area === 'cell' && this.editing && this.editing.pointing) this.pointAt(this.editing.pointing.anchor, { row: h.row, col: h.col });
+      };
+      const up = () => {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        this.drag = null;
+        if (this.editing) this.activeInput().focus({ preventScroll: true });
+      };
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      return true;
+    }
+
+    /** Writes the address of the block between two cells where the pointed reference goes. */
+    pointAt(anchor, to) {
+      const ed = this.editing;
+      const p = ed.pointing;
+      const r = U.normalizeRange(anchor.row, anchor.col, to.row, to.col);
+      const address = r.r1 === r.r2 && r.c1 === r.c2 ? U.cellAddress(r.r1, r.c1) : U.cellAddress(r.r1, r.c1) + ':' + U.cellAddress(r.r2, r.c2);
+      const text = ed.text.slice(0, p.start) + address + ed.text.slice(p.end);
+      p.end = p.start + address.length;
+      this.setEditText(text, p.end);
+      this.updateAssist();
+    }
+
+
     /**
      * Starts editing the active cell. text === null loads the cell's content;
      * quick means typing replaced the content (arrow keys then commit).
@@ -939,7 +1193,7 @@
       const { row, col } = this.anchor;
       const original = this.wb.getInputText(this.wb.activeIndex, row, col);
       const value = text === null ? original : text;
-      this.editing = { row, col, original, text: value, quick, viaBar: false };
+      this.editing = { row, col, original, text: value, quick, viaBar: false, pointing: null, refs: [], refsKey: '', suggest: null };
       if (text === null || selectEnd) {
         this.editor.value = value;
         const end = value.length;
@@ -949,6 +1203,7 @@
       this.positionEditor();
       this.focus();
       this.handlers.onEditInput(this.editor.value);
+      this.updateAssist();
     }
 
     onEditorInput() {
@@ -959,8 +1214,10 @@
         return;
       }
       this.editing.text = this.editor.value;
+      this.editing.pointing = null; // typing ends "point at a cell" mode
       this.positionEditor();
       this.handlers.onEditInput(this.editor.value);
+      this.updateAssist();
     }
 
     /** Called by the formula bar while the user types there. */
@@ -970,8 +1227,10 @@
         this.editing.viaBar = true;
       }
       this.editing.text = text;
+      this.editing.pointing = null;
       this.editor.value = text;
       this.positionEditor();
+      this.updateAssist();
     }
 
     async commitEdit(dr, dc) {
@@ -1001,6 +1260,7 @@
     }
 
     finishEdit() {
+      this.hideSuggest();
       this.editing = null;
       this.editor.value = '';
       this.stage.classList.remove('is-editing');
@@ -1057,7 +1317,29 @@
     onPaste(e) {
       if (this.editing) return;
       e.preventDefault();
-      this.pasteText(e.clipboardData.getData('text/plain'));
+      const valuesOnly = this.pasteValuesOnly;
+      this.pasteValuesOnly = false;
+      const text = e.clipboardData.getData('text/plain');
+      if (valuesOnly && this.clipboard && text === this.clipboard.data.text) this.pasteSpecial('values');
+      else this.pasteText(text);
+    }
+
+    /** Paste special from the last copy made in the editor. mode: 'values' | 'formulas' | 'formats' | 'transpose'. */
+    pasteSpecial(mode) {
+      const clip = this.clipboard;
+      if (!clip) { this.handlers.onStatus('Copy cells in the editor first (Ctrl+C), then choose Paste special.'); return; }
+      const { row, col } = this.anchor;
+      const size = this.wb.pasteSpecial(this.wb.activeIndex, row, col, clip.data, mode);
+      this.select({ row, col }, { row: row + size.rows - 1, col: col + size.cols - 1 }, { scroll: false });
+      this.renderNow();
+    }
+
+    /** Ctrl+; puts today's date in the active cell, Ctrl+Shift+; the current time. */
+    insertNow(withTime) {
+      const { row, col } = this.anchor;
+      const n = new Date();
+      const serial = U.dateToSerial(new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours(), n.getMinutes(), n.getSeconds())));
+      this.wb.setCellValue(this.wb.activeIndex, row, col, withTime ? serial - Math.floor(serial) : Math.floor(serial), withTime ? 'hh:mm' : 'yyyy-mm-dd');
     }
 
     /** Pastes text; uses the richer internal copy when the text matches it. */

@@ -30,8 +30,10 @@
       <symbol id="i-filter" viewBox="0 0 16 16"><path d="M1.5 2.5h13L9.5 8.5v5l-3 1.5V8.5z"/></symbol>
       <symbol id="i-find" viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4.5 4.5"/></symbol>
       <symbol id="i-check" viewBox="0 0 16 16"><path d="M1.5 2.5h13v11h-13z M4.5 8l2.2 2.2L11.5 5.5"/></symbol>
+      <symbol id="i-cf" viewBox="0 0 16 16"><path d="M1.5 2.5h13v11h-13z M1.5 6.2h13 M1.5 9.8h13 M6 2.5v11"/><path d="M2.4 3.4h2.7v1.9H2.4z M7 10.7h6.6v1.9H7z" fill="currentColor" stroke="none"/></symbol>
       <symbol id="i-dupes" viewBox="0 0 16 16"><path d="M5 1.5h8.5V10H5z M2.5 4.5V13.5H11"/></symbol>
       <symbol id="i-freeze" viewBox="0 0 16 16"><path d="M1.5 2.5h13v11h-13z M1.5 6h13 M5.5 2.5v11" /><path d="M1.5 6h13" stroke-width="2.2"/></symbol>
+      <symbol id="i-painter" viewBox="0 0 16 16"><path d="M3 2.5h8v3.5H3z M11 4h2v4H7v2 M6.5 10h1v4h-1z"/></symbol>
       <symbol id="i-clear" viewBox="0 0 16 16"><path d="M6 13.5h8 M9.5 2l4.5 4.5-6.5 6.5H5L2.5 10.5z M6.5 5l4.5 4.5"/></symbol>
       <symbol id="i-fx" viewBox="0 0 16 16"><path d="M9 2.5c-2 0-2.5 1-2.8 3L5 13c-.3 1.5-1 2-2.5 2 M3.5 6.5h5 M9.5 8l4 5 M13.5 8l-4 5"/></symbol>
       <symbol id="i-more" viewBox="0 0 16 16"><path d="M4 7l4 4 4-4"/></symbol>
@@ -121,6 +123,7 @@
         </select>
         <button type="button" class="tb glyph small" data-action="decimals-less" aria-label="Fewer decimals" title="Fewer decimal places">.0←</button>
         <button type="button" class="tb glyph small" data-action="decimals-more" aria-label="More decimals" title="More decimal places">.00→</button>
+        <button type="button" class="tb" data-action="format-painter" aria-pressed="false" aria-label="Format painter" title="Format painter: copy formatting from the active cell to cells you select next"><svg class="ico"><use href="#i-painter"/></svg></button>
         <button type="button" class="tb" data-action="clear-format" aria-label="Clear formatting" title="Clear formatting"><svg class="ico"><use href="#i-clear"/></svg></button>
       </div>
       <div class="tb-group" role="group" aria-label="Data">
@@ -129,6 +132,7 @@
         <button type="button" class="tb" data-action="sort-desc" aria-label="Sort Z to A" title="Sort Z → A by the active column"><svg class="ico"><use href="#i-sort-desc"/></svg></button>
         <button type="button" class="tb" data-action="filter" aria-label="Filter" title="Filter rows"><svg class="ico"><use href="#i-filter"/></svg></button>
         <button type="button" class="tb" data-action="find" aria-label="Find and replace" title="Find and replace (Ctrl+F)"><svg class="ico"><use href="#i-find"/></svg></button>
+        <button type="button" class="tb" data-action="cf-menu" aria-haspopup="menu" aria-label="Conditional formatting" title="Highlight cells by rules, colour scales"><svg class="ico"><use href="#i-cf"/></svg><span class="tb-label">Rules</span><svg class="ico caret"><use href="#i-more"/></svg></button>
         <button type="button" class="tb" data-action="data-menu" aria-haspopup="menu" aria-label="Data tools" title="Validation, duplicates and more"><svg class="ico"><use href="#i-check"/></svg><span class="tb-label">Data</span><svg class="ico caret"><use href="#i-more"/></svg></button>
         <button type="button" class="tb" data-action="freeze-menu" aria-haspopup="menu" aria-label="Freeze panes" title="Freeze rows or columns"><svg class="ico"><use href="#i-freeze"/></svg><span class="tb-label">Freeze</span><svg class="ico caret"><use href="#i-more"/></svg></button>
       </div>
@@ -178,7 +182,9 @@
 
   <script src="js/utils.js"></script>
   <script src="js/formula.js"></script>
+  <script src="js/fill.js"></script>
   <script src="js/spreadsheet.js"></script>
+  <script src="js/condfmt.js"></script>
   <script src="js/file-manager.js"></script>
   <script src="js/dialogs.js"></script>
   <script src="js/grid.js"></script>

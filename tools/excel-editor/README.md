@@ -51,6 +51,10 @@ Univer and Jspreadsheet were evaluated and not used: they would duplicate the gr
 - Cut, copy and paste work within the app (formulas adjust their references) and with other programs (tab-separated text).
 - Undo and redo up to 200 steps.
 - Insert and delete rows and columns. Formulas everywhere update, including on other sheets.
+- Hide and show rows and columns (Rows & columns menu). Hidden columns are kept when you save.
+- Paste special (right-click): values only, formulas only, formatting only, transposed.
+- Format painter: copy the active cell's formatting onto the next cells you select.
+- Sheet tab colours (right-click a tab); colours from files are shown and saved.
 - Find and replace, searching either displayed values or contents.
 - Vietnamese input methods (Telex/VNI, Unikey, OS keyboards) work from the first keystroke.
 
@@ -66,7 +70,19 @@ Univer and Jspreadsheet were evaluated and not used: they would duplicate the gr
 
 The formula bar area shows the **stored value** next to the **format**, so changing how a value looks is never confused with changing the value itself.
 
-**Formulas.** Type a formula beginning with `=`. Supported functions: SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, COUNTBLANK, COUNTIF, SUMIF, AVERAGEIF, PRODUCT, IF, IFERROR, AND, OR, NOT, ROUND, ROUNDUP, ROUNDDOWN, INT, ABS, MOD, POWER, SQRT, PI, CONCAT, CONCATENATE, LEN, LEFT, RIGHT, MID, UPPER, LOWER, TRIM, TEXT, VALUE, ISBLANK, ISNUMBER, ISTEXT, ISERROR, TODAY and NOW.
+**Formulas.** Type a formula beginning with `=`. About 110 functions are calculated:
+- **Maths and statistics:** SUM, AVERAGE, MIN, MAX, MEDIAN, LARGE, SMALL, RANK, STDEV, STDEV.S, STDEV.P, VAR, VAR.S, VAR.P, COUNT, COUNTA, COUNTBLANK, PRODUCT, SUMPRODUCT, ROUND, ROUNDUP, ROUNDDOWN, CEILING, FLOOR, TRUNC, INT, ABS, SIGN, MOD, POWER, SQRT, EXP, LN, LOG, LOG10, PI
+- **Conditional:** COUNTIF, SUMIF, AVERAGEIF, COUNTIFS, SUMIFS, AVERAGEIFS, MAXIFS, MINIFS
+- **Lookup:** VLOOKUP, HLOOKUP, XLOOKUP, INDEX, MATCH, CHOOSE, ROW, COLUMN, ROWS, COLUMNS
+- **Logical:** IF, IFS, SWITCH, IFERROR, IFNA, AND, OR, NOT, XOR, TRUE, FALSE, ISBLANK, ISNUMBER, ISTEXT, ISNONTEXT, ISLOGICAL, ISERROR, ISNA
+- **Text:** CONCAT, CONCATENATE, TEXTJOIN, LEN, LEFT, RIGHT, MID, FIND, SEARCH, SUBSTITUTE, REPLACE, REPT, UPPER, LOWER, PROPER, TRIM, CLEAN, EXACT, CHAR, CODE, TEXT, VALUE
+- **Date and time:** TODAY, NOW, DATE, YEAR, MONTH, DAY, WEEKDAY, EDATE, EOMONTH, DAYS, DATEDIF, DATEVALUE, TIME, HOUR, MINUTE, SECOND. A cell given `=DATE(...)` or similar gets a date format automatically.
+
+**Writing formulas.**
+- Click or drag over cells while typing a formula and their addresses are inserted; each reference gets a coloured box on the grid.
+- Press F4 with the caret on a reference to cycle `A1` → `$A$1` → `A$1` → `$A1`.
+- Function names are suggested as you type (Up/Down to choose, Tab to accept).
+- Drag the small square at the corner of the selection (the fill handle) to continue a series: numbers, dates, `Item 1`, weekday and month names. Formulas shift their references. Ctrl+D and Ctrl+R copy the first row or column over the selection.
 
 Operators, cross-sheet references (`'Dữ liệu'!B2`), absolute references (`$A$1`) and whole-column ranges (`A:A`) are supported. Errors (#DIV/0!, #VALUE!, #REF!, #NAME?) are shown in red. Circular references show `#CIRC!`.
 
@@ -78,6 +94,8 @@ Operators, cross-sheet references (`'Dữ liệu'!B2`), absolute references (`$A
 - Data validation: whole number, decimal, list or text length, with reject or warn behaviour.
 - Show cells that break validation.
 - Highlight duplicate values.
+- **Conditional formatting** (Rules menu): highlight cells by value, text, top/bottom N, above/below average, duplicates or a formula; 2- and 3-colour scales; manage and delete rules. Rules are saved in the .xlsx and read back from files.
+- **Remove duplicate rows** (choose the columns that count) and **Text to columns** (comma, semicolon, tab, space, pipe or your own separator).
 - The status bar shows count, sum and average for the selection.
 
 **Download.** Choose `.xlsx`, `.xls` or `.csv`. Before you download, the dialog lists exactly what the chosen format will not include. The original format is preselected when nothing would be lost; otherwise `.xlsx` is selected and the reason is shown. CSV options include:
@@ -107,6 +125,10 @@ Only a lossless download clears the "Unsaved changes" flag.
 | First column / last used column | Home / End |
 | Top-left / last used cell | Ctrl+Home / Ctrl+End |
 | Select all | Ctrl+A |
+| Fill down / fill right | Ctrl+D / Ctrl+R |
+| Cycle `$` on a reference (while editing a formula) | F4 |
+| Insert today's date / current time | Ctrl+; / Ctrl+Shift+; |
+| Paste values only | Ctrl+Shift+V (after copying inside the editor) |
 | Clear contents | Delete or Backspace |
 | Go to a cell or range | Type it in the name box (`C5`, `A1:D10`, `Sheet2!B3`) and press Enter |
 
@@ -141,10 +163,9 @@ On a Mac, use Cmd instead of Ctrl.
 - Excel tables, which become plain ranges with their data intact
 - array formulas, which are saved as regular formulas
 - mixed formatting within one cell, where the text is kept
-- hidden columns, which are shown and saved unhidden
 
 **Kept but not shown or edited:**
-- Conditional formatting and images are written back unchanged. They are not displayed, and they do not move when rows or columns are inserted or deleted.
+- Images are written back unchanged, not displayed. Data bars and icon sets are kept but not drawn, and conditional formatting does not move when rows or columns are inserted or deleted.
 - Named ranges are kept. Formulas that use them keep their saved results.
 - Theme colours from the file are kept but drawn without colour.
 - Validation rules for dates, times, custom formulas, and lists that come from a cell range are kept but not checked while editing.
@@ -170,6 +191,7 @@ js/spreadsheet.js     Workbook model: cells, calculation, undo/redo, all editing
 js/file-manager.js    Format detection, import, export, and what-will-be-lost warnings
 js/grid.js            Virtualized grid: rendering, selection, editing, resizing, clipboard
 js/dialogs.js         Accessible dialogs, menus, toasts
+js/condfmt.js         Conditional formatting rules and evaluation
 js/toolbar.js         Toolbar, formula bar, sheet tabs, status bar, find/sort/filter/validation
 js/app.js             Wiring, open/new/download flows, shortcuts, unsaved-change protection
 js/load-vendor.js     Falls back to pinned CDN builds when vendor/ files are missing

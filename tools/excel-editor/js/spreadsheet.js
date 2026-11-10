@@ -97,6 +97,7 @@
       this.colWidths = new Map();
       this.rowHeights = new Map();
       this.hiddenRows = new Set();
+      this.hiddenCols = new Set();
       this.filterHiddenRows = new Set();
       this.merges = [];
       this.validations = [];
@@ -117,6 +118,7 @@
       s.colWidths = new Map(this.colWidths);
       s.rowHeights = new Map(this.rowHeights);
       s.hiddenRows = new Set(this.hiddenRows);
+      s.hiddenCols = new Set(this.hiddenCols);
       s.filterHiddenRows = new Set(this.filterHiddenRows);
       s.merges = this.merges.map((m) => ({ ...m }));
       s.validations = this.validations.map((v) => ({ ranges: v.ranges.map((r) => ({ ...r })), rule: v.rule }));
@@ -286,7 +288,7 @@
       this.evaluating.add(id);
       let result;
       try {
-        let value = F.evaluate(cell.formula, this.contextFor(sheetIndex));
+        let value = F.evaluate(cell.formula, Object.assign(Object.create(this.contextFor(sheetIndex)), { row, col })); // row/col serve ROW() and COLUMN()
         if (typeof value === 'number' && Object.is(value, -0)) value = 0;
         result = { value: value === undefined ? null : value };
       } catch (e) {
@@ -433,6 +435,10 @@
       let style = cell ? cell.style : null;
       if (parsed.numFmt && (!style || !style.numFmt || style.numFmt === 'General')) {
         style = { ...(style || {}), numFmt: parsed.numFmt };
+      }
+      if (parsed.formula !== null && (!style || !style.numFmt || style.numFmt === 'General')) {
+        const inferred = F.inferResultFormat(parsed.formula); // =DATE(...) shows a date, not a serial number
+        if (inferred) style = { ...(style || {}), numFmt: inferred };
       }
       const next = withCell(cell, { value: parsed.formula !== null ? null : parsed.value, formula: parsed.formula, style });
       this.commitCells(sheetIndex, new Map([[U.cellKey(row, col), next]]), 'Edit ' + U.cellAddress(row, col));
@@ -590,6 +596,201 @@
       return { rows: rows.length, cols: rows.reduce((m, r) => Math.max(m, r.length), 0) };
     }
 
+    /**
+     * Autofill: extends `src` by `count` rows or columns in direction dir ('down' | 'up' | 'right' | 'left').
+     * options.copyOnly repeats the source (Ctrl+D / Ctrl+R) instead of continuing a series. Returns the filled range, or null.
+     */
+    fillRange(sheetIndex, src, dir, count, options) {
+      const sheet = this.sheets[sheetIndex];
+      const vertical = dir === 'down' || dir === 'up';
+      const reverse = dir === 'up' || dir === 'left';
+      const maxIndex = (vertical ? U.MAX_ROWS : U.MAX_COLS) - 1;
+      const first = vertical ? src.r1 : src.c1;
+      const last = vertical ? src.r2 : src.c2;
+      const room = reverse ? first : maxIndex - last;
+      count = Math.min(count, room);
+      if (count <= 0) return null;
+      const changes = new Map();
+      const lines = vertical ? src.c2 - src.c1 + 1 : src.r2 - src.r1 + 1;
+      const length = last - first + 1;
+      for (let line = 0; line < lines; line++) {
+        const at = (i) => (vertical ? [src.r1 + i, src.c1 + line] : [src.r1 + line, src.c1 + i]);
+        const cells = Array.from({ length }, (_, i) => sheet.getCell(...at(i)));
+        const steps = SheetApp.fill.plan(cells.map((c) => c || { value: null, formula: null, style: null }), count, { reverse, copyOnly: options && options.copyOnly });
+        steps.forEach((step, k) => {
+          const source = cells[step.from];
+          const index = reverse ? first - 1 - k : last + 1 + k;
+          const [row, col] = vertical ? [index, src.c1 + line] : [src.r1 + line, index];
+          const [srcRow, srcCol] = at(step.from);
+          let next = source;
+          if (source && step.value !== undefined) next = withCell(source, { value: step.value, formula: null });
+          else if (source && source.formula) next = withCell(source, { formula: F.shiftFormula(source.formula, row - srcRow, col - srcCol), value: null });
+          changes.set(U.cellKey(row, col), next);
+        });
+      }
+      this.commitCells(sheetIndex, changes, 'Fill');
+      return vertical
+        ? { r1: reverse ? first - count : src.r1, r2: reverse ? src.r2 : last + count, c1: src.c1, c2: src.c2 }
+        : { r1: src.r1, r2: src.r2, c1: reverse ? first - count : src.c1, c2: reverse ? src.c2 : last + count };
+    }
+
+    /** Hides or shows whole rows or columns (axis 'row' | 'col'). Returns how many changed. */
+    setHidden(sheetIndex, axis, indices, hidden) {
+      const sheet = this.sheets[sheetIndex];
+      const set = axis === 'row' ? sheet.hiddenRows : sheet.hiddenCols;
+      const changed = indices.filter((i) => set.has(i) !== hidden);
+      if (!changed.length) return 0;
+      this.transact((hidden ? 'Hide ' : 'Show ') + (axis === 'row' ? 'rows' : 'columns'), () => {
+        for (const i of changed) { if (hidden) set.add(i); else set.delete(i); }
+      });
+      return changed.length;
+    }
+
+    /** Sets (css hex like "#ff0000") or clears (null) the colour of a sheet tab. */
+    setTabColor(sheetIndex, css) {
+      const sheet = this.sheets[sheetIndex];
+      this.transact('Tab colour', () => {
+        const extras = { ...(sheet.extras || {}) };
+        if (css) extras.tabColor = U.cssToArgb(css); else delete extras.tabColor;
+        sheet.extras = extras; // replaced, not mutated, so undo restores the old object
+      });
+    }
+
+    /**
+     * Deletes rows of `range` whose chosen columns repeat an earlier row (text compared without case).
+     * `cols` are absolute column indexes inside the range. Later rows move up inside the range, as in Excel.
+     * Returns { removed, kept }.
+     */
+    removeDuplicates(sheetIndex, range, cols, hasHeader) {
+      const sheet = this.sheets[sheetIndex];
+      const first = range.r1 + (hasHeader ? 1 : 0);
+      const seen = new Set();
+      const keep = [];
+      for (let r = first; r <= range.r2; r++) {
+        const key = cols.map((c) => this.getDisplay(sheetIndex, r, c).text.trim().toLowerCase()).join('\u0001');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        keep.push(r);
+      }
+      const removed = range.r2 - first + 1 - keep.length;
+      if (!removed) return { removed: 0, kept: keep.length };
+      const changes = new Map();
+      for (let i = 0; i < range.r2 - first + 1; i++) {
+        const target = first + i;
+        const src = i < keep.length ? keep[i] : null;
+        for (let c = range.c1; c <= range.c2; c++) {
+          const cell = src === null ? null : sheet.getCell(src, c);
+          let next = cell;
+          if (cell && cell.formula && src !== target) next = withCell(cell, { formula: F.shiftFormula(cell.formula, target - src, 0), value: null });
+          changes.set(U.cellKey(target, c), next);
+        }
+      }
+      this.commitCells(sheetIndex, changes, 'Remove duplicates');
+      return { removed, kept: keep.length };
+    }
+
+    /**
+     * Splits the text of each cell of a one-column range into the columns on its right.
+     * `delimiter` is a string; `merge` treats runs of the delimiter as one. Returns the number of columns used,
+     * or -1 when it would overwrite data and `overwrite` is false.
+     */
+    textToColumns(sheetIndex, range, delimiter, merge, overwrite) {
+      const sheet = this.sheets[sheetIndex];
+      const rows = [];
+      let width = 1;
+      for (let r = range.r1; r <= range.r2; r++) {
+        const text = this.getDisplay(sheetIndex, r, range.c1).text;
+        let parts = text.split(delimiter);
+        if (merge) parts = parts.filter((p, i) => p !== '' || i === 0);
+        rows.push(parts.map((p) => p.trim()));
+        width = Math.max(width, parts.length);
+      }
+      if (!overwrite) {
+        for (let r = range.r1; r <= range.r2; r++) {
+          for (let c = range.c1 + 1; c < range.c1 + width; c++) if (sheet.getCell(r, c)) return -1;
+        }
+      }
+      const changes = new Map();
+      rows.forEach((parts, i) => {
+        const r = range.r1 + i;
+        for (let j = 0; j < Math.max(parts.length, 1); j++) {
+          const c = range.c1 + j;
+          const old = sheet.getCell(r, c);
+          const parsed = U.parseUserInput(parts[j] === undefined ? '' : parts[j]);
+          if (parts[j] === '' || parts[j] === undefined) { changes.set(U.cellKey(r, c), old && old.style ? withCell(old, { value: null, formula: null }) : null); continue; }
+          let style = old ? old.style : null;
+          if (parsed.numFmt && (!style || !style.numFmt || style.numFmt === 'General')) style = { ...(style || {}), numFmt: parsed.numFmt };
+          changes.set(U.cellKey(r, c), withCell(old, { value: parsed.formula !== null ? parts[j] : parsed.value, formula: null, style }));
+        }
+      });
+      this.commitCells(sheetIndex, changes, 'Text to columns');
+      return width;
+    }
+
+    /** Puts a plain value in one cell (used by Ctrl+; and Ctrl+Shift+;), with a number format when the cell has none. */
+    setCellValue(sheetIndex, row, col, value, numFmt) {
+      const cell = this.sheets[sheetIndex].getCell(row, col);
+      let style = cell ? cell.style : null;
+      if (numFmt && (!style || !style.numFmt || style.numFmt === 'General')) style = { ...(style || {}), numFmt };
+      this.commitCells(sheetIndex, new Map([[U.cellKey(row, col), withCell(cell, { value, formula: null, style })]]), 'Edit ' + U.cellAddress(row, col));
+    }
+
+    /** Gives every cell in the range the style (the format painter). */
+    applyFormat(sheetIndex, range, style) {
+      const sheet = this.sheets[sheetIndex];
+      const area = (range.r2 - range.r1 + 1) * (range.c2 - range.c1 + 1);
+      if (area > 200000) return false;
+      const changes = new Map();
+      for (let r = range.r1; r <= range.r2; r++) {
+        for (let c = range.c1; c <= range.c2; c++) changes.set(U.cellKey(r, c), withCell(sheet.getCell(r, c), { style }));
+      }
+      this.commitCells(sheetIndex, changes, 'Paint format');
+      return true;
+    }
+
+    /**
+     * Paste special from a copy made inside the app. mode: 'values' | 'formulas' | 'formats' | 'transpose'.
+     * Transposed paste keeps values and formats (formulas become their results). Returns the size pasted.
+     */
+    pasteSpecial(sheetIndex, row, col, clip, mode) {
+      const sheet = this.sheets[sheetIndex];
+      const sourceIndex = this.sheetIndexById(clip.sheetId);
+      const h = clip.cells.length;
+      const w = clip.cells[0].length;
+      const flip = mode === 'transpose';
+      const rows = flip ? w : h;
+      const cols = flip ? h : w;
+      const computed = (si, sj, src) => {
+        if (!src) return null;
+        if (!src.formula) return src.value;
+        const v = sourceIndex >= 0 ? this.getValue(sourceIndex, clip.range.r1 + si, clip.range.c1 + sj) : src.value;
+        return F.isError(v) ? v.error : v;
+      };
+      const changes = new Map();
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          const si = flip ? j : i;
+          const sj = flip ? i : j;
+          const src = clip.cells[si][sj];
+          const r = row + i;
+          const c = col + j;
+          if (r >= U.MAX_ROWS || c >= U.MAX_COLS) continue;
+          const target = sheet.getCell(r, c);
+          let next;
+          if (mode === 'formats') next = withCell(target, { style: src ? src.style : null });
+          else if (mode === 'values') next = withCell(target, { value: computed(si, sj, src), formula: null });
+          else if (mode === 'formulas') {
+            next = src && src.formula
+              ? withCell(target, { value: null, formula: F.shiftFormula(src.formula, r - (clip.range.r1 + si), c - (clip.range.c1 + sj)) })
+              : withCell(target, { value: src ? src.value : null, formula: null });
+          } else next = src ? withCell(null, { value: computed(si, sj, src), style: src.style, note: src.note, hyperlink: src.hyperlink }) : null;
+          changes.set(U.cellKey(r, c), next);
+        }
+      }
+      this.commitCells(sheetIndex, changes, 'Paste special');
+      return { rows, cols };
+    }
+
     /* ----- Rows and columns ----- */
 
     insertRows(sheetIndex, at, count) { return this.changeAxis(sheetIndex, 'row', at, count, 'Insert rows'); }
@@ -628,6 +829,7 @@
           sheet.filterHiddenRows = shiftIndexSet(sheet.filterHiddenRows, at, count);
           sheet.rowCount = Math.max(MIN_ROWS, Math.min(U.MAX_ROWS, sheet.rowCount + count));
         } else {
+          sheet.hiddenCols = shiftIndexSet(sheet.hiddenCols, at, count);
           sheet.colCount = Math.max(MIN_COLS, Math.min(U.MAX_COLS, sheet.colCount + count));
         }
         sheet.merges = sheet.merges.map((m) => shiftRange(m, axis, at, count))

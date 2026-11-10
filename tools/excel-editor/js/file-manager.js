@@ -239,7 +239,7 @@
       sheet.state = ws.state || 'visible';
       (ws.columns || []).forEach((col, i) => {
         if (col.width) sheet.colWidths.set(i, charsToPx(col.width));
-        if (col.hidden) stats.hiddenCols++;
+        if (col.hidden) sheet.hiddenCols.add(i);
       });
       ws.eachRow({ includeEmpty: true }, (row, rowNumber) => {
         const r = rowNumber - 1;
@@ -296,12 +296,11 @@
     if (pkg.hasDrawings && stats.images === 0) lost.push('shapes, text boxes and drawings');
     if (stats.arrayFormulas) lost.push('array formulas (' + stats.arrayFormulas + ' cells are saved as regular formulas)');
     if (stats.richText) lost.push('mixed formatting inside cells (' + stats.richText + ' cells keep their text but lose partial formatting)');
-    if (stats.hiddenCols) lost.push('hidden columns (' + stats.hiddenCols + ' will be shown)');
 
     const notes = [];
     if (stats.images) notes.push(stats.images + ' image(s) are kept in the file but not shown in the editor. Inserting or deleting rows does not move them.');
     if (pkg.hasDrawings && stats.images) notes.push('Shapes and text boxes, if any, are removed when saving.');
-    if (stats.conditionalFormats) notes.push('Conditional formatting is kept in the file but not shown in the editor, and is not adjusted when rows or columns move.');
+    if (stats.conditionalFormats) notes.push('Some conditional formatting (data bars, icon sets) is kept in the file but not drawn here, and conditional formatting is not adjusted when rows or columns move.');
     if (stats.unsupportedFunctions.size) {
       notes.push('Some formulas use functions this editor cannot calculate (' + [...stats.unsupportedFunctions].slice(0, 6).join(', ') + '). They keep the results saved in the file and are recalculated when opened in Excel.');
     }
@@ -354,6 +353,7 @@
         if (!col) return;
         const px = col.wpx || (col.wch ? charsToPx(col.wch) : 0);
         if (px) sheet.colWidths.set(i, px);
+        if (col.hidden) sheet.hiddenCols.add(i);
       });
       (ws['!rows'] || []).forEach((row, i) => {
         if (!row) return;
@@ -465,6 +465,7 @@
         ? [{ state: 'frozen', xSplit: sheet.frozenCols, ySplit: sheet.frozenRows }] : [];
       const ws = ewb.addWorksheet(sheet.name, { state: sheet.state, views, properties: extras.tabColor ? { tabColor: extras.tabColor } : undefined });
       for (const [c, px] of sheet.colWidths) ws.getColumn(c + 1).width = pxToChars(px);
+      for (const c of sheet.hiddenCols) ws.getColumn(c + 1).hidden = true;
       for (const [r, px] of sheet.rowHeights) ws.getRow(r + 1).height = pxToPt(px);
       const styleMemo = new Map();
       for (const [key, cell] of sheet.cells) {
@@ -549,6 +550,7 @@
       ws['!merges'] = sheet.merges.map((m) => ({ s: { r: m.r1, c: m.c1 }, e: { r: m.r2, c: m.c2 } }));
       const cols = [];
       for (const [c, px] of sheet.colWidths) cols[c] = { wpx: px };
+      for (const c of sheet.hiddenCols) cols[c] = { ...(cols[c] || {}), hidden: true };
       if (cols.length) ws['!cols'] = cols;
       const rows = [];
       for (const [r, px] of sheet.rowHeights) rows[r] = { hpx: px };

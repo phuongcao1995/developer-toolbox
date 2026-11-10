@@ -87,6 +87,7 @@
         'borders-menu': () => this.bordersMenu(button),
         'decimals-less': () => this.changeDecimals(-1),
         'decimals-more': () => this.changeDecimals(1),
+        'format-painter': () => this.toggleFormatPainter(button),
         'clear-format': () => this.wb.clearRanges(this.sheetIndex, [this.selection().range], 'formats'),
         'rows-menu': () => this.rowsMenu(button),
         'sort-asc': () => this.quickSort(true),
@@ -94,6 +95,7 @@
         filter: () => this.filterDialog(),
         find: () => this.openFind(false),
         'data-menu': () => this.dataMenu(button),
+        'cf-menu': () => this.cfMenu(button),
         'freeze-menu': () => this.freezeMenu(button),
         'add-sheet': () => { this.wb.addSheet(); this.grid.focus(); },
       };
@@ -229,6 +231,8 @@
         this.grid.layout();
         this.grid.focus();
       };
+      const span = (a, b) => Array.from({ length: Math.min(b - a + 1, 20000) }, (_, i) => a + i);
+      const hasHidden = (set, a, b) => { for (const i of set) if (i >= a && i <= b) return true; return false; };
       const wholeSheetRows = nRows >= this.wb.activeSheet.rowCount;
       const wholeSheetCols = nCols >= this.wb.activeSheet.colCount;
       return [
@@ -239,6 +243,11 @@
         '-',
         { label: 'Delete ' + plural(nRows, 'row'), action: run(() => this.wb.deleteRows(s, range.r1, nRows)), disabled: wholeSheetRows },
         { label: 'Delete ' + plural(nCols, 'column'), action: run(() => this.wb.deleteCols(s, range.c1, nCols)), disabled: wholeSheetCols },
+        '-',
+        { label: 'Hide ' + plural(nRows, 'row'), action: run(() => { this.wb.setHidden(s, 'row', span(range.r1, range.r2), true); }), disabled: wholeSheetRows },
+        { label: 'Show hidden rows in selection', action: run(() => { this.wb.setHidden(s, 'row', span(range.r1, range.r2), false); }), disabled: !hasHidden(this.wb.activeSheet.hiddenRows, range.r1, range.r2) },
+        { label: 'Hide ' + plural(nCols, 'column'), action: run(() => { this.wb.setHidden(s, 'col', span(range.c1, range.c2), true); }), disabled: wholeSheetCols },
+        { label: 'Show hidden columns in selection', action: run(() => { this.wb.setHidden(s, 'col', span(range.c1, range.c2), false); }), disabled: !hasHidden(this.wb.activeSheet.hiddenCols, range.c1, range.c2) },
       ];
     }
 
@@ -395,12 +404,198 @@
         '-',
         { label: 'Data validation…', action: () => this.validationDialog() },
         { label: 'Show cells that break validation', action: () => this.showInvalid() },
+        { label: 'Remove duplicate rows…', action: () => this.removeDuplicatesDialog() },
+        { label: 'Text to columns…', action: () => this.textToColumnsDialog() },
         { label: 'Highlight duplicates', action: () => this.highlightDuplicates() },
         { label: 'Clear highlights', action: () => { this.grid.clearHighlights(); this.grid.renderNow(); } },
         '-',
         { label: 'Clear contents', shortcut: 'Del', action: () => this.wb.clearRanges(this.sheetIndex, [this.selection().range], 'contents') },
         { label: 'Clear everything', action: () => this.wb.clearRanges(this.sheetIndex, [this.selection().range], 'all') },
       ]);
+    }
+
+    /* ---------- Conditional formatting ---------- */
+
+    cfMenu(button) {
+      const CF = SheetApp.condfmt;
+      const range = this.selection().range;
+      const quick = (rule) => () => { CF.addRule(this.wb, this.sheetIndex, [range], rule); D.toast('Rule added to ' + U.rangeAddress(range) + '.', 'success'); this.grid.focus(); };
+      const scale = (colors) => quick({ type: 'colorScale', cfvo: colors.length === 3 ? [{ type: 'min' }, { type: 'percentile', value: 50 }, { type: 'max' }] : [{ type: 'min' }, { type: 'max' }], color: colors.map((argb) => ({ argb })) });
+      this.menuAt(button, [
+        { label: 'Highlight cells…', action: () => this.cfDialog('cellIs') },
+        { label: 'Text that contains…', action: () => this.cfDialog('containsText') },
+        { label: 'Top or bottom values…', action: () => this.cfDialog('top10') },
+        { label: 'Above average', action: quick({ type: 'aboveAverage', aboveAverage: true, style: CF.presetStyle('green') }) },
+        { label: 'Below average', action: quick({ type: 'aboveAverage', aboveAverage: false, style: CF.presetStyle('red') }) },
+        { label: 'Duplicate values', action: () => {
+          const first = U.cellAddress(range.r1, range.c1);
+          const abs = U.rangeAddress(range).replace(/([A-Z]+)(\d+)/g, '$$$1$$$2');
+          quick({ type: 'expression', formulae: ['AND(' + first + '<>"",COUNTIF(' + abs + ',' + first + ')>1)'], style: CF.presetStyle('red') })();
+        } },
+        { label: 'Formula…', action: () => this.cfDialog('expression') },
+        '-',
+        { label: 'Colour scale: green – yellow – red', action: scale(['FF63BE7B', 'FFFFEB84', 'FFF8696B']) },
+        { label: 'Colour scale: red – yellow – green', action: scale(['FFF8696B', 'FFFFEB84', 'FF63BE7B']) },
+        { label: 'Colour scale: white – blue', action: scale(['FFFFFFFF', 'FF5A8AC6']) },
+        { label: 'Colour scale: white – green', action: scale(['FFFFFFFF', 'FF63BE7B']) },
+        '-',
+        { label: 'Manage rules…', action: () => this.cfManage() },
+        { label: 'Clear rules from selection', action: () => { const n = CF.clearRules(this.wb, this.sheetIndex, [range]); D.toast(n ? n + ' rule(s) removed.' : 'No rules in the selection.', n ? 'success' : 'info'); } },
+      ]);
+    }
+
+    async cfDialog(kind) {
+      const CF = SheetApp.condfmt;
+      const range = this.selection().range;
+      const result = await D.open({
+        title: 'Conditional format for ' + U.rangeAddress(range), submitText: 'Add rule',
+        build: (body) => {
+          const op = D.select(CF.OPERATORS, 'greaterThan');
+          const a = el('input', { class: 'input', placeholder: 'Value or formula' });
+          const b = el('input', { class: 'input', placeholder: 'Second value' });
+          const textOp = D.select([['containsText', 'contains'], ['beginsWith', 'begins with'], ['endsWith', 'ends with'], ['notContains', 'does not contain']], 'containsText');
+          const text = el('input', { class: 'input', placeholder: 'Text to look for' });
+          const which = D.select([['top', 'Top'], ['bottom', 'Bottom']], 'top');
+          const rank = el('input', { class: 'input', inputmode: 'numeric', value: '10' });
+          const percent = D.checkbox('As a percentage of the cells', false);
+          const formula = el('input', { class: 'input', placeholder: '=A1>100  (relative to the top-left cell)' });
+          const preset = D.select(Object.entries(CF.PRESETS).map(([k, v]) => [k, v.label]), 'red');
+          const second = D.field('And', b);
+          const sync = () => { second.hidden = !['between', 'notBetween'].includes(op.value); };
+          op.addEventListener('change', sync); sync();
+          if (kind === 'cellIs') body.append(el('div', { class: 'field-row' }, [D.field('Cell value', op), D.field('Value', a), second]));
+          if (kind === 'containsText') body.append(el('div', { class: 'field-row' }, [D.field('Text', textOp), D.field('Value', text)]));
+          if (kind === 'top10') body.append(el('div', { class: 'field-row' }, [D.field('Which', which), D.field('How many', rank)]), percent.node);
+          if (kind === 'expression') body.append(D.field('Formula', formula, 'Written for the top-left cell of the selection; it adjusts for the others.'));
+          body.append(D.field('Format with', preset));
+          return () => {
+            let rule;
+            if (kind === 'cellIs') {
+              if (!a.value.trim()) return { error: 'Enter a value.' };
+              const num = (v) => { const n = U.parseNumber(v); return n !== null ? n : v.trim().startsWith('=') ? v.trim().slice(1) : '"' + v.trim().replace(/"/g, '') + '"'; };
+              rule = { type: 'cellIs', operator: op.value, formulae: [num(a.value)] };
+              if (['between', 'notBetween'].includes(op.value)) { if (!b.value.trim()) return { error: 'Enter the second value.' }; rule.formulae.push(num(b.value)); }
+            } else if (kind === 'containsText') {
+              if (!text.value) return { error: 'Enter the text to look for.' };
+              rule = { type: 'containsText', operator: textOp.value, text: text.value };
+              const first = U.cellAddress(range.r1, range.c1);
+              const t = '"' + text.value.replace(/"/g, '""') + '"';
+              rule.formulae = [{ containsText: 'NOT(ISERROR(SEARCH(' + t + ',' + first + ')))', beginsWith: 'LEFT(' + first + ',LEN(' + t + '))=' + t, endsWith: 'RIGHT(' + first + ',LEN(' + t + '))=' + t, notContains: 'ISERROR(SEARCH(' + t + ',' + first + '))' }[textOp.value]];
+            } else if (kind === 'top10') {
+              const n = parseInt(rank.value, 10);
+              if (!(n >= 1 && n <= 1000)) return { error: 'How many must be between 1 and 1000.' };
+              rule = { type: 'top10', rank: n, percent: percent.input.checked, bottom: which.value === 'bottom' };
+            } else {
+              const f = formula.value.trim().replace(/^=/, '');
+              if (!f) return { error: 'Enter a formula.' };
+              const problem = SheetApp.formula.checkSyntax(f);
+              if (problem) return { error: problem };
+              rule = { type: 'expression', formulae: [f] };
+            }
+            rule.style = CF.presetStyle(preset.value);
+            return { rule };
+          };
+        },
+      });
+      if (result) { CF.addRule(this.wb, this.sheetIndex, [range], result.rule); D.toast('Rule added to ' + U.rangeAddress(range) + '.', 'success'); }
+      this.grid.focus();
+    }
+
+    async cfManage() {
+      const CF = SheetApp.condfmt;
+      const rules = CF.listRules(this.wb, this.sheetIndex);
+      if (!rules.length) { D.toast('This sheet has no conditional formatting rules.', 'info'); return; }
+      const remove = new Set();
+      const result = await D.open({
+        title: 'Conditional formatting rules', submitText: 'Apply', wide: true,
+        build: (body) => {
+          rules.forEach((r, i) => {
+            const swatch = el('span', { class: 'cf-swatch', text: 'Aa' });
+            const css = r.rule.type === 'colorScale' ? null : r.rule.style;
+            if (css) { const fill = css.fill && (U.argbToCss(css.fill.bgColor) || U.argbToCss(css.fill.fgColor)); if (fill) swatch.style.background = fill; const col = css.font && U.argbToCss(css.font.color); if (col) swatch.style.color = col; }
+            else swatch.style.background = 'linear-gradient(90deg,' + (r.rule.color || []).map((c) => U.argbToCss(c) || '#fff').join(',') + ')';
+            const del = D.checkbox('Delete', false);
+            del.input.addEventListener('change', () => { if (del.input.checked) remove.add(i); else remove.delete(i); });
+            body.append(el('div', { class: 'cf-row' }, [swatch, el('span', { class: 'cf-text', text: r.text }), el('span', { class: 'cf-ref', text: r.ref }), del.node]));
+          });
+          return () => ({ remove });
+        },
+      });
+      if (result && remove.size) {
+        const drop = new Set([...remove].map((i) => rules[i].rule));
+        CF.setRules(this.wb, this.sheetIndex, (rule) => !drop.has(rule));
+        D.toast(remove.size + ' rule(s) removed.', 'success');
+      }
+      this.grid.focus();
+    }
+
+    async removeDuplicatesDialog() {
+      const range = this.workingRange();
+      if (range.r2 - range.r1 < 1) { D.toast('Select a table with at least two rows first.', 'error'); return; }
+      const header = this.wb.guessHeader(this.sheetIndex, range);
+      const result = await D.open({
+        title: 'Remove duplicate rows in ' + U.rangeAddress(range), submitText: 'Remove duplicates',
+        build: (body) => {
+          const hasHeader = D.checkbox('My data has a header row', header);
+          const boxes = [];
+          body.append(hasHeader.node, el('p', { class: 'note', text: 'A row is a duplicate when all the checked columns match an earlier row (text is compared without regard to case).' }));
+          for (let c = range.c1; c <= range.c2; c++) {
+            const label = this.wb.getDisplay(this.sheetIndex, range.r1, c).text || 'Column ' + U.colToLetters(c);
+            const box = D.checkbox(header ? label : 'Column ' + U.colToLetters(c), true);
+            boxes.push([c, box]);
+            body.append(box.node);
+          }
+          hasHeader.input.addEventListener('change', () => boxes.forEach(([c, box]) => {
+            const text = hasHeader.input.checked ? (this.wb.getDisplay(this.sheetIndex, range.r1, c).text || 'Column ' + U.colToLetters(c)) : 'Column ' + U.colToLetters(c);
+            box.node.querySelector('span').textContent = text;
+          }));
+          return () => {
+            const cols = boxes.filter(([, b]) => b.input.checked).map(([c]) => c);
+            if (!cols.length) return { error: 'Check at least one column.' };
+            return { cols, header: hasHeader.input.checked };
+          };
+        },
+      });
+      if (result) {
+        const out = this.wb.removeDuplicates(this.sheetIndex, range, result.cols, result.header);
+        D.toast(out.removed ? out.removed + ' duplicate row(s) removed; ' + out.kept + ' unique row(s) left.' : 'No duplicates found.', out.removed ? 'success' : 'info');
+      }
+      this.grid.focus();
+    }
+
+    async textToColumnsDialog() {
+      const sel = this.selection().range;
+      const range = { r1: sel.r1, r2: sel.r2, c1: sel.c1, c2: sel.c1 };
+      if (sel.c2 > sel.c1) { D.toast('Select cells in one column only.', 'error'); return; }
+      const sheet = this.wb.activeSheet;
+      if (range.r2 >= sheet.rowCount - 1) range.r2 = Math.min(range.r2, sheet.usedBounds().maxRow);
+      const result = await D.open({
+        title: 'Text to columns for ' + U.rangeAddress(range), submitText: 'Split',
+        build: (body) => {
+          const kind = D.select([[',', 'Comma'], [';', 'Semicolon'], ['\t', 'Tab'], [' ', 'Space'], ['|', 'Pipe ( | )'], ['custom', 'Other…']], ',');
+          const custom = el('input', { class: 'input', placeholder: 'Separator', maxlength: '8' });
+          const merge = D.checkbox('Treat consecutive separators as one', false);
+          const customField = D.field('Separator', custom);
+          const sync = () => { customField.hidden = kind.value !== 'custom'; };
+          kind.addEventListener('change', sync); sync();
+          body.append(D.field('Split at', kind), customField, merge.node, el('p', { class: 'note', text: 'The pieces go in the columns to the right. Cells there are overwritten after you confirm.' }));
+          return () => {
+            const delimiter = kind.value === 'custom' ? custom.value : kind.value;
+            if (!delimiter) return { error: 'Enter a separator.' };
+            return { delimiter, merge: merge.input.checked };
+          };
+        },
+      });
+      if (result) {
+        let width = this.wb.textToColumns(this.sheetIndex, range, result.delimiter, result.merge, false);
+        if (width === -1) {
+          const ok = await D.confirm({ title: 'Overwrite cells?', message: 'The columns to the right already contain data. Replace it?', confirmText: 'Replace' });
+          if (!ok) { this.grid.focus(); return; }
+          width = this.wb.textToColumns(this.sheetIndex, range, result.delimiter, result.merge, true);
+        }
+        D.toast('Split into ' + width + ' column(s).', 'success');
+      }
+      this.grid.focus();
     }
 
     highlightDuplicates() {
@@ -581,7 +776,10 @@
         input.style.height = 'auto';
         input.style.height = Math.min(120, input.scrollHeight) + 'px';
       });
+      input.addEventListener('keyup', () => { if (this.grid.isEditing()) this.grid.updateAssist(); });
+      input.addEventListener('click', () => { if (this.grid.isEditing()) this.grid.updateAssist(); });
       input.addEventListener('keydown', (e) => {
+        if (this.grid.assistKey(e)) return;
         if (e.key === 'Enter' && !e.altKey && !e.shiftKey) { e.preventDefault(); this.grid.commitEdit(1, 0); }
         else if (e.key === 'Tab') { e.preventDefault(); this.grid.commitEdit(0, e.shiftKey ? -1 : 1); }
         else if (e.key === 'Escape') { e.preventDefault(); this.grid.cancelEdit(); }
@@ -751,6 +949,8 @@
           title: sheet.state !== 'visible' ? sheet.name + ' (hidden in Excel)' : sheet.name + '. Double-click to rename; right-click for more.',
           text: sheet.name,
         });
+        const tabColor = U.argbToCss(sheet.extras && sheet.extras.tabColor);
+        if (tabColor) { tab.style.borderBottom = '3px solid ' + tabColor; tab.classList.add('has-color'); }
         tab.addEventListener('click', () => { this.grid.commitEdit(0, 0); wb.setActive(i); this.grid.focus(); });
         tab.addEventListener('dblclick', () => this.renameSheet(i));
         tab.addEventListener('contextmenu', (e) => { e.preventDefault(); wb.setActive(i); this.tabMenu(e.clientX, e.clientY, i); });
@@ -791,8 +991,42 @@
         { label: 'Move left', action: () => wb.moveSheet(index, index - 1), disabled: index === 0 },
         { label: 'Move right', action: () => wb.moveSheet(index, index + 1), disabled: index === wb.sheets.length - 1 },
         '-',
+        { label: 'Tab colour…', action: () => this.pickTabColor(index) },
+        { label: 'Remove tab colour', action: () => wb.setTabColor(index, null), disabled: !(wb.sheets[index].extras && wb.sheets[index].extras.tabColor) },
+        '-',
         { label: 'Delete…', action: () => this.deleteSheet(index), disabled: wb.sheets.length === 1 },
       ]);
+    }
+
+    pickTabColor(index) {
+      const input = el('input', { type: 'color', value: U.argbToCss(this.wb.sheets[index].extras && this.wb.sheets[index].extras.tabColor) || '#1f6f50', 'aria-label': 'Tab colour' });
+      input.style.cssText = 'position:fixed;left:-9999px;opacity:0';
+      document.body.append(input);
+      input.addEventListener('change', () => { this.wb.setTabColor(index, input.value); input.remove(); });
+      input.addEventListener('blur', () => setTimeout(() => input.remove(), 300));
+      input.click();
+    }
+
+    /** Format painter: click it, then select the cells to copy the active cell's formatting onto. */
+    toggleFormatPainter(button) {
+      if (this.painter) { this.painter.cancel(); return; }
+      const { active } = this.selection();
+      const cell = this.wb.activeSheet.getCell(active.row, active.col);
+      const style = (cell && cell.style) || null;
+      const stage = this.grid.stage;
+      const cancel = () => { stage.removeEventListener('pointerup', apply, true); document.removeEventListener('keydown', onKey, true); button.setAttribute('aria-pressed', 'false'); this.painter = null; };
+      const apply = () => setTimeout(() => {
+        const { range } = this.selection();
+        if (this.painter) this.wb.applyFormat(this.sheetIndex, range, style);
+        cancel();
+        this.grid.focus();
+      }, 0);
+      const onKey = (e) => { if (e.key === 'Escape') cancel(); };
+      stage.addEventListener('pointerup', apply, { capture: true, once: true });
+      document.addEventListener('keydown', onKey, true);
+      button.setAttribute('aria-pressed', 'true');
+      this.painter = { cancel };
+      D.toast('Select the cells to format. Esc cancels.', 'info');
     }
 
     async renameSheet(index) {
@@ -844,6 +1078,10 @@
         { label: 'Cut', shortcut: 'Ctrl+X', action: () => this.grid.copySelectionToSystem(true) },
         { label: 'Copy', shortcut: 'Ctrl+C', action: () => this.grid.copySelectionToSystem(false) },
         pasteItem,
+        { label: 'Paste values only', shortcut: 'Ctrl+Shift+V', action: () => this.grid.pasteSpecial('values') },
+        { label: 'Paste formulas only', action: () => this.grid.pasteSpecial('formulas') },
+        { label: 'Paste formatting only', action: () => this.grid.pasteSpecial('formats') },
+        { label: 'Paste transposed', action: () => this.grid.pasteSpecial('transpose') },
         '-',
         ...this.structureItems(),
         '-',
