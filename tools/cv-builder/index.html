@@ -1,0 +1,54 @@
+<div class="cvb" id="cvb" data-view="edit">
+  <div class="cvb-bar">
+    <div class="cvb-grp">
+      <select class="select cvb-version" id="cvb-version" aria-label="CV version"></select>
+      <button class="btn btn-sm btn-icon" data-action="ver-new" aria-label="New CV version" title="New CV"><i data-lucide="plus"></i></button>
+      <button class="btn btn-sm btn-icon" data-action="ver-dup" aria-label="Duplicate this CV" title="Duplicate"><i data-lucide="copy"></i></button>
+      <button class="btn btn-sm btn-icon" data-action="ver-rename" aria-label="Rename this CV" title="Rename"><i data-lucide="pencil"></i></button>
+      <button class="btn btn-sm btn-icon" data-action="ver-del" aria-label="Delete this CV" title="Delete"><i data-lucide="trash-2"></i></button>
+    </div>
+    <div class="cvb-grp">
+      <button class="btn btn-sm" data-action="templates" id="cvb-tpl-btn"><i data-lucide="files"></i> <span id="cvb-tpl-name">Template</span></button>
+      <details class="cvb-pop" id="cvb-style">
+        <summary class="btn btn-sm" aria-label="Customize colour and typography"><i data-lucide="palette"></i> Style</summary>
+        <div class="cvb-pop-body">
+          <div class="field"><label for="cvb-color">Accent colour</label>
+            <div class="cvb-swatches" id="cvb-swatches"></div>
+            <div class="row"><input type="color" id="cvb-color" aria-label="Custom accent colour"><button class="btn btn-sm" data-action="color-reset">Template default</button></div>
+          </div>
+          <div class="field"><label for="cvb-font">Font</label><select class="select" id="cvb-font"></select></div>
+          <div class="field"><label for="cvb-size">Text size <output id="cvb-size-out"></output></label><input type="range" id="cvb-size" min="8.5" max="12" step="0.5"></div>
+          <div class="field"><label for="cvb-density">Spacing</label>
+            <select class="select" id="cvb-density"><option value="compact">Compact</option><option value="normal">Normal</option><option value="relaxed">Relaxed</option></select></div>
+        </div>
+      </details>
+    </div>
+    <div class="cvb-grp cvb-right">
+      <details class="cvb-pop cvb-more" id="cvb-more">
+        <summary class="btn btn-sm" aria-label="More actions"><i data-lucide="folder-open"></i> More</summary>
+        <div class="cvb-pop-body cvb-menu">
+          <button class="btn btn-sm btn-ghost" data-action="import"><i data-lucide="upload"></i> Import JSON / JSON Resume</button>
+          <button class="btn btn-sm btn-ghost" data-action="export-json"><i data-lucide="file-json"></i> Download JSON</button>
+          <button class="btn btn-sm btn-ghost" data-action="export-text"><i data-lucide="file-text"></i> Download plain text</button>
+          <button class="btn btn-sm btn-ghost" data-action="export-html"><i data-lucide="download"></i> Download HTML</button>
+          <button class="btn btn-sm btn-ghost" data-action="example"><i data-lucide="sparkles"></i> New from example</button>
+        </div>
+      </details>
+      <button class="btn btn-sm btn-primary" data-action="pdf"><i data-lucide="printer"></i> Export PDF</button>
+    </div>
+  </div>
+  <div class="cvb-tabs" role="group" aria-label="View">
+    <button class="btn btn-sm active" data-action="view-edit" aria-pressed="true">Edit</button>
+    <button class="btn btn-sm" data-action="view-preview" aria-pressed="false">Preview</button>
+  </div>
+  <div class="cvb-main">
+    <div class="cvb-form" id="cvb-form" aria-label="CV content"></div>
+    <div class="cvb-preview">
+      <div class="cvb-status"><span id="cvb-pages"></span><button class="btn btn-sm btn-ghost" id="cvb-issues" data-action="issues" hidden></button><span id="cvb-saved" class="cvb-saved" role="status"></span></div>
+      <div class="cvb-example" id="cvb-example" hidden>Example preview. Start typing to replace it with your own details.</div>
+      <div class="cvb-scroll" id="cvb-scroll">
+        <div class="cvb-sizer" id="cvb-sizer"><div class="cvb-paper" id="cvb-paper" aria-label="CV preview"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
