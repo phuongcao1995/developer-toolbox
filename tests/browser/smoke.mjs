@@ -25,7 +25,8 @@ const probe = `(() => {
     return true;
   }).length;
   return { visibleError: [...root.querySelectorAll('.alert-error')].some(e => e.offsetParent !== null),
-           hOverflow: de.scrollWidth > innerWidth + 1, icon: !!document.querySelector('.tool-head-icon svg'), len: root.innerHTML.length, unlabeled };
+           // clientWidth, not innerWidth: with mobile emulation innerWidth grows to match overflowing content and would hide the bug
+           hOverflow: de.scrollWidth > de.clientWidth + 1, icon: !!document.querySelector('.tool-head-icon svg'), len: root.innerHTML.length, unlabeled };
 })()`;
 
 const findings = [];

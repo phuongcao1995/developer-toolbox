@@ -94,6 +94,20 @@ const RELEASES = {
 };
 for (const [id, r] of Object.entries(RELEASES)) Object.assign(getTool(id) || {}, r);
 
+/**
+ * Date each tool was first added (taken from git history). Used by "Recently added" sorting. A tool with no entry here
+ * has no `added` date and is treated as the newest, so a freshly added tool sorts first until its date is recorded.
+ */
+const ADDED_ON = {
+  '2026-11-03': ['json-formatter', 'cyberchef', 'jwt-decoder', 'regex-tester', 'saltbox', 'api-client', 'diff-checker', 'markdown-editor', 'markdown-viewer', 'code-beautifier', 'sql-formatter',
+    'prettier-playground', 'carbon-code-image', 'base64-converter', 'url-encoder', 'cron-generator', 'uuid-generator', 'timestamp-converter', 'webhook-inspector', 'table-converter', 'http-status-reference'],
+  '2026-11-05': ['text-pad', 'html-entity-converter', 'ts-interface-generator', 'sql-query-analyzer', 'openapi-viewer', 'xml-formatter', 'yaml-formatter', 'git-command-generator', 'image-converter',
+    'file-hash-generator', 'qr-code', 'chmod-calculator', 'html-css-js-playground', 'color-converter', 'http-header-analyzer', 'excel-editor', 'word-editor', 'curl-converter'],
+  '2026-11-09': ['test-case-manager'],
+  '2026-11-10': ['cv-builder', 'weather-forecast'],
+};
+for (const [date, ids] of Object.entries(ADDED_ON)) for (const id of ids) { const tool = getTool(id); if (tool) tool.added = date; }
+
 /** Dev-time sanity check of the registry; returns a list of problems (empty = healthy). */
 export function validateRegistry(tools = TOOLS, categories = CATEGORIES) {
   const problems = [], seen = new Set(), cats = new Set(categories.map(c => c.id));

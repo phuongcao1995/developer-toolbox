@@ -7,6 +7,7 @@
   "scripts": {
     "test": "node tests/run-all.mjs",
     "test:browser": "node tests/browser/smoke.mjs",
+    "test:catalog": "node tests/browser/catalog.mjs",
     "test:leaks": "node tests/browser/leak.mjs",
     "serve": "node scripts/serve.mjs 8080"
   },

@@ -10,6 +10,9 @@ export const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c =>
 export function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
+    // ARIA states are strings, not HTML boolean attributes: aria-pressed={true} must read "true" (an empty value is treated as unset
+    // by assistive technology) and aria-pressed={false} must read "false", not be omitted.
+    if (typeof v === 'boolean' && k.startsWith('aria-')) { node.setAttribute(k, String(v)); continue; }
     if (v == null || v === false) continue;
     if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2).toLowerCase(), v);
     else if (k === 'class') node.className = v;

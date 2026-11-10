@@ -6,7 +6,7 @@ import * as ui from './components/ui.js';
 
 const { $, $$, el, escapeHtml, renderIcons, icon } = ui;
 const main = $('#main');
-const RECENT_MAX = 10;
+const RECENT_MAX = 20;
 
 // ---------- State (persisted) ----------
 const favorites = {
@@ -63,18 +63,25 @@ function applySettings() {
 // ---------- Tool cards ----------
 // Standalone tools (own page, own UI) open in a new tab; everything else is a hash route inside the shell.
 const toolLinkAttrs = tool => tool.standalone ? { href: tool.href, target: '_blank', rel: 'noopener' } : { href: hrefTo('tool', tool.id) };
-function toolCard(tool, ranges = [], badge = '') {
+/**
+ * One tool card. `onFav(tool)` lets a list that can redraw itself (the catalog) handle a favourite toggle in place, keeping its
+ * filter, sort and scroll position; without it the current page is re-rendered. The star never triggers the card's navigation.
+ */
+function toolCard(tool, ranges = [], badge = '', onFav = null) {
   const fav = favorites.has(tool.id);
   const cat = getCategory(tool.category);
-  const card = el('a', { class: 'tool-card', 'data-cat': tool.category, ...toolLinkAttrs(tool) },
+  const favBtn = el('button', { class: `fav-btn${fav ? ' active' : ''}`, type: 'button', 'aria-label': fav ? `Remove ${tool.name} from favorites` : `Add ${tool.name} to favorites`, 'aria-pressed': fav,
+    title: fav ? 'Remove from favorites' : 'Add to favorites', html: icon('star'),
+    onclick: e => { e.preventDefault(); e.stopPropagation(); favorites.toggle(tool.id); if (onFav) onFav(tool); else route(router.current, true); } });
+  return el('a', { class: 'tool-card', 'data-cat': tool.category, 'data-tool': tool.id, ...toolLinkAttrs(tool) },
     el('div', { class: 'tool-card-icon', html: icon(tool.icon) }),
     el('div', { class: 'tool-card-body' },
       el('div', { class: 'tool-card-title' }, highlight(tool.name, ranges)),
-      el('div', { class: 'tool-card-desc' }, tool.description),
-      el('span', { class: 'badge badge-cat' }, cat?.name || ''), badge ? el('span', { class: 'card-note' }, badge) : null),
-    el('button', { class: `fav-btn${fav ? ' active' : ''}`, 'aria-label': fav ? 'Remove from favorites' : 'Add to favorites', 'aria-pressed': fav, title: 'Favorite',
-      html: icon('star'), onclick: e => { e.preventDefault(); e.stopPropagation(); favorites.toggle(tool.id); route(router.current, true); } }));
-  return card;
+      el('div', { class: 'tool-card-desc', title: tool.description }, tool.description),
+      badge ? el('div', { class: 'card-note' }, badge) : null,
+      el('div', { class: 'tool-card-foot' }, el('span', { class: 'badge badge-cat' }, cat?.name || ''))),
+    favBtn,
+    el('span', { class: 'tool-card-go', 'aria-hidden': 'true', html: icon('arrow-up-right') }));
 }
 const toolGrid = (tools, badgeFor) => el('div', { class: 'tool-grid' }, tools.map(t => toolCard(t, [], badgeFor?.(t))));
 const emptyState = (title, text, href, linkText) => el('div', { class: 'empty' }, el('strong', {}, title), el('p', {}, text),
@@ -112,26 +119,88 @@ function viewDashboard() {
   return { title: 'Dashboard', node: frag };
 }
 
-function viewCatalog({ category = null, ids = null, title, empty }) {
+// Sorting and view preferences for the catalog pages, remembered between visits.
+const SORTS = [['default', 'Default'], ['name', 'Name (A–Z)'], ['recent', 'Recently used'], ['most', 'Most used'], ['favorites', 'Favorites first'], ['added', 'Recently added']];
+const catalogPrefs = {
+  get() { const p = storage.get('catalogPrefs', {}) || {}; return { sort: SORTS.some(s => s[0] === p.sort) ? p.sort : 'default', view: p.view === 'list' ? 'list' : 'grid' }; },
+  set(patch) { storage.set('catalogPrefs', { ...catalogPrefs.get(), ...patch }); },
+};
+/**
+ * Order search results. They arrive in the default order (relevance while searching, otherwise the page's natural order), which
+ * is also the tie-breaker, so sorting composes with the search and category filters. A tool with no `added` date counts as newest.
+ */
+function sortResults(results, mode) {
+  if (mode === 'default') return results;
+  const pos = new Map(results.map((r, i) => [r.tool.id, i])), u = usage.all(), favs = new Set(favorites.list());
+  const last = r => u[r.tool.id]?.last || 0, count = r => u[r.tool.id]?.count || 0, added = r => r.tool.added || '9999-12-31';
+  const by = {
+    name: (a, b) => a.tool.name.localeCompare(b.tool.name, undefined, { sensitivity: 'base' }),
+    recent: (a, b) => last(b) - last(a),
+    most: (a, b) => count(b) - count(a) || last(b) - last(a),
+    favorites: (a, b) => Number(favs.has(b.tool.id)) - Number(favs.has(a.tool.id)),
+    added: (a, b) => added(b).localeCompare(added(a)),
+  }[mode];
+  return [...results].sort((a, b) => by(a, b) || pos.get(a.tool.id) - pos.get(b.tool.id));
+}
+
+/**
+ * A browsable list of tools with a filter (name, description, keywords, category), category chips, sorting and a grid/list view.
+ * `ids` restricts the list to certain tools (an array, or a function returning one so it stays current), in that order by default.
+ */
+function viewCatalog({ category = null, ids = null, title, empty, emptyText = '' }) {
+  const prefs = catalogPrefs.get();
+  let sort = prefs.sort, view = prefs.view, activeCat = category;
   const wrap = el('div');
-  const input = el('input', { class: 'input', type: 'search', placeholder: 'Filter tools…', 'aria-label': 'Filter tools' });
-  const chips = el('div', { class: 'chips' });
-  let activeCat = category;
-  const results = el('div');
-  const draw = () => {
-    chips.replaceChildren(...[{ id: null, name: 'All' }, ...CATEGORIES].map(c =>
-      el('button', { class: `chip${activeCat === c.id ? ' active' : ''}`, 'data-cat': c.id, 'aria-pressed': activeCat === c.id, onclick: () => { activeCat = c.id; draw(); } }, c.name)));
-    let list = searchToolsDetailed(input.value, activeCat);
-    if (ids) list = list.filter(r => ids.includes(r.tool.id));
-    results.replaceChildren(list.length
-      ? el('div', { class: 'tool-grid' }, list.map(r => toolCard(r.tool, r.ranges)))
-      : emptyState(empty || 'No tools match', 'Try a different search or category.'));
-    count.textContent = input.value ? `${list.length} ${list.length === 1 ? 'tool' : 'tools'} found` : '';
-    renderIcons(results);
+  const input = el('input', { class: 'input', type: 'search', id: 'catalog-filter', placeholder: 'Filter tools by name, description or category…', 'aria-label': 'Filter tools by name, description or category', autocomplete: 'off', spellcheck: 'false' });
+  const clearBtn = el('button', { class: 'search-clear', type: 'button', 'aria-label': 'Clear filter', title: 'Clear filter (Esc)', hidden: true, html: icon('x') });
+  const sortSel = el('select', { class: 'select', id: 'catalog-sort', 'aria-label': 'Sort tools' }, SORTS.map(([v, l]) => el('option', { value: v }, l)));
+  sortSel.value = sort;
+  const gridBtn = el('button', { type: 'button', title: 'Grid view', 'aria-label': 'Grid view', html: icon('grid-2x2') });
+  const listBtn = el('button', { type: 'button', title: 'List view', 'aria-label': 'List view', html: icon('list') });
+  const chips = el('div', { class: 'chips catalog-chips', role: 'group', 'aria-label': 'Filter by category' });
+  const meta = el('div', { class: 'catalog-meta', role: 'status', 'aria-live': 'polite' });
+  const results = el('div', { class: 'catalog-results' });
+
+  const clearAll = () => { input.value = ''; activeCat = null; draw(); input.focus(); };
+  const onFav = tool => { renderSidebarCounts(); draw(); results.querySelector(`[data-tool="${tool.id}"] .fav-btn`)?.focus(); };
+  const emptyView = (q, scope) => {
+    if (!q && !activeCat) return emptyState(empty || 'No tools to show', emptyText || 'Try a different search or category.', hrefTo('tools'), 'Browse all tools');
+    return el('div', { class: 'empty' }, el('strong', {}, q ? `No tools match “${q}”` : 'No tools in this category'),
+      el('p', {}, scope ? 'Check the spelling, or clear the filters to see all of them.' : 'Check the spelling, try a keyword such as “json” or “url”, or clear the filters.'),
+      el('button', { class: 'btn', type: 'button', onclick: clearAll }, 'Clear filters'));
   };
-  const count = el('span', { class: 'sr-only', role: 'status' });
-  input.addEventListener('input', ui.debounce(draw, 100));
-  wrap.append(el('div', { class: 'toolbar' }, input, count), chips, results);
+  function draw() {
+    const q = input.value.trim(), idList = typeof ids === 'function' ? ids() : ids;
+    clearBtn.hidden = !input.value;
+    gridBtn.setAttribute('aria-pressed', String(view === 'grid')); listBtn.setAttribute('aria-pressed', String(view === 'list'));
+    chips.replaceChildren(...[{ id: null, name: 'All' }, ...CATEGORIES].map(c =>
+      el('button', { class: `chip${activeCat === c.id ? ' active' : ''}`, type: 'button', 'data-cat': c.id, 'data-chip': c.id ?? 'all', 'aria-pressed': activeCat === c.id,
+        onclick: () => { activeCat = c.id; draw(); chips.querySelector(`[data-chip="${c.id ?? 'all'}"]`)?.focus(); } }, c.name)));
+    let list = searchToolsDetailed(q, activeCat);
+    if (idList) {
+      const order = new Map(idList.map((id, i) => [id, i]));
+      list = list.filter(r => order.has(r.tool.id));
+      if (!q) list.sort((a, b) => order.get(a.tool.id) - order.get(b.tool.id)); // a Favorites / Recently used page keeps its own order
+    }
+    list = sortResults(list, sort);
+    const scope = idList ? idList.length : TOOLS.length, filtered = q || activeCat;
+    results.replaceChildren(list.length ? el('div', { class: 'tool-grid', 'data-view': view }, list.map(r => toolCard(r.tool, r.ranges, '', onFav))) : emptyView(q, !!idList));
+    meta.textContent = filtered ? `${list.length} of ${scope} ${scope === 1 ? 'tool' : 'tools'}` : `${scope} ${scope === 1 ? 'tool' : 'tools'}`;
+    renderIcons(wrap);
+  }
+  const redraw = ui.debounce(draw, 100);
+  input.addEventListener('input', () => { clearBtn.hidden = !input.value; redraw(); });
+  input.addEventListener('keydown', e => { if (e.key === 'Escape' && input.value) { e.preventDefault(); e.stopPropagation(); input.value = ''; draw(); } });
+  clearBtn.addEventListener('click', () => { input.value = ''; draw(); input.focus(); });
+  sortSel.addEventListener('change', () => { sort = sortSel.value; catalogPrefs.set({ sort }); draw(); });
+  gridBtn.addEventListener('click', () => { view = 'grid'; catalogPrefs.set({ view }); draw(); });
+  listBtn.addEventListener('click', () => { view = 'list'; catalogPrefs.set({ view }); draw(); });
+  wrap.append(
+    el('div', { class: 'catalog-bar' },
+      el('div', { class: 'search-field' }, input, clearBtn),
+      el('label', { class: 'sort-field' }, el('span', {}, 'Sort'), sortSel),
+      el('div', { class: 'seg', role: 'group', 'aria-label': 'View' }, gridBtn, listBtn)),
+    chips, meta, results);
   draw();
   return { title, node: wrap };
 }
@@ -313,8 +382,8 @@ async function route(r = router.current, rerender = false) {
   switch (r.name) {
     case 'dashboard': view = viewDashboard(); break;
     case 'tools': view = viewCatalog({ title: 'All Tools' }); break;
-    case 'favorites': view = viewCatalog({ title: 'Favorites', ids: favorites.list(), empty: 'No favorites yet' }); break;
-    case 'recent': view = viewCatalog({ title: 'Recently Used', ids: recent.list(), empty: 'No recently used tools' }); break;
+    case 'favorites': view = viewCatalog({ title: 'Favorites', ids: () => favorites.list(), empty: 'No favorites yet', emptyText: 'Click the star on any tool to pin it here for quick access.' }); break;
+    case 'recent': view = viewCatalog({ title: 'Recently Used', ids: () => recent.list(), empty: 'No recently used tools', emptyText: 'Tools you open will show up here, most recent first.' }); break;
     case 'category': { const c = getCategory(r.param); view = c ? viewCatalog({ title: c.name, category: c.id }) : viewCatalog({ title: 'All Tools' }); break; }
     case 'settings': view = viewSettings(); break;
     case 'about': view = viewAbout(); break;
@@ -326,7 +395,7 @@ async function route(r = router.current, rerender = false) {
   else { main.append(el('div', { class: 'page-head' }, el('h1', {}, view.title === 'Dashboard' ? '' : view.title)), view.node); if (view.title === 'Dashboard') $('.page-head', main).remove(); }
   renderIcons(main);
   document.title = `${view.title} · Developer Toolbox`;
-  main.scrollTop = 0; window.scrollTo(0, 0);
+  if (!rerender) { main.scrollTop = 0; window.scrollTo(0, 0); } // a re-render (e.g. after starring a card) must not jump to the top
   if (!rerender) announceRoute(view.title, firstRoute);
   firstRoute = false;
   highlightNav(r); renderSidebarCounts(); closeSidebar();

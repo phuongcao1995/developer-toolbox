@@ -11,14 +11,22 @@
   --code-bg: #f4f6fa; --mark: #fff0a8; --add-bg: #dff5e6; --del-bg: #fde3e6;
   --shadow: 0 1px 2px rgba(20,30,50,.06), 0 4px 14px rgba(20,30,50,.06);
   --overlay: rgba(15,20,35,.45);
-  /* Category colours. soft = tinted background, ink = icon/label text, accent = hover border. Every ink/soft pair is >= 4.8:1. */
-  --cat-data-soft: #e7eefe;    --cat-data-ink: #285edc;    --cat-data-accent: #2257d3;
-  --cat-text-soft: #f1e7fe;    --cat-text-ink: #8435de;    --cat-text-accent: #7522d3;
-  --cat-code-soft: #e7fdfe;    --cat-code-ink: #14777b;    --cat-code-accent: #22cdd3;
-  --cat-utility-soft: #fef9e7; --cat-utility-ink: #7f6a15; --cat-utility-accent: #d3af22;
-  --cat-api-soft: #fee7f1;     --cat-api-ink: #c11f6b;     --cat-api-accent: #d32275;
-  --cat-files-soft: #e7feee;   --cat-files-ink: #157f35;   --cat-files-accent: #22d357;
-  --cat-web-soft: #feeae7;     --cat-web-ink: #bd341f;     --cat-web-accent: #d33a22;
+  /*
+   * Category colours, defined once. soft = tinted background (icon tile, label), accent = the category's primary colour
+   * (hover border, filter dot), ink = icon and label text. soft and accent are the design spec's values; ink is the same hue
+   * darkened only as far as needed to read at >= 4.8:1 on soft (the raw primaries fail 4.5:1 as text for five of seven categories).
+   */
+  --cat-data-soft: #e8eeff;    --cat-data-ink: #3458ea;    --cat-data-accent: #4263eb;
+  --cat-text-soft: #f3e8ff;    --cat-text-ink: #8e2ae9;    --cat-text-accent: #9333ea;
+  --cat-code-soft: #e0f7fa;    --cat-code-ink: #06738d;    --cat-code-accent: #0891b2;
+  --cat-utility-soft: #fef9c3; --cat-utility-ink: #906303; --cat-utility-accent: #ca8a04;
+  --cat-api-soft: #fce7f3;     --cat-api-ink: #c12068;     --cat-api-accent: #db2777;
+  --cat-files-soft: #dcfce7;   --cat-files-ink: #117b38;   --cat-files-accent: #16a34a;
+  --cat-web-soft: #ffedd5;     --cat-web-ink: #b54409;     --cat-web-accent: #ea580c;
+  /* Card and catalog design tokens */
+  --card-radius: 12px; --card-pad: 16px; --grid-gap: 14px; --icon-tile: 40px;
+  --shadow-hover: 0 4px 14px rgba(15, 23, 42, .07);
+  --star: #d97706;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -32,6 +40,8 @@
   --code-bg: #10141c; --mark: #5b4b0a; --add-bg: #12351f; --del-bg: #411a20;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
   --overlay: rgba(0,0,0,.6);
+  --shadow-hover: 0 6px 18px rgba(0, 0, 0, .35);
+  --star: #fbbf24;
   /* Category colours (dark): every ink/soft pair is >= 6:1. */
   --cat-data-soft: #1d2a49;    --cat-data-ink: #89aaf5;    --cat-data-accent: #3c6cdd;
   --cat-text-soft: #2c2149;    --cat-text-ink: #c192f6;    --cat-text-accent: #873cdd;

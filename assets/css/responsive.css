@@ -21,9 +21,17 @@
   .topbar { padding: 0 12px; }
   .search-trigger kbd { display: none; }
   .avatar { display: none; }
-  .tool-grid, .cat-grid { grid-template-columns: 1fr; }
+  .cat-grid { grid-template-columns: 1fr; }
   .hero { padding: 12px 14px; }
   .modal-overlay { padding-top: 6vh; }
+}
+/* Phones and small tablets: the category filter becomes one horizontally scrollable row instead of wrapping to several lines. */
+@media (max-width: 767px) {
+  .catalog-chips { flex-wrap: nowrap; overflow-x: auto; margin-inline: -16px; padding: 2px 16px 8px; scrollbar-width: none; scroll-snap-type: x proximity; }
+  .catalog-chips::-webkit-scrollbar { display: none; }
+  .catalog-chips .chip { flex: none; white-space: nowrap; scroll-snap-align: start; }
+  .catalog-bar .search-field { flex-basis: 100%; }
+  .sort-field { flex: 1; } .sort-field .select { width: 100%; min-width: 0; }
 }
 
 @media (pointer: coarse) {
