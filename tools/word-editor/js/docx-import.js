@@ -129,6 +129,8 @@
     if (ind) {
       const left = num(attr(ind, 'left') ?? attr(ind, 'start'));
       if (left !== null) p.indLeft = u.twipsToPt(left);
+      const right = num(attr(ind, 'right') ?? attr(ind, 'end'));
+      if (right !== null) p.indRight = u.twipsToPt(right);
       const first = num(attr(ind, 'firstLine')); const hang = num(attr(ind, 'hanging'));
       if (hang !== null) p.firstLine = -u.twipsToPt(hang);
       else if (first !== null) p.firstLine = u.twipsToPt(first);
@@ -263,9 +265,15 @@
   /* ---------------------------------------------------------------------- */
   /* Converter                                                              */
   /* ---------------------------------------------------------------------- */
+  /** "PAGE" / "NUMPAGES" from a field instruction (these become live field chips); null for any other field. */
+  function fieldName(instr) {
+    const m = /^\s*(PAGE|NUMPAGES)\b/i.exec(instr || '');
+    return m ? m[1].toUpperCase() : null;
+  }
+
   const WARNINGS = {
-    headersFooters: 'Headers and footers are not shown and will not be saved.',
-    footnotes: 'Footnotes and endnotes were not imported.',
+    headerVariants: 'Different first-page or odd/even headers and footers were not imported; the default header and footer are used.',
+    footnotes: 'Endnotes were not imported.',
     comments: 'Comments were removed.',
     textBoxes: 'Text inside text boxes was not imported.',
     shapes: 'Charts, shapes and SmartArt graphics were not imported.',
@@ -326,7 +334,8 @@
         const name = (s ? s.name : cur).toLowerCase().replace(/\s+/g, ' ').trim();
         const h = name.match(/^heading ?([1-6])$/);
         if (h) { kind = 'h' + h[1]; break; }
-        if (name === 'title') { kind = 'h1'; break; }
+        if (name === 'title') { kind = 'title'; break; }
+        if (name === 'subtitle') { kind = 'subtitle'; break; }
         if (name === 'quote' || name === 'intense quote') { kind = 'blockquote'; break; }
         cur = s ? s.basedOn : null;
       }
@@ -428,11 +437,12 @@
       const sect = kid(body, 'sectPr');
       if (this.sectionCount > 0) this.warn('sections');
       const page = this.pageSetup(sect);
+      const header = await this.headerFooter(sect, 'header');
+      const footer = await this.headerFooter(sect, 'footer');
 
       // Some features live in other parts; detect them so we can tell the user.
       const allSect = doc.getElementsByTagNameNS('*', 'sectPr');
       for (const s of allSect) {
-        if (kid(s, 'headerReference') || kid(s, 'footerReference')) this.warn('headersFooters');
         const cols = num(attr(kid(s, 'cols'), 'num'));
         if (cols && cols > 1) this.warn('columns');
       }
@@ -443,6 +453,8 @@
       return {
         fragment: frag,
         page,
+        header,
+        footer,
         defaults: this.defaults,
         warnings: Array.from(this.warnings).map((k) => WARNINGS[k]).filter(Boolean)
       };
@@ -461,8 +473,41 @@
           right: num(attr(mar, 'right')) ?? 1440,
           bottom: Math.abs(num(attr(mar, 'bottom')) ?? 1440),
           left: num(attr(mar, 'left')) ?? 1440
-        }
+        },
+        headerTw: num(attr(mar, 'header')) ?? 720,
+        footerTw: num(attr(mar, 'footer')) ?? 720
       };
+    }
+
+    /**
+     * The default header or footer of the final section as a fragment (or null). The part has its own relationships
+     * (for pictures and links), so they are swapped in while it is converted.
+     */
+    async headerFooter(sect, kind) {
+      if (!sect) return null;
+      const refs = Array.from(sect.children).filter((c) => c.localName === kind + 'Reference');
+      if (!refs.length) return null;
+      const def = refs.find((r) => (attr(r, 'type') || 'default') === 'default');
+      if (!def || refs.length > 1 || kid(sect, 'titlePg')) this.warn('headerVariants');
+      if (!def) return null;
+      const rel = this.rels[relAttr(def, 'id')];
+      const file = rel && rel.path ? this.zip.file(rel.path) : null;
+      if (!file) return null;
+      const root = parseXml(await file.async('string'), rel.path).documentElement;
+      const baseDir = rel.path.includes('/') ? rel.path.slice(0, rel.path.lastIndexOf('/') + 1) : '';
+      const relsFile = this.zip.file(baseDir + '_rels/' + rel.path.slice(baseDir.length) + '.rels');
+      const partRels = relsFile ? parseRels(parseXml(await relsFile.async('string'), baseDir + '_rels'), baseDir) : {};
+      const savedRels = this.rels, savedFields = this.fields;
+      this.rels = partRels;
+      this.fields = [];
+      try {
+        const frag = document.createDocumentFragment();
+        this.blocks(root, { container: frag, listStack: [] });
+        return frag;
+      } finally {
+        this.rels = savedRels;
+        this.fields = savedFields;
+      }
     }
 
     emptyParagraph() {
@@ -525,7 +570,8 @@
         this.placeListItem(el, level, numId, eff.ilvl || 0, ctx);
       } else {
         ctx.listStack = [];
-        el = document.createElement(kind);
+        el = document.createElement(kind === 'title' || kind === 'subtitle' ? 'p' : kind);
+        if (kind === 'title' || kind === 'subtitle') el.className = kind;
         ctx.container.appendChild(el);
       }
 
@@ -550,6 +596,7 @@
       if (isListItem) return; // list geometry is controlled by the list itself
       const src = kind[0] === 'h' ? direct : eff; // headings use app heading styles
       if (src.indLeft && kind !== 'blockquote') el.style.marginLeft = src.indLeft + 'pt';
+      if (src.indRight && kind !== 'blockquote') el.style.marginRight = src.indRight + 'pt';
       if (src.firstLine) el.style.textIndent = src.firstLine + 'pt';
       if (kind !== 'p') return;
       // Missing values mean Word's built-in defaults (0 pt spacing, single line).
@@ -610,7 +657,14 @@
           case 'del': case 'moveFrom': this.warn('trackedChanges'); break;
           case 'smartTag': case 'customXml': case 'dir': case 'bdo': this.collectInline(c, base, segs, link); break;
           case 'sdt': { const sc = kid(c, 'sdtContent'); if (sc) this.collectInline(sc, base, segs, link); break; }
-          case 'fldSimple': this.collectInline(c, base, segs, parseHyperlinkInstr(attr(c, 'instr')) || link); break;
+          case 'fldSimple': {
+            const name = fieldName(attr(c, 'instr'));
+            if (name) {
+              const run = kid(c, 'r');
+              segs.push({ type: 'field', name, fmt: run ? Object.assign({}, base, clean(parseRPr(kid(run, 'rPr'), this.theme))) : base });
+            } else this.collectInline(c, base, segs, parseHyperlinkInstr(attr(c, 'instr')) || link);
+            break;
+          }
           case 'oMath': case 'oMathPara': this.warn('equations'); break;
           case 'commentRangeStart': this.warn('comments'); break;
           default: break;
@@ -643,19 +697,25 @@
       // Complex fields: skip instruction text, keep the displayed result.
       if (name === 'fldChar') {
         const t = attr(c, 'fldCharType');
-        if (t === 'begin') this.fields.push({ instr: '', result: false, link: null });
+        if (t === 'begin') this.fields.push({ instr: '', result: false, link: null, suppress: false });
         else if (t === 'separate' && this.fields.length) {
           const f = this.fields[this.fields.length - 1];
           f.result = true;
           f.link = parseHyperlinkInstr(f.instr);
-        } else if (t === 'end') this.fields.pop();
+          const name = fieldName(f.instr);
+          if (name) { f.suppress = true; segs.push({ type: 'field', name, fmt }); } // the cached number is replaced by a live field
+        } else if (t === 'end') {
+          const f = this.fields.pop();
+          const name = f && !f.result ? fieldName(f.instr) : null;
+          if (name) segs.push({ type: 'field', name, fmt });
+        }
         return;
       }
       if (name === 'instrText') {
         if (this.fields.length) this.fields[this.fields.length - 1].instr += c.textContent;
         return;
       }
-      if (this.inFieldInstruction()) return;
+      if (this.inFieldInstruction() || this.fields.some((f) => f.suppress)) return;
       const href = link || this.fieldLink();
       const text = (t) => {
         const s = fmt.caps ? t.toUpperCase() : t;
@@ -689,7 +749,12 @@
           if (target) for (const cc of target.children) this.runChild(cc, fmt, segs, link);
           break;
         }
-        case 'footnoteReference': case 'endnoteReference': this.warn('footnotes'); break;
+        case 'footnoteReference': {
+          const note = this.footnotes && this.footnotes[attr(c, 'id')];
+          if (note) segs.push({ type: 'footnote', text: note }); else this.warn('footnotes');
+          break;
+        }
+        case 'endnoteReference': this.warn('footnotes'); break;
         case 'commentReference': this.warn('comments'); break;
         default: break; // rPr, lastRenderedPageBreak, softHyphen …
       }
@@ -763,11 +828,30 @@
         }
         if (s.type === 'text') container.appendChild(this.formattedText(s.text, s.fmt));
         else if (s.type === 'br') container.appendChild(document.createElement('br'));
+        else if (s.type === 'field') container.appendChild(this.fieldEl(s));
+        else if (s.type === 'footnote') {
+          const fn = document.createElement('span');
+          fn.className = 'fn';
+          fn.setAttribute('data-note', s.text);
+          fn.setAttribute('contenteditable', 'false');
+          fn.textContent = '1';
+          container.appendChild(fn);
+        }
         else if (s.type === 'image') {
           const img = this.imageEl(s);
           if (img) container.appendChild(img);
         }
       }
+    }
+
+    /** A page-number field: shown as a small chip, saved back as a real Word field. */
+    fieldEl(s) {
+      const span = document.createElement('span');
+      span.className = 'fld';
+      span.setAttribute('data-field', s.name);
+      span.setAttribute('contenteditable', 'false');
+      span.appendChild(this.formattedText('1', s.fmt || {}));
+      return span;
     }
 
     formattedText(text, f) {
@@ -958,9 +1042,21 @@
     const numberingPath = partOf('/numbering');
     const numbering = parseNumbering(numberingPath ? await readXml(numberingPath) : null);
 
-    const conv = new Converter({ zip, rels, styles, numbering, theme });
+    // Footnote texts: plain text per note (id -> text); Folio shows them as numbered notes under the document.
+    const footnotes = {};
+    const notesPath = partOf('/footnotes');
+    if (notesPath && zip.file(notesPath)) {
+      const nd = await readXml(notesPath);
+      for (const fnEl of Array.from(nd.getElementsByTagNameNS('*', 'footnote'))) {
+        const type = attr(fnEl, 'type');
+        if (type && type !== 'normal') continue;
+        const text = kids(fnEl, 'p').map((p) => Array.from(p.getElementsByTagNameNS('*', 't')).map((t) => t.textContent).join('')).join(' ').replace(/\s+/g, ' ').trim();
+        if (text) footnotes[attr(fnEl, 'id')] = text;
+      }
+    }
+    const conv = new Converter({ zip, rels, styles, numbering, theme, footnotes });
     const result = await conv.convert(doc);
-    if (partOf('/footnotes') && doc.getElementsByTagNameNS('*', 'footnoteReference').length) {
+    if (!Object.keys(footnotes).length && partOf('/footnotes') && doc.getElementsByTagNameNS('*', 'footnoteReference').length) {
       if (!result.warnings.includes(WARNINGS.footnotes)) result.warnings.push(WARNINGS.footnotes);
     }
     return result;

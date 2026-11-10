@@ -58,6 +58,23 @@ The file type is detected from the file's content, not its extension. A `.doc` r
   - Match case and whole-word options.
   - Next/previous match, Replace and Replace all.
   - Matches work across formatting changes, e.g. "he**llo**".
+- **Headers and footers:**
+  - Click the top or bottom margin of the page to type. A small toolbar offers bold, italic, underline, alignment, **Page #** and **Pages** (live page-number fields).
+  - Opened from a file, the default header and footer are loaded, including pictures and page-number fields, and written back on save with the header/footer distances.
+  - The editor shows them once (header on the first page, footer on the last); Word repeats them on every page.
+  - Different first-page and odd/even headers are not imported; a notice says so.
+- **Styles:** Normal, Title, Subtitle, Heading 1–4 and Quote, saved as the matching Word styles.
+- **Table tools** (Table menu, with the cursor in a table):
+  - Merge selected cells: select from the first to the last cell, like dragging in Word. Works across rows and down columns.
+  - Split a merged cell, shade cells, turn the header row on or off, turn borders on or off.
+- **Footnotes** (AB¹ button): the note is listed under the document and numbered in reading order. Click a number to edit or delete it. They are saved as real Word footnotes, so Word puts each at the bottom of its page. Footnotes in a .docx are read back as plain text.
+- **Table of contents** (TOC button): built from Heading 1–3, with a link for each entry. Press the button again to update it. Headings are saved as bookmarks so the links work in Word.
+- **More text tools:**
+  - Superscript (`Ctrl+Shift+=`) and subscript (`Ctrl+=`).
+  - Format painter: copy the formatting at the cursor, then select the text to apply it to.
+  - Change case: sentence, lower, UPPER, Capitalize Each Word, tOGGLE.
+  - Insert symbols, today's date and a horizontal line (the Ω menu). `Ctrl+Shift+V` pastes as plain text.
+  - Paragraph settings (¶): left and right indent, first-line or hanging indent, space before and after, line spacing.
 - **Page layout:**
   - Paper size: Letter, A4, Legal.
   - Orientation and margin presets.
@@ -93,8 +110,8 @@ Pasted content is sanitized. Scripts, event handlers, classes and unsafe links (
 
 Folio warns, rather than failing silently, when a file contains things it can't keep. Those are:
 
-- Headers and footers.
-- Footnotes and endnotes.
+- Different first-page or odd/even headers and footers (the default ones are kept).
+- Endnotes.
 - Comments.
 - Text boxes.
 - Charts, shapes and SmartArt.
@@ -143,6 +160,8 @@ folio/
 │   ├── app.css           Application chrome, responsive and print rules
 │   └── document.css      Page content styles (mirror the exported Word styles)
 ├── js/
+│   ├── references.js     Footnotes and table of contents
+│   ├── header-footer.js  Page header and footer regions and their mini toolbar
 │   ├── util.js           Units, colours, fonts, XML escaping, file sniffing
 │   ├── ui.js             Modal dialogs (<dialog>), toasts, notice banner
 │   ├── history.js        Undo/redo: HTML snapshots + caret offsets
@@ -184,8 +203,9 @@ These are stated plainly so nobody relies on something that doesn't work.
 - **Line spacing is approximate on screen.** Word's "single" spacing depends on the font's line gap, while the editor uses CSS line height. The saved value is exact; only the on-screen look differs a little.
 - **Headings use Folio's heading styles.** On import, a heading keeps its level and any direct formatting, but takes Folio's heading look (size and colour) rather than the source document's style definition.
 - **Not supported:**
-  - Headers and footers.
-  - Footnotes and endnotes.
+  - Different first-page or odd/even headers and footers.
+  - A ruler and custom tab stops.
+  - Endnotes, and footnotes with formatting (a note is kept as plain text).
   - Comments.
   - Tracked-change review.
   - Text boxes.
@@ -193,10 +213,10 @@ These are stated plainly so nobody relies on something that doesn't work.
   - Equations.
   - Columns.
   - Multiple sections.
-  - Table of contents generation.
+  - Page numbers in the table of contents (Word adds them when you update the field there).
   - Spell-check beyond the browser's own.
 - **Tables:**
-  - Row and column editing is disabled in tables with merged cells (deleting the whole table still works).
+  - Row and column editing is disabled in tables with merged cells (deleting the whole table still works). Split the merged cells first.
   - Borders are either single black lines or none; custom border styles and colours are not kept.
   - Cells with paragraphs use zero spacing between paragraphs.
 - **Images:**
@@ -221,6 +241,8 @@ These are stated plainly so nobody relies on something that doesn't work.
 | `Ctrl+B` / `I` / `U` | Bold / Italic / Underline |
 | `Ctrl+L` / `E` / `R` / `J` | Align left / centre / right / justify |
 | `Ctrl+K` | Insert or edit link |
+| `Ctrl+Shift+=` / `Ctrl+=` | Superscript / Subscript |
+| `Ctrl+Shift+V` | Paste as plain text |
 | `Ctrl+F` / `Ctrl+H` | Find / Replace |
 | `Ctrl+Enter` | Page break |
 | `Tab` / `Shift+Tab` | Nest list item, or move between table cells |

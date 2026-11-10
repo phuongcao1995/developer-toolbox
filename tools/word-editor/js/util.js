@@ -238,5 +238,31 @@
     return new Blob([decodeURIComponent(m[3])], { type: mime });
   };
 
+  /**
+   * Changes the case of `text`, keeping its length (so a selection stays valid). `state` carries "start of a sentence" across calls
+   * so a selection that spans several text nodes is treated as one text. modes: upper, lower, title, sentence, toggle.
+   */
+  util.changeCase = function (text, mode, state) {
+    state = state || { capNext: true, inWord: false };
+    const same = (a, ch) => (a.length === ch.length ? a : ch); // never change the length (e.g. German ß -> SS)
+    let out = '';
+    for (const ch of text) {
+      const isLetter = /\p{L}/u.test(ch);
+      const upper = same(ch.toUpperCase(), ch), lower = same(ch.toLowerCase(), ch);
+      let r = ch;
+      if (mode === 'upper') r = upper;
+      else if (mode === 'lower') r = lower;
+      else if (mode === 'toggle') r = ch === ch.toUpperCase() ? lower : upper;
+      else if (mode === 'title') r = isLetter ? (state.inWord ? lower : upper) : ch;
+      else if (mode === 'sentence') r = isLetter ? (state.capNext ? upper : lower) : ch;
+      if (isLetter) { state.inWord = true; state.capNext = false; }
+      else if (/\d/.test(ch)) { state.capNext = false; state.inWord = true; }
+      else if (ch === "'" || ch === '\u2019') { /* an apostrophe stays inside a word */ }
+      else { state.inWord = false; if (/[.!?]/.test(ch)) state.capNext = true; }
+      out += r;
+    }
+    return out;
+  };
+
   Folio.util = util;
 })(window.Folio = window.Folio || {});

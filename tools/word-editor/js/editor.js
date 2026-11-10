@@ -15,7 +15,7 @@
   const ui = Folio.ui;
 
   const LEAF_BLOCKS = 'p,h1,h2,h3,h4,h5,h6,blockquote,li,pre,div';
-  const TOGGLES = ['bold', 'italic', 'underline', 'strikeThrough', 'justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', 'insertUnorderedList', 'insertOrderedList'];
+  const TOGGLES = ['bold', 'italic', 'underline', 'strikeThrough', 'superscript', 'subscript', 'justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull', 'insertUnorderedList', 'insertOrderedList'];
   const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml'];
   const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 
@@ -318,9 +318,15 @@
             if (!parentQuote.textContent.trim() && !parentQuote.querySelector('img')) parentQuote.remove();
           }
           if (parentQuote && tag === 'blockquote') continue;
-          if (block.tagName.toLowerCase() === tag) continue;
-          const el = document.createElement(tag);
+          const special = tag === 'title' || tag === 'subtitle'; // Title and Subtitle are paragraphs with a class
+          const realTag = special ? 'p' : tag;
+          const currentClass = block.classList.contains('title') ? 'title' : block.classList.contains('subtitle') ? 'subtitle' : '';
+          if (block.tagName.toLowerCase() === realTag && currentClass === (special ? tag : '')) continue;
+          const el = document.createElement(realTag);
           for (const a of block.attributes) el.setAttribute(a.name, a.value);
+          el.classList.remove('title', 'subtitle');
+          if (!el.getAttribute('class')) el.removeAttribute('class');
+          if (special) el.classList.add(tag);
           // Spacing overrides belong to Normal paragraphs, not headings.
           if (tag !== 'p') { el.style.marginTop = ''; el.style.marginBottom = ''; }
           if (!el.getAttribute('style')) el.removeAttribute('style');
@@ -335,6 +341,65 @@
       this.restoreSelection();
       const blocks = this.getSelectedBlocks();
       this.transact(() => blocks.forEach((b) => { b.style.lineHeight = String(value); }));
+    }
+
+    /** Paragraph settings: indents, first line / hanging, spacing before and after, line spacing. */
+    async paragraphDialog() {
+      this.restoreSelection();
+      const saved = this.currentRange() && this.currentRange().cloneRange();
+      const blocks = this.getSelectedBlocks().filter((b) => b.tagName !== 'TD' && b.tagName !== 'TH');
+      if (!blocks.length) return;
+      const lists = blocks.some((b) => b.tagName === 'LI');
+      const first = blocks[0];
+      const cs = getComputedStyle(first);
+      const pt = (v) => Math.round((parseFloat(v) || 0) * 0.75 * 10) / 10;
+      const inch = (v) => Math.round((parseFloat(v) || 0) * 0.75 / 72 * 100) / 100;
+      const indent = parseFloat(cs.textIndent) || 0;
+      const fontPx = parseFloat(cs.fontSize) || 15;
+      const lh = first.style.lineHeight || '';
+      let line = 'multiple', at = Math.round(((parseFloat(cs.lineHeight) || fontPx * 1.15) / fontPx) * 100) / 100;
+      if (/pt$|px$/.test(lh)) { line = 'atleast'; at = u.cssLengthToPt(lh, 11); }
+      else if ([1, 1.15, 1.5, 2].includes(at)) line = String(at);
+      const body = document.createElement('div');
+      body.className = 'form-grid';
+      body.innerHTML =
+        `<div class="form-row"><label>Left indent (in)<input name="left" type="number" step="0.05" min="0" max="20" value="${lists ? 0 : inch(cs.marginLeft)}"${lists ? ' disabled' : ''}></label>` +
+        `<label>Right indent (in)<input name="right" type="number" step="0.05" min="0" max="20" value="${lists ? 0 : inch(cs.marginRight)}"${lists ? ' disabled' : ''}></label></div>` +
+        `<div class="form-row"><label>Special<select name="special"${lists ? ' disabled' : ''}><option value="none"${indent === 0 ? ' selected' : ''}>(none)</option>` +
+        `<option value="first"${indent > 0 ? ' selected' : ''}>First line</option><option value="hanging"${indent < 0 ? ' selected' : ''}>Hanging</option></select></label>` +
+        `<label>By (in)<input name="by" type="number" step="0.05" min="0" max="20" value="${lists ? 0 : Math.abs(inch(indent))}"${lists ? ' disabled' : ''}></label></div>` +
+        `<div class="form-row"><label>Space before (pt)<input name="before" type="number" step="1" min="0" max="500" value="${pt(cs.marginTop)}"></label>` +
+        `<label>Space after (pt)<input name="after" type="number" step="1" min="0" max="500" value="${pt(cs.marginBottom)}"></label></div>` +
+        `<div class="form-row"><label>Line spacing<select name="line">` +
+        [['1', 'Single'], ['1.15', '1.15'], ['1.5', '1.5 lines'], ['2', 'Double'], ['multiple', 'Multiple'], ['atleast', 'At least']]
+          .map(([v, l]) => `<option value="${v}"${v === line ? ' selected' : ''}>${l}</option>`).join('') + `</select></label>` +
+        `<label>At (lines, or pt for At least)<input name="at" type="number" step="0.05" min="0.1" max="500" value="${at}"></label></div>` +
+        (lists ? '<p class="form-hint">Indents of list items are set by the list. Use Increase / Decrease indent to nest them.</p>' : '');
+      const res = await ui.modal({
+        title: 'Paragraph', body,
+        actions: [{ label: 'Cancel', value: 'cancel' }, { label: 'OK', value: 'ok', primary: true }],
+        collect: (form) => Object.fromEntries(Array.from(form.elements).filter((f) => f.name).map((f) => [f.name, f.value]))
+      });
+      this.root.focus({ preventScroll: true });
+      if (saved) { const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(saved); this.savedRange = saved; }
+      if (res.action !== 'ok') return;
+      const v = res.values;
+      const n = (k, d) => { const x = parseFloat(v[k]); return isFinite(x) ? x : d; };
+      this.transact(() => blocks.forEach((b) => {
+        const isLi = b.tagName === 'LI';
+        const set = (prop, value) => { if (value === '' || value === null) b.style.removeProperty(prop); else b.style.setProperty(prop, value); };
+        if (!isLi) {
+          const left = Math.max(0, n('left', 0)) * 72, right = Math.max(0, n('right', 0)) * 72, by = Math.max(0, n('by', 0)) * 72;
+          set('margin-left', left ? left + 'pt' : '');
+          set('margin-right', right ? right + 'pt' : '');
+          set('text-indent', v.special === 'first' && by ? by + 'pt' : v.special === 'hanging' && by ? -by + 'pt' : '');
+        }
+        set('margin-top', Math.max(0, n('before', 0)) + 'pt');
+        set('margin-bottom', Math.max(0, n('after', 0)) + 'pt');
+        if (v.line === 'atleast') set('line-height', Math.max(1, n('at', 12)) + 'pt');
+        else set('line-height', v.line === 'multiple' ? String(Math.max(0.1, n('at', 1))) : v.line);
+        if (!b.getAttribute('style')) b.removeAttribute('style');
+      }));
     }
 
     /** Increase/decrease indent: nests list items, or shifts paragraphs by 0.5 in. */
@@ -412,6 +477,104 @@
         const after = this.insertBlocks([hr]);
         this.placeCaret(after, true);
       });
+    }
+
+    /* ================================================================== */
+    /* Text tools: change case, special characters, horizontal line, format painter */
+    /* ================================================================== */
+    /** Changes the case of the selection (or of the word at the caret). modes: sentence, lower, upper, title, toggle. */
+    changeCase(mode) {
+      this.restoreSelection();
+      let range = this.currentRange();
+      if (!range) return;
+      if (range.collapsed) {
+        // Word at the caret.
+        const node = range.startContainer;
+        if (node.nodeType !== 3) return;
+        const re = /[\p{L}\p{N}'\u2019]/u;
+        let a = range.startOffset, b = a;
+        while (a > 0 && re.test(node.data[a - 1])) a--;
+        while (b < node.data.length && re.test(node.data[b])) b++;
+        if (a === b) return;
+        range = range.cloneRange();
+        range.setStart(node, a); range.setEnd(node, b);
+      }
+      const keep = { sc: range.startContainer, so: range.startOffset, ec: range.endContainer, eo: range.endOffset };
+      const texts = [];
+      const walker = document.createTreeWalker(range.commonAncestorContainer.nodeType === 3 ? range.commonAncestorContainer.parentNode : range.commonAncestorContainer, NodeFilter.SHOW_TEXT);
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) if (range.intersectsNode(n) && this.inEditor(n)) texts.push(n);
+      if (range.commonAncestorContainer.nodeType === 3 && !texts.length) texts.push(range.commonAncestorContainer);
+      this.transact(() => {
+        const state = { capNext: mode === 'sentence' ? this.startsSentence(texts[0], texts[0] === keep.sc ? keep.so : 0) : false, inWord: false };
+        for (const n of texts) {
+          const from = n === keep.sc ? keep.so : 0;
+          const to = n === keep.ec ? keep.eo : n.data.length;
+          if (to > from) n.replaceData(from, to - from, u.changeCase(n.data.slice(from, to), mode, state));
+        }
+        const sel = window.getSelection();
+        const r = document.createRange();
+        r.setStart(keep.sc, keep.so); r.setEnd(keep.ec, keep.eo);
+        sel.removeAllRanges(); sel.addRange(r);
+      });
+    }
+
+    /** True when the text before `offset` in `node` is the start of a sentence (nothing before it, or ". " etc.). */
+    startsSentence(node, offset) {
+      const before = node.data.slice(0, offset).replace(/\s+$/, '');
+      if (before) return /[.!?]$/.test(before);
+      const block = node.parentElement && node.parentElement.closest('p,h1,h2,h3,h4,h5,h6,li,td,th,blockquote');
+      return !block || !block.textContent.slice(0, block.textContent.indexOf(node.data)).trim();
+    }
+
+    /** Types text at the caret (used for symbols and the date). */
+    insertText(text) {
+      this.restoreSelection();
+      this.transact(() => document.execCommand('insertText', false, text));
+    }
+
+    /** A horizontal line between paragraphs (saved as a paragraph with a bottom border). */
+    insertHorizontalLine() {
+      this.restoreSelection();
+      this.transact(() => {
+        const after = this.insertBlocks([document.createElement('hr')]);
+        this.placeCaret(after, true);
+      });
+    }
+
+    /** Remembers the formatting at the caret for the format painter. */
+    captureFormat() {
+      const range = this.currentRange();
+      let node = range && range.startContainer;
+      if (node && node.nodeType !== 1) node = node.parentElement;
+      if (!node || !this.inEditor(node)) return null;
+      const cs = getComputedStyle(node);
+      const hex = (c) => { const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/.exec(c); return m && (m[4] === undefined || parseFloat(m[4]) > 0) ? '#' + [1, 2, 3].map((i) => Number(m[i]).toString(16).padStart(2, '0')).join('') : null; };
+      let bg = null;
+      for (let n = node; n && n !== this.root; n = n.parentElement) { const b = hex(getComputedStyle(n).backgroundColor); if (b) { bg = b; break; } }
+      return {
+        bold: parseInt(cs.fontWeight, 10) >= 600, italic: cs.fontStyle === 'italic',
+        underline: cs.textDecorationLine.includes('underline'), strike: cs.textDecorationLine.includes('line-through'),
+        sup: cs.verticalAlign === 'super' || !!node.closest('sup'), sub: cs.verticalAlign === 'sub' || !!node.closest('sub'),
+        font: u.firstFontFamily(cs.fontFamily) || '', size: u.roundHalf(parseFloat(cs.fontSize) * 0.75), color: hex(cs.color), bg
+      };
+    }
+
+    /** Gives the selected text the captured formatting. Returns false when nothing is selected. */
+    applyFormat(f) {
+      this.restoreSelection();
+      const range = this.currentRange();
+      if (!f || !range || range.collapsed) return false;
+      const state = (c) => { try { return document.queryCommandState(c); } catch (err) { return false; } };
+      this.history.flush();
+      for (const [cmd, want] of [['bold', f.bold], ['italic', f.italic], ['underline', f.underline], ['strikeThrough', f.strike], ['superscript', f.sup], ['subscript', f.sub]]) {
+        if (state(cmd) !== !!want) document.execCommand(cmd, false, null);
+      }
+      if (f.font) document.execCommand('fontName', false, u.fontStack(f.font));
+      this.applyFontSize(f.size);
+      if (f.color) this.applyColor('fore', f.color);
+      if (f.bg) this.applyColor('back', f.bg);
+      this.transact(() => {});
+      return true;
     }
 
     /* ================================================================== */
@@ -532,6 +695,7 @@
       const ctx = this.tableContext();
       if (!ctx) return;
       const { cell, row, table } = ctx;
+      if (['mergeCells', 'splitCell', 'headerRow', 'borders', 'shade'].includes(action) || /^shade:/.test(action)) { this.tableFormat(action, ctx); return; }
       if (ctx.merged && action !== 'deleteTable') {
         ui.toast('Rows and columns can\u2019t be edited in tables with merged cells.');
         return;
@@ -575,6 +739,132 @@
           case 'deleteTable': this.removeTable(table); return;
         }
         if (focus) this.placeCaret(focus.querySelector('p') || focus, true);
+      });
+    }
+
+    /** Occupancy grid of a table: grid[r][c] = the cell covering that position. */
+    tableGrid(table) {
+      const rows = Array.from(table.rows).filter((r) => r.closest('table') === table);
+      const grid = [];
+      rows.forEach((row, r) => {
+        grid[r] = grid[r] || [];
+        let c = 0;
+        for (const cell of row.cells) {
+          while (grid[r][c]) c++;
+          const rs = Math.max(1, cell.rowSpan || 1), cs = Math.max(1, cell.colSpan || 1);
+          for (let dr = 0; dr < rs && r + dr < rows.length; dr++) {
+            grid[r + dr] = grid[r + dr] || [];
+            for (let dc = 0; dc < cs; dc++) grid[r + dr][c + dc] = cell;
+          }
+          c += cs;
+        }
+      });
+      return { rows, grid };
+    }
+
+    /** The cells of the table that the selection touches (just the current cell when the caret is collapsed). */
+    selectedCells(table, fallback) {
+      const range = this.currentRange();
+      if (!range || range.collapsed) return [fallback];
+      const cellOf = (n) => { const e = n.nodeType === 1 ? n : n.parentElement; const c = e && e.closest('td,th'); return c && c.closest('table') === table ? c : null; };
+      const a = cellOf(range.startContainer), b = cellOf(range.endContainer);
+      const all = Array.from(table.querySelectorAll('td,th')).filter((c) => c.closest('table') === table);
+      if (!a || !b || a === b) {
+        const hit = all.filter((c) => range.intersectsNode(c));
+        return hit.length ? hit : [fallback];
+      }
+      // Like dragging in Word: the block of cells between the first and the last cell of the selection.
+      const { grid } = this.tableGrid(table);
+      const pos = (cell) => { for (let r = 0; r < grid.length; r++) { const c = grid[r].indexOf(cell); if (c >= 0) return { r, c }; } return { r: 0, c: 0 }; };
+      const pa = pos(a), pb = pos(b);
+      const ext = (cell, p) => ({ r1: p.r, c1: p.c, r2: p.r + Math.max(1, cell.rowSpan || 1) - 1, c2: p.c + Math.max(1, cell.colSpan || 1) - 1 });
+      const ea = ext(a, pa), eb = ext(b, pb);
+      const box = { r1: Math.min(ea.r1, eb.r1), c1: Math.min(ea.c1, eb.c1), r2: Math.max(ea.r2, eb.r2), c2: Math.max(ea.c2, eb.c2) };
+      const out = new Set();
+      for (let r = box.r1; r <= box.r2; r++) for (let c = box.c1; c <= box.c2; c++) if (grid[r] && grid[r][c]) out.add(grid[r][c]);
+      return Array.from(out);
+    }
+
+    /** Merge / split cells, shading, header row and borders. */
+    tableFormat(action, ctx) {
+      const { cell, table } = ctx;
+      if (action === 'borders') { this.transact(() => table.classList.toggle('borderless')); return; }
+      if (action === 'headerRow') {
+        const first = table.rows[0];
+        if (!first) return;
+        const makeHeader = first.cells[0].tagName !== 'TH';
+        const ri = cell.parentElement.rowIndex, ci = cell.cellIndex;
+        this.transact(() => {
+          for (const c of Array.from(first.cells)) {
+            const n = document.createElement(makeHeader ? 'th' : 'td');
+            for (const a of c.attributes) n.setAttribute(a.name, a.value);
+            while (c.firstChild) n.appendChild(c.firstChild);
+            c.replaceWith(n);
+          }
+          const again = table.rows[ri] && table.rows[ri].cells[ci];
+          if (again) this.placeCaret(again.querySelector('p') || again, true); // replacing the cells dropped the caret
+        });
+        return;
+      }
+      if (action === 'shade' || action.startsWith('shade:')) {
+        const color = action.slice(6);
+        const cells = this.selectedCells(table, cell);
+        this.transact(() => cells.forEach((c) => { c.style.backgroundColor = color || ''; if (!c.getAttribute('style')) c.removeAttribute('style'); }));
+        return;
+      }
+      const { rows, grid } = this.tableGrid(table);
+      if (action === 'splitCell') {
+        const rs = Math.max(1, cell.rowSpan || 1), cs = Math.max(1, cell.colSpan || 1);
+        if (rs === 1 && cs === 1) { ui.toast('This cell is not merged.'); return; }
+        const r0 = rows.indexOf(cell.parentElement);
+        const c0 = grid[r0].indexOf(cell);
+        const width = u.cssLengthToPt(cell.style.width, 11);
+        this.transact(() => {
+          cell.rowSpan = 1; cell.colSpan = 1; cell.removeAttribute('rowspan'); cell.removeAttribute('colspan');
+          for (let dr = 0; dr < rs; dr++) {
+            for (let dc = 0; dc < cs; dc++) {
+              if (!dr && !dc) continue;
+              const row = rows[r0 + dr];
+              // Insert before the first cell of that row that sits to the right of this column.
+              let before = null;
+              for (const x of row.cells) { if (grid[r0 + dr].indexOf(x) > c0 + dc) { before = x; break; } }
+              row.insertBefore(this.newCell(cell.tagName.toLowerCase(), width && cs ? width / cs : 0), before);
+            }
+          }
+          if (width && cs > 1) cell.style.width = width / cs + 'pt';
+        });
+        return;
+      }
+      // mergeCells
+      const cells = this.selectedCells(table, cell);
+      if (cells.length < 2) { ui.toast('Select two or more cells to merge.'); return; }
+      let r1 = Infinity, r2 = -1, c1 = Infinity, c2 = -1;
+      grid.forEach((line, r) => line.forEach((x, c) => { if (cells.includes(x)) { r1 = Math.min(r1, r); r2 = Math.max(r2, r); c1 = Math.min(c1, c); c2 = Math.max(c2, c); } }));
+      const inside = new Set();
+      for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) inside.add(grid[r][c]);
+      // The rectangle must not cut through a cell that is already merged beyond it.
+      for (const x of inside) {
+        const r = grid.findIndex((line) => line.includes(x));
+        const c = grid[r].indexOf(x);
+        if (r < r1 || c < c1 || r + (x.rowSpan || 1) - 1 > r2 || c + (x.colSpan || 1) - 1 > c2) { ui.toast('Those cells can\u2019t be merged because the selection cuts through an already merged cell.'); return; }
+      }
+      const origin = grid[r1][c1];
+      this.transact(() => {
+        for (const x of inside) {
+          if (x === origin) continue;
+          for (const p of Array.from(x.children)) { if (p.textContent.trim() || p.querySelector('img')) origin.appendChild(p); }
+          x.remove();
+        }
+        // Drop the empty placeholder paragraph left in front of real content.
+        const ps = Array.from(origin.children);
+        if (ps.length > 1) ps.filter((p) => p.tagName === 'P' && !p.textContent.trim() && !p.querySelector('img')).forEach((p) => p.remove());
+        origin.colSpan = c2 - c1 + 1; origin.rowSpan = r2 - r1 + 1;
+        if (origin.colSpan === 1) origin.removeAttribute('colspan');
+        if (origin.rowSpan === 1) origin.removeAttribute('rowspan');
+        origin.style.width = '';
+        if (!origin.getAttribute('style')) origin.removeAttribute('style');
+        if (!origin.children.length) { const p = origin.appendChild(document.createElement('p')); p.appendChild(document.createElement('br')); }
+        this.placeCaret(origin.querySelector('p') || origin, true);
       });
     }
 
@@ -764,6 +1054,9 @@
         if (key === 'z' && !e.shiftKey) { e.preventDefault(); this.undo(); return; }
         if (key === 'y' || (key === 'z' && e.shiftKey)) { e.preventDefault(); this.redo(); return; }
         if (key === 'k') { e.preventDefault(); this.linkDialog(); return; }
+        if (key === 'v' && e.shiftKey) this.plainNext = true; // Ctrl+Shift+V: paste as plain text (the paste event follows)
+        if (key === '=' && !e.shiftKey) { e.preventDefault(); this.exec('subscript'); return; }
+        if (key === '+' || (key === '=' && e.shiftKey)) { e.preventDefault(); this.exec('superscript'); return; }
         const align = { l: 'justifyLeft', e: 'justifyCenter', r: 'justifyRight', j: 'justifyFull' }[key];
         if (align && !e.shiftKey) { e.preventDefault(); this.exec(align); return; }
         if (key === 'enter') { e.preventDefault(); this.insertPageBreak(); return; }
@@ -793,8 +1086,10 @@
     onPaste(e) {
       const cd = e.clipboardData;
       if (!cd) return;
-      const html = cd.getData('text/html');
-      const files = Array.from(cd.files || []).filter((f) => f.type.startsWith('image/'));
+      const plain = this.plainNext;
+      this.plainNext = false;
+      const html = plain ? '' : cd.getData('text/html');
+      const files = plain ? [] : Array.from(cd.files || []).filter((f) => f.type.startsWith('image/'));
       e.preventDefault();
       if (!html && files.length) { this.insertImageFiles(files); return; }
       this.history.flush();
@@ -940,6 +1235,8 @@
       let tag = block ? block.tagName.toLowerCase() : 'p';
       if (block && block.closest('blockquote') && this.inEditor(block.closest('blockquote'))) tag = 'blockquote';
       if (/^(h5|h6)$/.test(tag)) tag = 'h4';
+      if (tag === 'p' && block && block.classList.contains('title')) tag = 'title';
+      if (tag === 'p' && block && block.classList.contains('subtitle')) tag = 'subtitle';
       if (!styleSel.querySelector(`option[value="${tag}"]`)) tag = 'p';
       if (document.activeElement !== styleSel) styleSel.value = tag;
 

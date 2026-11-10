@@ -34,7 +34,7 @@
     darkBlue: 'Dark blue', darkCyan: 'Teal', darkGreen: 'Green', darkMagenta: 'Violet', darkRed: 'Dark red',
     darkYellow: 'Dark yellow', darkGray: 'Gray 50%', lightGray: 'Gray 25%', black: 'Black' };
 
-  const defaultPage = () => ({ widthTw: PAPER.letter[0], heightTw: PAPER.letter[1], margins: Object.assign({}, MARGINS.normal) });
+  const defaultPage = () => ({ widthTw: PAPER.letter[0], heightTw: PAPER.letter[1], margins: Object.assign({}, MARGINS.normal), headerTw: 720, footerTw: 720 });
 
   const state = {
     page: defaultPage(),
@@ -58,9 +58,12 @@
       onSelectionState: onSelectionState
     });
     editor.init();
+    Folio.headerFooter.init({ onChange: onContentChange });
+    Folio.references.init({ editor, onChange: onContentChange });
     finder = new Folio.FindReplace(editor);
 
     buildPalettes();
+    buildSpecial();
     buildGridPicker();
     bindFileActions();
     bindToolbar();
@@ -101,6 +104,7 @@
   }
 
   function onContentChange() {
+    Folio.references.refresh();
     if (!state.dirty) setStatus(true);
     schedulePages();
     scheduleCounts();
@@ -123,6 +127,8 @@
     applyDefaults();
     applyPage();
     editor.setContent('<p><br></p>');
+    Folio.references.refresh();
+    Folio.headerFooter.clear();
     ui.hideNotice();
     setStatus(false, 'New document');
     updatePages();
@@ -181,6 +187,8 @@
     applyDefaults();
     applyPage();
     editor.setContent(result.fragment);
+    Folio.references.refresh();
+    Folio.headerFooter.setContent(result.header || null, result.footer || null);
     setStatus(false, 'Opened from file');
     updatePages();
     updateCounts();
@@ -201,7 +209,7 @@
     setBusy(true, 'Saving\u2026');
     try {
       const title = $('docName').value.trim() || 'Untitled document';
-      const { blob, warnings } = await Folio.exportDocx($('editor'), { page: state.page, defaults: state.defaults, title });
+      const { blob, warnings } = await Folio.exportDocx($('editor'), { page: state.page, defaults: state.defaults, title, header: Folio.headerFooter.header, footer: Folio.headerFooter.footer });
       const fileName = u.safeFileName(title, '.docx');
       download(blob, fileName);
       setStatus(false, 'Downloaded as .docx');
@@ -245,6 +253,9 @@
     ed.style.setProperty('--doc-size', d.fontSizePt + 'pt');
     ed.style.setProperty('--doc-space-after', d.spaceAfterPt + 'pt');
     ed.style.setProperty('--doc-line', String(d.lineHeight));
+    Folio.headerFooter.applyDefaults({
+      '--doc-font': u.fontStack(d.fontFamily), '--doc-size': d.fontSizePt + 'pt', '--doc-space-after': '0pt', '--doc-line': String(d.lineHeight)
+    });
   }
 
   function applyPage() {
@@ -252,6 +263,7 @@
     page.style.width = px(p.widthTw) + 'px';
     page.style.minHeight = px(p.heightTw) + 'px';
     page.style.padding = `${px(m.top)}px ${px(m.right)}px ${px(m.bottom)}px ${px(m.left)}px`;
+    Folio.headerFooter.applyPage(p, px);
 
     // Reflect in the layout menu.
     const portrait = p.widthTw <= p.heightTw;
@@ -450,9 +462,13 @@
         case 'indent': editor.indent(1); break;
         case 'outdent': editor.indent(-1); break;
         case 'link': editor.linkDialog(); break;
+        case 'paragraph': editor.paragraphDialog(); break;
         case 'image': $('imageInput').click(); break;
         case 'pageBreak': editor.insertPageBreak(); break;
+        case 'footnote': Folio.references.insertFootnote(); break;
+        case 'toc': Folio.references.insertToc(); break;
         case 'find': finder.open(false); break;
+        case 'formatPainter': toggleFormatPainter(btn); break;
         case 'foreColor': editor.applyColor('fore', currentColors.fore); break;
         case 'hiliteColor': editor.applyColor('back', currentColors.back); break;
         default: editor.exec(cmd);
@@ -478,6 +494,41 @@
     size.addEventListener('change', applySize);
     size.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); size.blur(); } });
     size.addEventListener('focus', () => size.select());
+  }
+
+  /** Format painter: click it, then select the text that should get the formatting from the cursor position. */
+  let painter = null;
+  function toggleFormatPainter(btn) {
+    if (painter) { painter.stop(); return; }
+    const format = editor.captureFormat();
+    if (!format) { ui.toast('Put the cursor in the text whose formatting you want to copy.'); return; }
+    const root = $('editor');
+    const stop = () => {
+      root.removeEventListener('mouseup', onUp);
+      document.removeEventListener('keydown', onKey, true);
+      btn.classList.remove('is-active');
+      btn.setAttribute('aria-pressed', 'false');
+      painter = null;
+    };
+    const onUp = () => setTimeout(() => { const r = editor.currentRange(); if (r && !r.collapsed && editor.applyFormat(format)) stop(); }, 0);
+    const onKey = (e) => { if (e.key === 'Escape') stop(); };
+    root.addEventListener('mouseup', onUp);
+    document.addEventListener('keydown', onKey, true);
+    btn.classList.add('is-active');
+    btn.setAttribute('aria-pressed', 'true');
+    painter = { stop };
+    ui.toast('Select the text to format. Esc cancels.');
+  }
+
+  const SYMBOLS = ['\u00A9', '\u00AE', '\u2122', '\u00B0', '\u00B1', '\u00D7', '\u00F7', '\u20AC', '\u00A3', '\u00A5', '\u00A7', '\u00B6', '\u2022', '\u2014', '\u2013', '\u2026',
+    '\u2190', '\u2192', '\u2191', '\u2193', '\u2264', '\u2265', '\u2260', '\u2248', '\u221E', '\u221A', '\u03C0', '\u00B5', '\u03B1', '\u03B2', '\u0394', '\u2713', '\u2717', '\u00BD', '\u00BC', '\u00BE', '\u00B2', '\u00B3', '\u2030', '\u20AB'];
+  function buildSpecial() {
+    const grid = $('symbolGrid');
+    SYMBOLS.forEach((s) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = s; b.dataset.symbol = s; b.setAttribute('aria-label', 'Insert ' + s);
+      grid.appendChild(b);
+    });
   }
 
   const currentColors = { fore: '#C00000', back: '#FFFF00' };
@@ -579,6 +630,16 @@
         openPopover = pop;
         openPopover.trigger = btn;
       });
+    });
+    document.querySelectorAll('#caseMenu [data-case], #specialMenu button').forEach((b) => b.addEventListener('mousedown', (e) => e.preventDefault()));
+    document.querySelectorAll('[data-case]').forEach((b) => b.addEventListener('click', () => { closePopovers(); editor.changeCase(b.dataset.case); }));
+    $('specialMenu').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      closePopovers();
+      if (b.dataset.symbol) editor.insertText(b.dataset.symbol);
+      else if (b.dataset.special === 'date') editor.insertText(new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }));
+      else if (b.dataset.special === 'line') editor.insertHorizontalLine();
     });
     document.querySelectorAll('[data-spacing]').forEach((b) => {
       b.addEventListener('mousedown', (e) => e.preventDefault());

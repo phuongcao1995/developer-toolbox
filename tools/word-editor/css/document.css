@@ -124,3 +124,17 @@
   .doc table.borderless td, .doc table.borderless th { border: 0; }
   .doc img:hover { outline: 0; }
 }
+
+/* Title and Subtitle (paragraph styles) */
+.doc p.title { font-size: 26pt; font-weight: bold; color: var(--heading-color); line-height: 1.1; margin: 0 0 6pt; }
+.doc p.subtitle { font-size: 13pt; color: #595959; line-height: 1.2; margin: 0 0 12pt; }
+
+/* Footnotes and table of contents */
+.doc span.fn { vertical-align: super; font-size: 0.75em; color: var(--heading-color); background: #eef3fb; border-radius: 3px; padding: 0 2px; cursor: pointer; }
+.fn-list { margin-top: 18pt; padding-top: 6pt; border-top: 1px solid #9aa5b1; font-size: 9pt; color: #333; }
+.fn-list ol { margin: 0; padding-left: 18pt; }
+.doc .toc { margin: 6pt 0 12pt; padding: 8pt 10pt; background: #f6f8fb; border-radius: 4px; }
+.doc .toc p { margin: 0 0 2pt; }
+.doc .toc a { color: inherit; text-decoration: none; }
+.doc .toc a:hover { text-decoration: underline; }
+.doc .toc-title { margin-bottom: 4pt; }

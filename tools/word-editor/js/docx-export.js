@@ -68,11 +68,15 @@
       this.page = opts.page;
       this.defaults = opts.defaults;
       this.title = opts.title || 'Document';
+      this.headerEl = opts.header || null;   // optional editable header / footer regions
+      this.footerEl = opts.footer || null;
       this.rels = [];
       this.nextRel = 4;     // rId1–3 are reserved for styles, numbering, settings
       this.media = [];
       this.abstractNums = [];
       this.nextDocPr = 1;
+      this.footnotes = [];   // { id, text } collected while writing the body
+      this.bookmarkId = 0;
       this.warnings = new Set();
       this.contentWidthTw = this.page.widthTw - this.page.margins.left - this.page.margins.right;
     }
@@ -122,6 +126,8 @@
       const h = tag.match(/^H([1-6])$/);
       if (h) sub.style = 'Heading' + h[1];
       else if (tag === 'BLOCKQUOTE') sub.style = 'Quote';
+      else if (tag === 'P' && el.classList.contains('title')) sub.style = 'Title';
+      else if (tag === 'P' && el.classList.contains('subtitle')) sub.style = 'Subtitle';
       if (tag === 'PRE') sub.baseFmt = Object.assign({}, ctx.baseFmt, { font: 'Courier New' });
       if (tag === 'DT') sub.baseFmt = Object.assign({}, ctx.baseFmt, { bold: true });
       const align = this.alignOf(el);
@@ -143,6 +149,10 @@
       let runs = '';
       const pctx = Object.assign({}, ctx, { paraRoot: el });
       for (const n of nodes) runs += await this.inline(n, fmt, pctx);
+      if (el && el.id && /^[A-Za-z][\w-]{0,38}$/.test(el.id) && runs) { // a bookmark, so #links (and the table of contents) reach this paragraph in Word
+        const bid = ++this.bookmarkId;
+        runs = `<w:bookmarkStart w:id="${bid}" w:name="${esc(el.id)}"/>${runs}<w:bookmarkEnd w:id="${bid}"/>`;
+      }
       return '<w:p>' + this.pPr(el, ctx) + runs + '</w:p>';
     }
 
@@ -180,13 +190,14 @@
       }
 
       // Indentation (lists take their geometry from numbering.xml)
-      let left = listIndent, first = null;
+      let left = listIndent, first = null, right = null;
       if (st && !ctx.list) {
         if (st.marginLeft) { const v = u.cssLengthToPt(st.marginLeft, base); if (v) left = u.ptToTwips(v); }
+        if (st.marginRight) { const v = u.cssLengthToPt(st.marginRight, base); if (v) right = u.ptToTwips(Math.max(0, v)); }
         if (st.textIndent) { const v = u.cssLengthToPt(st.textIndent, base); if (v) first = u.ptToTwips(v); }
       }
-      if (left !== null || first !== null) {
-        x += '<w:ind' + (left !== null ? ` w:left="${Math.max(0, left)}"` : '') +
+      if (left !== null || first !== null || right !== null) {
+        x += '<w:ind' + (left !== null ? ` w:left="${Math.max(0, left)}"` : '') + (right !== null ? ` w:right="${right}"` : '') +
           (first !== null ? (first >= 0 ? ` w:firstLine="${first}"` : ` w:hanging="${-first}"`) : '') + '/>';
       }
 
@@ -210,6 +221,17 @@
         return '<w:r>' + this.rPr(fmt, !!ctx.link) + '<w:br/></w:r>';
       }
       if (tag === 'IMG') return this.imageRun(n, ctx);
+      if (tag === 'SPAN' && n.classList.contains('fld') && /^(PAGE|NUMPAGES)$/.test(n.getAttribute('data-field') || '')) {
+        // A page-number field: Word recalculates it on every page.
+        let f2 = this.fmtFromElement(n, fmt);
+        for (let c = n.firstElementChild; c; c = c.firstElementChild) f2 = this.fmtFromElement(c, f2); // bold, size... wrap the number inside the chip
+        return `<w:fldSimple w:instr=" ${n.getAttribute('data-field')} "><w:r>${this.rPr(f2, false)}<w:t>1</w:t></w:r></w:fldSimple>`;
+      }
+      if (tag === 'SPAN' && n.classList.contains('fn') && !ctx.noFootnotes) {
+        const id = this.footnotes.length + 1;
+        this.footnotes.push({ id, text: n.getAttribute('data-note') || '' });
+        return `<w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr><w:footnoteReference w:id="${id}"/></w:r>`;
+      }
       if (tag === 'A' && n.getAttribute('href') && !ctx.link) {
         const href = n.getAttribute('href').trim();
         const sub = Object.assign({}, ctx, { link: href });
@@ -581,29 +603,72 @@
         `<w:style w:type="paragraph" w:styleId="Quote"><w:name w:val="Quote"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:uiPriority w:val="29"/><w:qFormat/>` +
         `<w:pPr><w:pBdr><w:left w:val="single" w:sz="18" w:space="8" w:color="9AA5B1"/></w:pBdr><w:spacing w:before="120" w:after="120"/><w:ind w:left="720" w:right="720"/></w:pPr>` +
         `<w:rPr><w:i/><w:iCs/><w:color w:val="404040"/></w:rPr></w:style>` +
+        `<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:uiPriority w:val="10"/><w:qFormat/>` +
+        `<w:pPr><w:spacing w:after="120" w:line="240" w:lineRule="auto"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="${HEADING_COLOR}"/><w:sz w:val="52"/><w:szCs w:val="52"/></w:rPr></w:style>` +
+        `<w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:uiPriority w:val="11"/><w:qFormat/>` +
+        `<w:pPr><w:spacing w:after="240"/></w:pPr><w:rPr><w:color w:val="595959"/><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr></w:style>` +
+        `<w:style w:type="paragraph" w:styleId="FootnoteText"><w:name w:val="footnote text"/><w:basedOn w:val="Normal"/><w:uiPriority w:val="99"/><w:unhideWhenUsed/>` +
+        `<w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>` +
+        `<w:style w:type="character" w:styleId="FootnoteReference"><w:name w:val="footnote reference"/><w:basedOn w:val="DefaultParagraphFont"/><w:uiPriority w:val="99"/><w:unhideWhenUsed/><w:rPr><w:vertAlign w:val="superscript"/></w:rPr></w:style>` +
         `<w:style w:type="character" w:styleId="Hyperlink"><w:name w:val="Hyperlink"/><w:basedOn w:val="DefaultParagraphFont"/><w:uiPriority w:val="99"/><w:unhideWhenUsed/>` +
         `<w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/></w:rPr></w:style>` +
         `</w:styles>`;
     }
 
-    settingsXml() {
+    settingsXml(hasNotes) {
       return XML_HEAD + `<w:settings ${NS_W}><w:zoom w:percent="100"/><w:defaultTabStop w:val="720"/>` +
-        `<w:characterSpacingControl w:val="doNotCompress"/><w:compat>` +
+        `<w:characterSpacingControl w:val="doNotCompress"/>` +
+        (hasNotes ? '<w:footnotePr><w:footnote w:id="-1"/><w:footnote w:id="0"/></w:footnotePr>' : '') +
+        `<w:compat>` +
         `<w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/>` +
         `</w:compat></w:settings>`;
     }
 
-    sectPr() {
+    sectPr(refs) {
       const p = this.page, m = p.margins;
       const orient = p.widthTw > p.heightTw ? ' w:orient="landscape"' : '';
-      return `<w:sectPr><w:pgSz w:w="${p.widthTw}" w:h="${p.heightTw}"${orient}/>` +
-        `<w:pgMar w:top="${m.top}" w:right="${m.right}" w:bottom="${m.bottom}" w:left="${m.left}" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>`;
+      return `<w:sectPr>${refs || ''}<w:pgSz w:w="${p.widthTw}" w:h="${p.heightTw}"${orient}/>` +
+        `<w:pgMar w:top="${m.top}" w:right="${m.right}" w:bottom="${m.bottom}" w:left="${m.left}" w:header="${p.headerTw || 720}" w:footer="${p.footerTw || 720}" w:gutter="0"/></w:sectPr>`;
+    }
+
+    /** True when a header/footer region has something worth saving (text, a page-number field or a picture). */
+    static regionHasContent(el) {
+      return !!el && (el.textContent.replace(/[\s\u200B]/g, '') !== '' || !!el.querySelector('.fld, img, table'));
+    }
+
+    /**
+     * Writes a header or footer part. It shares the body's picture list and list definitions, but has its own relationships
+     * (links and pictures are referenced from the part, not from document.xml). Returns { xml, rels } or null when empty.
+     */
+    async headerFooterPart(el, tag) {
+      if (!DocxWriter.regionHasContent(el)) return null;
+      const w = new DocxWriter({ page: this.page, defaults: this.defaults, title: this.title });
+      w.media = this.media;
+      w.abstractNums = this.abstractNums;
+      w.nextDocPr = this.nextDocPr;
+      w.nextRel = 1;
+      let body = await w.blocks(el, { blockEl: null, list: null, style: null, baseFmt: {} });
+      if (!body || body.endsWith('</w:tbl>')) body += '<w:p/>';
+      this.nextDocPr = w.nextDocPr;
+      w.warnings.forEach((m) => this.warnings.add(m));
+      return { xml: XML_HEAD + `<w:${tag} ${NS_DOC}>${body}</w:${tag}>`, rels: w.rels };
     }
 
     async build(root) {
       let body = await this.blocks(root, { blockEl: null, list: null, style: null, baseFmt: {} });
       if (!body || body.endsWith('</w:tbl>')) body += '<w:p/>';
-      const documentXml = XML_HEAD + `<w:document ${NS_DOC}><w:body>${body}${this.sectPr()}</w:body></w:document>`;
+      const header = await this.headerFooterPart(this.headerEl, 'hdr');
+      const footer = await this.headerFooterPart(this.footerEl, 'ftr');
+      let refs = '';
+      if (header) refs += `<w:headerReference w:type="default" r:id="${this.addRel('header', 'header1.xml', false)}"/>`;
+      if (footer) refs += `<w:footerReference w:type="default" r:id="${this.addRel('footer', 'footer1.xml', false)}"/>`;
+      const notes = this.footnotes;
+      const notesXml = notes.length ? XML_HEAD + `<w:footnotes ${NS_DOC}>` +
+        '<w:footnote w:type="separator" w:id="-1"><w:p><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:separator/></w:r></w:p></w:footnote>' +
+        '<w:footnote w:type="continuationSeparator" w:id="0"><w:p><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:continuationSeparator/></w:r></w:p></w:footnote>' +
+        notes.map((n) => `<w:footnote w:id="${n.id}"><w:p><w:pPr><w:pStyle w:val="FootnoteText"/></w:pPr><w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr><w:footnoteRef/></w:r><w:r><w:t xml:space="preserve"> ${esc(n.text)}</w:t></w:r></w:p></w:footnote>`).join('') +
+        '</w:footnotes>' : '';
+      const documentXml = XML_HEAD + `<w:document ${NS_DOC}><w:body>${body}${this.sectPr(refs)}</w:body></w:document>`;
 
       const zip = new JSZip();
       const hasMedia = this.media.length > 0;
@@ -616,6 +681,9 @@
         '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
         '<Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/>' +
         '<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>' +
+        (notes.length ? '<Override PartName="/word/footnotes.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml"/>' : '') +
+        (header ? '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>' : '') +
+        (footer ? '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>' : '') +
         '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
         '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' +
         '</Types>');
@@ -636,14 +704,23 @@
       zip.file('word/document.xml', documentXml);
       zip.file('word/styles.xml', this.stylesXml());
       zip.file('word/numbering.xml', this.numberingXml());
-      zip.file('word/settings.xml', this.settingsXml());
+      zip.file('word/settings.xml', this.settingsXml(notes.length > 0));
+      if (notes.length) zip.file('word/footnotes.xml', notesXml);
       zip.file('word/_rels/document.xml.rels', XML_HEAD +
         '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
         `<Relationship Id="rId1" Type="${REL}styles" Target="styles.xml"/>` +
         `<Relationship Id="rId2" Type="${REL}numbering" Target="numbering.xml"/>` +
         `<Relationship Id="rId3" Type="${REL}settings" Target="settings.xml"/>` +
+        (notes.length ? `<Relationship Id="rIdFn" Type="${REL}footnotes" Target="footnotes.xml"/>` : '') +
         this.rels.map((r) => `<Relationship Id="${r.id}" Type="${r.type}" Target="${esc(r.target)}"${r.external ? ' TargetMode="External"' : ''}/>`).join('') +
         '</Relationships>');
+      const partRels = (rels) => XML_HEAD + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        rels.map((r) => `<Relationship Id="${r.id}" Type="${r.type}" Target="${esc(r.target)}"${r.external ? ' TargetMode="External"' : ''}/>`).join('') + '</Relationships>';
+      for (const [part, file] of [[header, 'header1'], [footer, 'footer1']]) {
+        if (!part) continue;
+        zip.file(`word/${file}.xml`, part.xml);
+        if (part.rels.length) zip.file(`word/_rels/${file}.xml.rels`, partRels(part.rels));
+      }
       for (const m of this.media) zip.file('word/media/' + m.name, m.bytes);
 
       const blob = await zip.generateAsync({
@@ -659,7 +736,7 @@
   /**
    * Export the editor content as a .docx Blob.
    * @param {HTMLElement} root editor element
-   * @param {{page:object, defaults:object, title:string}} opts
+   * @param {{page:object, defaults:object, title:string, header?:HTMLElement, footer?:HTMLElement}} opts
    */
   Folio.exportDocx = async function (root, opts) {
     if (typeof JSZip === 'undefined') {
