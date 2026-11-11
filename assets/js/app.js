@@ -498,22 +498,29 @@ function openShare() {
   if (document.querySelector('.modal-overlay')) return;
   const { url, title, text } = shareTarget();
   const u = encodeURIComponent(url), t = encodeURIComponent(text);
+  // [name, href, brand colour, badge text]
   const targets = [
-    ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${u}`],
-    ['X (Twitter)', `https://twitter.com/intent/tweet?url=${u}&text=${t}`],
-    ['LinkedIn', `https://www.linkedin.com/sharing/share-offsite/?url=${u}`],
-    ['Reddit', `https://www.reddit.com/submit?url=${u}&title=${encodeURIComponent(title)}`],
-    ['WhatsApp', `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`],
-    ['Telegram', `https://t.me/share/url?url=${u}&text=${t}`],
-    ['Email', `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${text}\n${url}`)}`],
+    ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${u}`, '#1877f2', 'f'],
+    ['X', `https://twitter.com/intent/tweet?url=${u}&text=${t}`, '#111111', '𝕏'],
+    ['LinkedIn', `https://www.linkedin.com/sharing/share-offsite/?url=${u}`, '#0a66c2', 'in'],
+    ['WhatsApp', `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, '#25d366', 'W'],
+    ['Telegram', `https://t.me/share/url?url=${u}&text=${t}`, '#229ed9', 'T'],
+    ['Reddit', `https://www.reddit.com/submit?url=${u}&title=${encodeURIComponent(title)}`, '#ff4500', 'R'],
+    ['Email', `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${text}
+${url}`)}`, '#6b7280', '@'],
   ];
   const input = el('input', { class: 'input', type: 'text', readonly: true, value: url, 'aria-label': 'Link to share' });
   input.addEventListener('focus', () => input.select());
-  const body = el('div', { class: 'stack' },
-    el('div', { class: 'row' }, input,
-      el('button', { class: 'btn btn-primary', type: 'button', html: `${icon('copy')}<span>Copy</span>`, onclick: () => ui.copyText(url, 'Link copied') })),
-    el('div', { class: 'row' }, targets.map(([name, href]) => el('a', { class: 'btn', href, target: '_blank', rel: 'noopener noreferrer' }, name))),
-    navigator.share ? el('button', { class: 'btn', type: 'button', html: `${icon('share-2')}<span>More options…</span>`,
+  const copyBtn = el('button', { class: 'btn btn-primary', type: 'button', html: `${icon('copy')}<span>Copy</span>`,
+    onclick: async () => { if (await ui.copyText(url, 'Link copied')) { copyBtn.lastChild.textContent = 'Copied'; setTimeout(() => { copyBtn.lastChild.textContent = 'Copy'; }, 1800); } } });
+  const body = el('div', { class: 'share' },
+    el('div', { class: 'share-preview' }, el('img', { src: 'assets/icons/og-image.png', alt: '', width: 1200, height: 630 }),
+      el('div', {}, el('strong', {}, title), el('small', {}, text))),
+    el('div', { class: 'share-grid' }, targets.map(([name, href, color, mark]) =>
+      el('a', { class: 'share-btn', href, target: '_blank', rel: 'noopener noreferrer', style: `--brand:${color}` },
+        el('span', { class: 'share-mark', 'aria-hidden': 'true' }, mark), el('span', {}, name)))),
+    el('div', { class: 'share-copy' }, input, copyBtn),
+    navigator.share ? el('button', { class: 'btn share-native', type: 'button', html: `${icon('share-2')}<span>Share via device…</span>`,
       onclick: () => navigator.share({ title, text, url }).catch(() => {}) }) : null);
   ui.openModal({ title: 'Share', body });
   renderIcons(body);

@@ -187,3 +187,17 @@ details.help-card > summary { font-size: 14px; font-weight: 600; color: var(--te
 .seg svg { width: 16px; height: 16px; }
 .catalog-meta { margin: 0 0 12px; font-size: 12px; color: var(--text-muted); }
 .empty .btn { margin-top: 12px; }
+
+/* Share dialog */
+.share { display: grid; gap: 14px; min-width: min(440px, 100%); }
+.share-preview { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface-2); }
+.share-preview img { display: block; width: 100%; height: auto; aspect-ratio: 1200 / 630; object-fit: cover; }
+.share-preview > div { padding: 10px 12px; display: grid; gap: 2px; }
+.share-preview small { color: var(--text-faint); }
+.share-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.share-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); text-decoration: none; font-size: 13px; transition: border-color var(--t), background var(--t); }
+.share-btn:hover { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.share-mark { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--brand); color: #fff; font-weight: 700; font-size: 15px; }
+.share-copy { display: flex; gap: 8px; }
+.share-copy .input { flex: 1; min-width: 0; }
+.share-native { justify-self: start; }
