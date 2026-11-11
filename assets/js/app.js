@@ -484,6 +484,41 @@ function openPalette() {
   draw(); input.focus();
 }
 
+// ---------- Share ----------
+const SITE_URL = 'https://developer-toolbox.caongocphuong95.workers.dev/';
+/** Public URL of the current page (tool or category), always on the production domain so shared links work for everyone. */
+function shareTarget() {
+  const r = router.current, tool = r?.name === 'tool' ? getTool(r.param) : null;
+  const cat = r?.name === 'category' ? getCategory(r.param) : null;
+  if (tool) return { url: tool.standalone ? new URL(tool.href, SITE_URL).href : SITE_URL + hrefTo('tool', tool.id), title: `${tool.name} · Developer Toolbox`, text: `${tool.name}: ${tool.description}` };
+  if (cat) return { url: SITE_URL + hrefTo('category', cat.id), title: `${cat.name} · Developer Toolbox`, text: `${cat.name} tools, free in your browser.` };
+  return { url: SITE_URL, title: 'Developer Toolbox', text: `Developer Toolbox: ${TOOLS.length} free developer tools that run in your browser.` };
+}
+function openShare() {
+  if (document.querySelector('.modal-overlay')) return;
+  const { url, title, text } = shareTarget();
+  const u = encodeURIComponent(url), t = encodeURIComponent(text);
+  const targets = [
+    ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${u}`],
+    ['X (Twitter)', `https://twitter.com/intent/tweet?url=${u}&text=${t}`],
+    ['LinkedIn', `https://www.linkedin.com/sharing/share-offsite/?url=${u}`],
+    ['Reddit', `https://www.reddit.com/submit?url=${u}&title=${encodeURIComponent(title)}`],
+    ['WhatsApp', `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`],
+    ['Telegram', `https://t.me/share/url?url=${u}&text=${t}`],
+    ['Email', `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${text}\n${url}`)}`],
+  ];
+  const input = el('input', { class: 'input', type: 'text', readonly: true, value: url, 'aria-label': 'Link to share' });
+  input.addEventListener('focus', () => input.select());
+  const body = el('div', { class: 'stack' },
+    el('div', { class: 'row' }, input,
+      el('button', { class: 'btn btn-primary', type: 'button', html: `${icon('copy')}<span>Copy</span>`, onclick: () => ui.copyText(url, 'Link copied') })),
+    el('div', { class: 'row' }, targets.map(([name, href]) => el('a', { class: 'btn', href, target: '_blank', rel: 'noopener noreferrer' }, name))),
+    navigator.share ? el('button', { class: 'btn', type: 'button', html: `${icon('share-2')}<span>More options…</span>`,
+      onclick: () => navigator.share({ title, text, url }).catch(() => {}) }) : null);
+  ui.openModal({ title: 'Share', body });
+  renderIcons(body);
+}
+
 // ---------- Keyboard shortcuts ----------
 const SHORTCUTS = [
   { keys: ['Ctrl', 'K'], text: 'Open global search (⌘K on macOS)' },
@@ -544,6 +579,7 @@ function boot() {
   $('#theme-toggle').addEventListener('click', () => settings.set({ theme: currentTheme() === 'dark' ? 'light' : 'dark' }));
   $('#open-search').addEventListener('click', openPalette);
   $('#open-shortcuts')?.addEventListener('click', openShortcuts);
+  $('#open-share')?.addEventListener('click', openShare);
   // Desktop: collapse to an icon rail (remembered). Narrow screens: open/close the drawer.
   const COLLAPSE_KEY = 'sidebar-collapsed', narrow = () => matchMedia('(max-width: 860px)').matches;
   const setCollapsed = on => {

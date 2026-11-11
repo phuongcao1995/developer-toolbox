@@ -19,7 +19,7 @@ export function el(tag, attrs = {}, ...children) {
     else if (k === 'html') node.innerHTML = v;
     else node.setAttribute(k, v === true ? '' : v);
   }
-  for (const c of children.flat()) if (c != null) node.append(c.nodeType ? c : document.createTextNode(c));
+  for (const c of children.flat(Infinity)) if (c != null) node.append(c.nodeType ? c : document.createTextNode(c));
   return node;
 }
 
