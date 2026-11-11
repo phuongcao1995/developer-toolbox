@@ -201,3 +201,8 @@ details.help-card > summary { font-size: 14px; font-weight: 600; color: var(--te
 .share-copy { display: flex; gap: 8px; }
 .share-copy .input { flex: 1; min-width: 0; }
 .share-native { justify-self: start; }
+.share-tool { flex-direction: row; align-items: center; gap: 14px; padding: 14px; background: var(--cat-soft); border-color: transparent; }
+.share-tool-icon { flex: none; width: 52px; height: 52px; border-radius: 14px; background: var(--surface); color: var(--cat-ink); display: grid; place-items: center; }
+.share-tool-icon svg { width: 26px; height: 26px; }
+.share-tool > div:last-child { padding: 0; }
+.share-tool em { font-style: normal; font-size: 12px; color: var(--cat-ink); font-weight: 600; }

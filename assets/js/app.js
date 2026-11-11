@@ -264,7 +264,8 @@ async function viewTool(id, rerender = false) {
       html: `${icon('star')}<span class="sr-only">${fav ? 'Favorited' : 'Favorite'}</span>`,
       onclick: e => { const on = favorites.toggle(id); const b = e.currentTarget;
         b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); b.title = on ? 'Remove from favorites' : 'Add to favorites';
-        b.querySelector('span').textContent = on ? 'Favorited' : 'Favorite'; renderSidebarCounts(); } }));
+        b.querySelector('span').textContent = on ? 'Favorited' : 'Favorite'; renderSidebarCounts(); } }),
+    el('button', { class: 'btn btn-icon', type: 'button', title: `Share ${tool.name}`, 'aria-label': `Share ${tool.name}`, html: `${icon('share-2')}<span class="sr-only">Share</span>`, onclick: () => openShare(tool) }));
   if (tool.standalone) {
     page.append(head, el('div', { class: 'panel' }, el('div', { class: 'panel-body stack' },
       el('p', {}, `${tool.name} is a standalone app with its own interface. It opens in its own tab, runs entirely in your browser and does not upload your files.`),
@@ -487,21 +488,26 @@ function openPalette() {
 // ---------- Share ----------
 const SITE_URL = 'https://developer-toolbox.caongocphuong95.workers.dev/';
 /** Public URL of the current page (tool or category), always on the production domain so shared links work for everyone. */
-function shareTarget() {
-  const r = router.current, tool = r?.name === 'tool' ? getTool(r.param) : null;
+function shareTarget(tool = null) {
+  const r = router.current;
+  tool = tool || (r?.name === 'tool' ? getTool(r.param) : null);
   const cat = r?.name === 'category' ? getCategory(r.param) : null;
-  if (tool) return { url: tool.standalone ? new URL(tool.href, SITE_URL).href : SITE_URL + hrefTo('tool', tool.id), title: `${tool.name} · Developer Toolbox`, text: `${tool.name}: ${tool.description}` };
-  if (cat) return { url: SITE_URL + hrefTo('category', cat.id), title: `${cat.name} · Developer Toolbox`, text: `${cat.name} tools, free in your browser.` };
-  return { url: SITE_URL, title: 'Developer Toolbox', text: `Developer Toolbox: ${TOOLS.length} free developer tools that run in your browser.` };
+  if (tool) {
+    const c = getCategory(tool.category), tag = (c?.name || '').replace(/[^A-Za-z0-9]+/g, '');
+    return { tool, url: tool.standalone ? new URL(tool.href, SITE_URL).href : SITE_URL + hrefTo('tool', tool.id), title: `${tool.name} · Developer Toolbox`,
+      text: `${tool.name}: ${tool.description} Free, runs in your browser.`, tags: ['DeveloperTools', ...(tag ? [tag] : [])] };
+  }
+  if (cat) return { url: SITE_URL + hrefTo('category', cat.id), title: `${cat.name} · Developer Toolbox`, text: `${cat.name} tools, free in your browser.`, tags: ['DeveloperTools'] };
+  return { url: SITE_URL, title: 'Developer Toolbox', text: `Developer Toolbox: ${TOOLS.length} free developer tools that run in your browser.`, tags: ['DeveloperTools'] };
 }
-function openShare() {
+function openShare(tool = null) {
   if (document.querySelector('.modal-overlay')) return;
-  const { url, title, text } = shareTarget();
-  const u = encodeURIComponent(url), t = encodeURIComponent(text);
+  const { tool: t0, url, title, text, tags } = shareTarget(tool);
+  const u = encodeURIComponent(url), t = encodeURIComponent(text), hashtags = encodeURIComponent(tags.join(','));
   // [name, href, brand colour, badge text]
   const targets = [
     ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${u}`, '#1877f2', 'f'],
-    ['X', `https://twitter.com/intent/tweet?url=${u}&text=${t}`, '#111111', '𝕏'],
+    ['X', `https://twitter.com/intent/tweet?url=${u}&text=${t}&hashtags=${hashtags}`, '#111111', '𝕏'],
     ['LinkedIn', `https://www.linkedin.com/sharing/share-offsite/?url=${u}`, '#0a66c2', 'in'],
     ['WhatsApp', `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, '#25d366', 'W'],
     ['Telegram', `https://t.me/share/url?url=${u}&text=${t}`, '#229ed9', 'T'],
@@ -514,8 +520,11 @@ ${url}`)}`, '#6b7280', '@'],
   const copyBtn = el('button', { class: 'btn btn-primary', type: 'button', html: `${icon('copy')}<span>Copy</span>`,
     onclick: async () => { if (await ui.copyText(url, 'Link copied')) { copyBtn.lastChild.textContent = 'Copied'; setTimeout(() => { copyBtn.lastChild.textContent = 'Copy'; }, 1800); } } });
   const body = el('div', { class: 'share' },
-    el('div', { class: 'share-preview' }, el('img', { src: 'assets/icons/og-image.png', alt: '', width: 1200, height: 630 }),
-      el('div', {}, el('strong', {}, title), el('small', {}, text))),
+    t0
+      ? el('div', { class: 'share-preview share-tool', 'data-cat': t0.category }, el('div', { class: 'share-tool-icon', html: icon(t0.icon) }),
+          el('div', {}, el('strong', {}, t0.name), el('small', {}, t0.description), el('em', {}, tags.map(x => '#' + x).join(' '))))
+      : el('div', { class: 'share-preview' }, el('img', { src: 'assets/icons/og-image.png', alt: '', width: 1200, height: 630 }),
+          el('div', {}, el('strong', {}, title), el('small', {}, text))),
     el('div', { class: 'share-grid' }, targets.map(([name, href, color, mark]) =>
       el('a', { class: 'share-btn', href, target: '_blank', rel: 'noopener noreferrer', style: `--brand:${color}` },
         el('span', { class: 'share-mark', 'aria-hidden': 'true' }, mark), el('span', {}, name)))),
@@ -586,7 +595,7 @@ function boot() {
   $('#theme-toggle').addEventListener('click', () => settings.set({ theme: currentTheme() === 'dark' ? 'light' : 'dark' }));
   $('#open-search').addEventListener('click', openPalette);
   $('#open-shortcuts')?.addEventListener('click', openShortcuts);
-  $('#open-share')?.addEventListener('click', openShare);
+  $('#open-share')?.addEventListener('click', () => openShare());
   // Desktop: collapse to an icon rail (remembered). Narrow screens: open/close the drawer.
   const COLLAPSE_KEY = 'sidebar-collapsed', narrow = () => matchMedia('(max-width: 860px)').matches;
   const setCollapsed = on => {
