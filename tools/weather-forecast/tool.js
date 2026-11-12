@@ -1,8 +1,11 @@
 import { el, bindActions, renderIcons } from '../../assets/js/components/ui.js';
+import { weatherSvg } from './icons.js';
 import { LOCATIONS, loadForecast, viewForecast, nowInVietnam, describeDate, fmt } from './logic.js';
 
 const icon = name => el('i', { 'data-lucide': name });
-const wxIcon = (name, cls = '') => el('span', { class: `wx-ic ${cls}` }, icon(name));
+// Lucide icons used by the UI (listed on an "icon" line so scripts/build-icons.mjs bundles them).
+export const UI_ICONS = ['thermometer', 'droplets', 'wind', 'umbrella', 'sunrise', 'sunset', 'arrow-up', 'arrow-down', 'sun', 'cloud-off', 'loader', 'map-pin', 'refresh-cw', 'chevron-down'];
+const wxIcon =(name, cls = '') => el('span', { class: `wx-ic ${cls}` }, weatherSvg(name));
 
 /** 'YYYY-MM-DDTHH:mm' (Vietnam) -> 'Tue, 10 Nov 2026 · 09:45'. */
 function clockText(iso) {
@@ -11,8 +14,8 @@ function clockText(iso) {
 }
 
 /** Small label/value cell. */
-const stat = (label, value, sub) => el('div', { class: 'wx-stat' },
-  el('span', { class: 'wx-stat-l' }, label), el('span', { class: 'wx-stat-v' }, value), sub ? el('span', { class: 'wx-stat-s' }, sub) : null);
+const stat = (label, value, sub, ic) => el('div', { class: 'wx-stat' },
+  el('span', { class: 'wx-stat-l' }, ic ? icon(ic) : null, label), el('span', { class: 'wx-stat-v' }, value), sub ? el('span', { class: 'wx-stat-s' }, sub) : null);
 
 const windText = h => h.wind == null ? '–' : `${fmt(h.wind)} km/h${h.compass ? ' ' + h.compass : ''}`;
 const mm = v => v == null ? '–' : `${fmt(v, 1)} mm`;
@@ -25,17 +28,24 @@ function uvLevel(uv) {
 }
 
 // ---------- sections ----------
-function currentCard(cur, nowIso) {
-  return el('section', { class: `wx-current tone-${cur.info.tone}`, 'aria-label': 'Current weather' },
+function currentCard(cur, nowIso, today) {
+  const chip = (ic, text) => el('span', { class: 'wx-chip' }, icon(ic), text);
+  const chips = today ? el('div', { class: 'wx-chips' },
+    today.max != null ? chip('arrow-up', `High ${deg(today.max)}`) : null, today.min != null ? chip('arrow-down', `Low ${deg(today.min)}`) : null,
+    today.sunrise ? chip('sunrise', today.sunrise) : null, today.sunset ? chip('sunset', today.sunset) : null,
+    today.uv != null ? chip('sun', `UV ${fmt(today.uv, 1)} · ${uvLevel(today.uv)}`) : null) : null;
+  return el('section', { class: `wx-current tone-${cur.info.tone}${cur.isDay ? '' : ' is-night'}`, 'aria-label': 'Current weather' },
     el('div', { class: 'wx-current-main' },
       wxIcon(cur.info.icon, 'wx-ic-xl'),
       el('div', {},
         el('div', { class: 'wx-temp-xl' }, fmt(cur.temp), el('span', {}, '°C')),
-        el('div', { class: 'wx-cond' }, cur.info.label))),
-    el('div', { class: 'wx-stats' },
-      stat('Feels like', deg(cur.feels)), stat('Humidity', pct(cur.humidity)),
-      stat('Wind', windText(cur)), stat('Rain chance', pct(cur.pop), cur.pop == null ? '' : 'this hour')),
-    el('div', { class: 'hint wx-asof' }, cur.time ? `Observed ${cur.time.slice(11, 16)}` : `As of ${nowIso.slice(11, 16)}`));
+        el('div', { class: 'wx-cond' }, cur.info.label),
+        el('div', { class: 'wx-asof' }, cur.time ? `Observed ${cur.time.slice(11, 16)}` : `As of ${nowIso.slice(11, 16)}`))),
+    el('div', { class: 'wx-current-side' },
+      el('div', { class: 'wx-stats' },
+        stat('Feels like', deg(cur.feels), '', 'thermometer'), stat('Humidity', pct(cur.humidity), '', 'droplets'),
+        stat('Wind', windText(cur), '', 'wind'), stat('Rain chance', pct(cur.pop), cur.pop == null ? '' : 'this hour', 'umbrella')),
+      chips));
 }
 
 function hourlySection(hours) {
@@ -133,8 +143,11 @@ export default {
       tabsEl.replaceChildren(...LOCATIONS.map(l => {
         const s = state.get(l.id), on = l.id === selected;
         return el('button', { class: `wx-tab${on ? ' active' : ''}`, type: 'button', role: 'tab', 'aria-selected': String(on), tabindex: on ? '0' : '-1', 'data-loc': l.id },
-          el('span', { class: 'wx-tab-name' }, icon('map-pin'), l.short),
-          el('span', { class: 'wx-tab-now' }, s.data ? `${fmt(s.data.current.temp)}°C · ${s.data.current.info.label}` : s.status === 'error' ? 'Unavailable' : 'Loading…'));
+          el('span', { class: 'wx-tab-ic' }, s.data ? wxIcon(s.data.current.info.icon) : icon(s.status === 'error' ? 'cloud-off' : 'loader')),
+          el('span', { class: 'wx-tab-text' },
+            el('span', { class: 'wx-tab-name' }, l.short), el('span', { class: 'wx-tab-area' }, l.area),
+            el('span', { class: 'wx-tab-now' }, s.data ? s.data.current.info.label : s.status === 'error' ? 'Unavailable' : 'Loading…')),
+          s.data ? el('span', { class: 'wx-tab-temp' }, `${fmt(s.data.current.temp)}°`) : null);
       }));
       renderIcons(tabsEl);
     }
@@ -142,7 +155,7 @@ export default {
     function renderView() {
       const loc = LOCATIONS.find(l => l.id === selected), s = state.get(loc.id);
       const head = el('div', { class: 'wx-loc' },
-        el('div', {}, el('h2', { class: 'wx-loc-name' }, loc.name), el('div', { class: 'hint' }, `${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}`)),
+        el('div', {}, el('h2', { class: 'wx-loc-name' }, icon('map-pin'), loc.name), el('div', { class: 'hint' }, `${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}`)),
         el('button', { class: 'btn btn-sm', type: 'button', 'data-action': 'refresh-one', disabled: s.status === 'loading' || s.refreshing || null,
           'aria-label': `Refresh ${loc.short}` }, icon('refresh-cw'), el('span', {}, s.refreshing ? 'Refreshing…' : 'Refresh')));
       const nodes = [head];
@@ -157,7 +170,7 @@ export default {
         const nowIso = nowInVietnam(), v = viewForecast(s.data, nowIso);
         if (s.error) nodes.push(el('div', { class: 'alert alert-warn', role: 'status' }, `Showing saved data. Could not refresh: ${s.error}`));
         if (v.outdated) nodes.push(el('div', { class: 'alert alert-info', role: 'status' }, 'This data is from an earlier day. Refreshing…'));
-        nodes.push(currentCard(s.data.current, nowIso));
+        nodes.push(currentCard(s.data.current, nowIso, v.days.find(d => d.isToday)));
         if (v.hours.length) { hourly = hourlySection(v.hours); nodes.push(hourly.node); }
         else nodes.push(el('div', { class: 'alert alert-info' }, 'No hourly data is available for today.'));
         nodes.push(v.days.length ? dailySection(v.days) : el('div', { class: 'alert alert-info' }, 'No daily forecast is available.'));

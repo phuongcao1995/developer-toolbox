@@ -5,13 +5,14 @@ export const CACHE_TTL_MS = 10 * 60 * 1000;
 export const REQUEST_TIMEOUT_MS = 15000;
 
 /**
- * Fixed coordinates, resolved from OpenStreetMap (ward boundary centres for the two wards; the centre of the
- * "Làng Thể thao Tuyên Sơn" pitch cluster for the stadium) so they are deterministic and need no runtime geocoding.
+ * Fixed coordinates, resolved from OpenStreetMap (ward centre for Phong Quảng, street positions for the two addresses, the centre of the
+ * "Làng Thể thao Tuyên Sơn" pitch cluster for the stadium; accurate to a few hundred metres, plenty for weather) so they are deterministic and need no runtime geocoding.
  */
 export const LOCATIONS = [
-  { id: 'phong-quang', name: 'Phường Phong Quảng, Huế, Việt Nam', short: 'Phong Quảng – Huế', lat: 16.6297, lon: 107.5130 },
-  { id: 'thanh-khe', name: 'Phường Thanh Khê, Đà Nẵng, Việt Nam', short: 'Thanh Khê – Đà Nẵng', lat: 16.0684, lon: 108.1966 },
-  { id: 'tuyen-son', name: 'Sân bóng Tuyên Sơn, Đà Nẵng, Việt Nam', short: 'Tuyên Sơn Stadium – Đà Nẵng', lat: 16.0347, lon: 108.2271 },
+  { id: 'phong-quang', name: 'Phường Phong Quảng, Huế, Việt Nam', short: 'Phong Quảng', area: 'Huế', lat: 16.6297, lon: 107.5130 },
+  { id: 'ha-huy-tap', name: '282 Hà Huy Tập, Thanh Khê, Đà Nẵng, Việt Nam', short: '282 Hà Huy Tập', area: 'Thanh Khê, Đà Nẵng', lat: 16.0640, lon: 108.1903 },
+  { id: 'nguyen-phuoc-lan', name: '214 Nguyễn Phước Lan, Hòa Xuân, Đà Nẵng, Việt Nam', short: '214 Nguyễn Phước Lan', area: 'Hòa Xuân, Đà Nẵng', lat: 16.0222, lon: 108.2246 },
+  { id: 'tuyen-son', name: 'Sân bóng Tuyên Sơn, Đà Nẵng, Việt Nam', short: 'Sân Tuyên Sơn', area: 'Đà Nẵng', lat: 16.0347, lon: 108.2271 },
 ];
 
 const HOURLY = ['temperature_2m', 'apparent_temperature', 'relative_humidity_2m', 'precipitation_probability', 'precipitation',

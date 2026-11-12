@@ -22,11 +22,11 @@ function raw(extra = {}) {
   };
 }
 
-test('locations: three, Vietnam coordinates, unique ids', () => {
-  assert.equal(L.LOCATIONS.length, 3);
-  assert.equal(new Set(L.LOCATIONS.map(l => l.id)).size, 3);
+test('locations: four, Vietnam coordinates, unique ids', () => {
+  assert.equal(L.LOCATIONS.length, 4);
+  assert.equal(new Set(L.LOCATIONS.map(l => l.id)).size, 4);
   for (const l of L.LOCATIONS) { assert.ok(l.lat > 15.9 && l.lat < 16.7 && l.lon > 107.4 && l.lon < 108.3, l.id); assert.ok(l.name && l.short); }
-  assert.notDeepEqual([L.LOCATIONS[1].lat, L.LOCATIONS[1].lon], [L.LOCATIONS[2].lat, L.LOCATIONS[2].lon], 'stadium is not the ward centre');
+  assert.notDeepEqual([L.LOCATIONS[1].lat, L.LOCATIONS[1].lon], [L.LOCATIONS[2].lat, L.LOCATIONS[2].lon], 'the two Đà Nẵng addresses differ');
 });
 test('buildForecastUrl', () => {
   const u = new URL(L.buildForecastUrl(L.LOCATIONS[2]));
@@ -115,7 +115,7 @@ test('loadForecast: one location failing does not affect the others', async () =
   const storage = memStore();
   const fetchImpl = async url => (url.includes(`latitude=${L.LOCATIONS[1].lat}&`) ? { ok: false, status: 503 } : { ok: true, json: async () => raw() });
   const res = await Promise.allSettled(L.LOCATIONS.map(l => L.loadForecast(l, { storage, fetchImpl })));
-  assert.deepEqual(res.map(r => r.status), ['fulfilled', 'rejected', 'fulfilled']);
+  assert.deepEqual(res.map(r => r.status), ['fulfilled', 'rejected', 'fulfilled', 'fulfilled']);
 });
 test('loadForecast: ignores a corrupt cache entry', async () => {
   const storage = memStore(), c = { n: 0 }; storage.set('cache:phong-quang', { fetchedAt: Date.now(), data: { nope: 1 } });

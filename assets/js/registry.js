@@ -42,7 +42,7 @@ export const TOOLS = [
   t('url-encoder', 'URL Encoder / Decoder', 'Encode, decode and parse URLs; edit query parameters.', 'utility', 'link', ['url', 'uri', 'encode', 'decode', 'query', 'percent']),
   t('cron-generator', 'Cron Generator', 'Build and explain cron expressions and preview upcoming run times.', 'utility', 'clock', ['cron', 'schedule', 'crontab', 'job']),
   t('uuid-generator', 'UUID Generator', 'Generate one or many UUID v4 values with formatting options.', 'utility', 'fingerprint', ['uuid', 'guid', 'random', 'id']),
-  t('weather-forecast', 'Weather Forecast', 'Live current, hourly and 7-day weather for Phong Quảng (Huế), Thanh Khê and Tuyên Sơn (Đà Nẵng), from Open-Meteo.', 'utility', 'cloud-sun', ['weather', 'forecast', 'rain', 'temperature', 'huế', 'đà nẵng', 'vietnam', 'open-meteo']),
+  t('weather-forecast', 'Weather Forecast', 'Live current, hourly and 7-day weather for Phong Quảng (Huế), 282 Hà Huy Tập, 214 Nguyễn Phước Lan and Tuyên Sơn (Đà Nẵng), from Open-Meteo.', 'utility', 'cloud-sun', ['weather', 'forecast', 'rain', 'temperature', 'huế', 'đà nẵng', 'vietnam', 'open-meteo']),
   t('timestamp-converter', 'Timestamp Converter', 'Convert Unix timestamps and dates, with UTC, local and timezone views.', 'utility', 'calendar-clock', ['unix', 'epoch', 'timestamp', 'date', 'iso', 'timezone']),
 
   t('webhook-inspector', 'Webhook Inspector', 'Inspect webhook requests — demo mode with simulated requests, optional external service.', 'api', 'webhook', ['webhook', 'inspect', 'http', 'request', 'callback']),
@@ -86,7 +86,7 @@ const RELEASES = {
   'table-converter': { updated: '2026-11-04', version: '1.2', note: 'XML conversion, large-file worker, better CSV handling and Unicode.' },
   'diff-checker': { updated: '2026-11-04', version: '1.2', note: 'Exact diffs on huge files, character-level view, folding and ignore options.' },
   'cyberchef': { updated: '2026-11-04', version: '1.1', note: 'Binary-safe output, HTML entities, Base32/58, ROT13 and more operations.' },
-  'weather-forecast': { updated: '2026-11-10', version: '1.0', note: 'New: live current, hourly and 7-day weather for three Vietnam locations.' },
+  'weather-forecast': { updated: '2026-11-12', version: '1.1', note: 'Four locations incl. two Đà Nẵng addresses, redesigned layout and colour weather icons.' },
   'timestamp-converter': { updated: '2026-11-04', version: '1.1', note: 'Exact nanoseconds and microseconds, ambiguity hints.' },
   'uuid-generator': { updated: '2026-11-04', version: '1.1', note: 'UUID v7, nil and max UUIDs.' },
   'webhook-inspector': { updated: '2026-11-03', version: '1.1', note: 'Redacts secrets in stored history, backs off when polling fails.' },
