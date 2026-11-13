@@ -188,10 +188,13 @@ function forecastAlerts(loc, data, flood, nowIso, checkedMs) {
   const rain3 = rain.map((_, i) => rain.slice(i, i + 3).reduce((a, b) => a + b, 0));
   const dRain = maxBy(days, d => d.precip), r1 = dRain?.precip ?? 0, i3 = rain3.indexOf(Math.max(...rain3)), r3 = rain3[i3] ?? 0;
 
-  // Heavy rain
-  if (r1 >= 50) {
-    const lvl = r1 >= 100 ? 2 : 1;
-    push('rain', lvl, dRain.date, peakHour(dRain.date, h => h.precip), `Up to ${mm1(r1)} in 24 h (${r1 >= 100 ? 'very heavy' : 'heavy'}, ${r1 >= 100 ? 'mưa rất to' : 'mưa to'}). Rain chance up to ${dRain.pop == null ? 'n/a' : dRain.pop + '%'}.`);
+  // Heavy rain. A "Very heavy rain" condition (hourly or daily) always raises at least an Advisory, even when the 24 h total is below 50 mm.
+  const vhHour = data.hourly.filter(h => h.date >= v.today && h.cond.key === 'rain-very-heavy'), vhDay = days.some(d => d.cond.key === 'rain-very-heavy');
+  if (r1 >= 50 || vhHour.length || vhDay) {
+    const hr = maxBy(vhHour, h => h.precip);
+    const lvl = r1 >= 100 ? 2 : 1, date = r1 >= 50 || !hr ? dRain.date : hr.date;
+    push('rain', lvl, date, r1 >= 50 || !hr ? peakHour(date, h => h.precip) : hr.hour,
+      `${r1 >= 50 ? `Up to ${mm1(r1)} in 24 h (${r1 >= 100 ? 'very heavy, mưa rất to' : 'heavy, mưa to'}).` : ''}${hr ? ` Very heavy rain (mưa rất to) up to ${mm1(hr.precip)} per hour.` : ''} Rain chance up to ${dRain?.pop == null ? 'n/a' : dRain.pop + '%'}.`.trim());
   }
   // Flood risk: rain totals, supported by the river-flow model when it is available.
   let fl = r1 >= 100 || r3 >= 150 ? 2 : r1 >= 70 || r3 >= 100 ? 1 : -1, flowNote = '';
@@ -212,7 +215,8 @@ function forecastAlerts(loc, data, flood, nowIso, checkedMs) {
   const dWind = maxBy(days, d => d.gustMax ?? d.windMax), g = dWind?.gustMax ?? dWind?.windMax ?? 0;
   if (g >= 62) push('wind', g >= 88 ? 2 : 1, dWind.date, peakHour(dWind.date, h => h.gust ?? h.wind), `Gusts up to ${Math.round(g)} km/h (${g >= 118 ? 'typhoon force' : g >= 88 ? 'storm force' : 'gale force'}).`);
   // Extreme heat: a single hot day is an advisory, three in a row a watch.
-  const hot = days.map(d => (d.feelsMax ?? d.max ?? 0) >= 41 || (d.max ?? 0) >= 37);
+  const xHour = data.hourly.filter(h => h.date >= v.today && h.cond.key === 'sun-extreme').map(h => h.date);
+  const hot = days.map(d => (d.feelsMax ?? d.max ?? 0) >= 41 || (d.max ?? 0) >= 37 || d.cond.key === 'sun-extreme' || xHour.includes(d.date)); // an "Extremely hot" condition always counts
   const hotDay = days.find((_, i) => hot[i]);
   if (hotDay) {
     let run = 0, best = 0; for (const h of hot) { run = h ? run + 1 : 0; best = Math.max(best, run); }

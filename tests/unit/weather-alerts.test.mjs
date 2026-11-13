@@ -115,6 +115,11 @@ test('very heavy rain: one merged group for all locations, a Watch (never a conf
   assert.equal(r.groups[0].level, 'watch'); assert.equal(r.top, 'watch');
   for (const l of L.LOCATIONS) assert.equal(r.byLocation[l.id], 'watch');
 });
+test('a Very heavy rain hour alerts even when the 24 h total is under 50 mm', () => {
+  const r = A.buildAlerts(L.LOCATIONS, okForecasts(raw7({ rain: [0, 45, 0, 0, 0, 0, 0] })), calmSources(), NOW);
+  const g = r.groups.find(x => x.key === 'fx:rain');
+  assert.ok(g, 'alert present'); assert.equal(g.level, 'advisory'); assert.match(g.items[0].severity, /Very heavy rain/);
+});
 test('only the affected location gets the alert', () => {
   const f = okForecasts(), wet = L.LOCATIONS[1];
   f[wet.id] = { status: 'ok', data: L.normalizeForecast(raw7({ rain: [0, 60, 0, 0, 0, 0, 0] })), fetchedAt: NOW };
