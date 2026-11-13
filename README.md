@@ -1,7 +1,7 @@
 # Developer Toolbox
 
-39 everyday developer utilities in one responsive, framework-free web app. HTML5, CSS3 and vanilla ES modules: **no build step, no backend, no database.**
-Tools process your input in the browser. The few that use the network (API Client, optional URL import and webhook polling, CDN libraries) are listed under
+40 everyday developer utilities in one responsive, framework-free web app. HTML5, CSS3 and vanilla ES modules: **no build step, no backend, no database.**
+Tools process your input in the browser. The few that use the network (API Client, Weather Forecast, optional URL import and webhook polling, CDN libraries) are listed under
 [External services](#dependencies-and-cdn-libraries).
 
 ## Run locally
@@ -31,7 +31,7 @@ The app is deployed as Cloudflare static assets (`wrangler.jsonc`); `.assetsigno
 | JSON & Data (8) | JSON Formatter · Data Converter · JWT Decoder · Regex Tester · Saltbox · API Client · XML Formatter & Validator · YAML Formatter & Validator |
 | Text & Docs (10) | Text Pad · CV Builder · Test Case Manager · Word Editor* · Diff Checker · Markdown Editor · Markdown Viewer · Code Beautifier · SQL Formatter · HTML Entity Converter |
 | Code Development (4) | Prettier Playground · Code Image Generator · Base64 Converter · TypeScript Interface Generator |
-| URL, Time & Utilities (6) | URL Encoder / Decoder · Cron Generator · UUID Generator · Timestamp Converter · Git Command Generator · Chmod Calculator |
+| URL, Time & Utilities (7) | URL Encoder / Decoder · Cron Generator · UUID Generator · Weather Forecast · Timestamp Converter · Git Command Generator · Chmod Calculator |
 | API & Database (6) | Webhook Inspector · Table Converter · HTTP Status Codes · SQL Query Analyzer · OpenAPI / Swagger Viewer · cURL Converter |
 | Files & Media (4) | Excel Editor* · Image Converter · File Hash Generator · QR Code Generator & Reader |
 | Web Development (3) | HTML/CSS/JS Playground · Color Converter · HTTP Header Analyzer |
@@ -95,7 +95,7 @@ shows a clear message and everything else keeps working.
 | js-yaml 4.1.1, qrcode-generator 2.0.4, jsQR 1.4.0 | YAML Formatter, OpenAPI Viewer, QR Code | **vendored** in `assets/js/vendor/` with licences |
 | SheetJS 0.20.3 | Test Case Manager (.xlsx import/export) | **vendored** in `assets/js/vendor/`, loaded only when an .xlsx file is read or written |
 
-Other network use: the API Client sends the requests you ask for (the target must allow CORS; there is **no proxy**), the OpenAPI Viewer can fetch a spec from a URL you
+Other network use: the Weather Forecast fetches live forecasts from the public Open-Meteo API, plus disaster alerts from GDACS (cyclones, floods) and the USGS earthquake catalogue (no keys; responses cached 10 minutes in `localStorage`; Vietnamese agencies NCHMF/VNDMA have no browser-readable API and are linked as the authority to confirm with), the API Client sends the requests you ask for (the target must allow CORS; there is **no proxy**), the OpenAPI Viewer can fetch a spec from a URL you
 enter, and the Webhook Inspector can poll a service you supply (its demo mode is simulated). The Code Image Generator, Image Converter, QR Code, File Hash Generator and
 most other tools work fully offline.
 

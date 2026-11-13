@@ -14,6 +14,10 @@ const snow = '<g fill="var(--wi-snow)"><circle cx="9" cy="20.6" r="1.1"/><circle
 const bolt = '<path d="M12.8 14.2l-2.6 4h2.3l-1 3.6 3.9-5.1h-2.4l1.1-2.5Z" fill="var(--wi-sun)"/>';
 const fog = '<g stroke="var(--wi-fog)" stroke-width="1.8" stroke-linecap="round"><path d="M6 20h12M8 22.2h8"/></g>';
 
+const hotSun = (color, r) => `<g class="wi-rays" stroke="${color}" stroke-width="2" stroke-linecap="round"><path d="M12 .8v2.8M12 20.4v2.8M.8 12h2.8M20.4 12h2.8M4.1 4.1l2 2M17.9 17.9l2 2M4.1 19.9l2-2M17.9 6.1l2-2"/></g><circle cx="12" cy="12" r="${r}" fill="${color}"/>`;
+const heatWaves = '<g stroke="var(--wi-blaze)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity=".85"><path d="M8 21.5q1-1 2 0t2 0 2 0 2 0"/></g>';
+const downpour = '<g stroke="var(--wi-rain)" stroke-width="2.2" stroke-linecap="round"><path d="M7 17.2l-1.2 3.4M11 17.6l-1.2 3.4M15 17.2l-1.2 3.4M19 17.6l-1.2 3.4"/></g>';
+
 const SHAPES = {
   sun: sun(),
   moon: MOON + '<circle cx="18.5" cy="5.5" r=".9" fill="var(--wi-moon)"/><circle cx="21" cy="9" r=".6" fill="var(--wi-moon)"/>',
@@ -24,6 +28,10 @@ const SHAPES = {
   'cloud-drizzle': CLOUD('var(--wi-cloud)', -3) + drops(1),
   'cloud-rain': CLOUD('var(--wi-cloud-dark)', -3) + drops(2),
   'cloud-snow': CLOUD('var(--wi-cloud)', -3) + snow,
+  'cloud-downpour': CLOUD('var(--wi-cloud-dark)', -4) + downpour,
+  'cloud-overcast': `<g transform="translate(5.4 -5.2) scale(.72)">${CLOUD('var(--wi-cloud)')}</g>` + `<path transform="translate(-1 1.5)" d="M7.5 18.5a3.6 3.6 0 0 1-.3-7.2 5 5 0 0 1 9.6.7 3.3 3.3 0 0 1-.1 6.5Z" fill="var(--wi-cloud-dark)"/>`,
+  'sun-hot': hotSun('var(--wi-hot)', 5),
+  'sun-blaze': hotSun('var(--wi-blaze)', 5.4).replace('M12 .8', 'M12 .3') + heatWaves.replace('M8 21.5', 'M5 21.8').replace(/q1-1 2 0t2 0 2 0 2 0/, 'q1.5-1.4 3 0t3 0 3 0 3 0'),
   'cloud-lightning': CLOUD('var(--wi-cloud-dark)', -3) + bolt,
 };
 

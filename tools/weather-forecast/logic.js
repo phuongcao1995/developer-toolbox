@@ -1,4 +1,6 @@
 // Weather Forecast: pure logic (no DOM). Data comes from Open-Meteo (https://open-meteo.com/), no API key needed.
+import { classifyCondition, describeCondition } from './conditions.js';
+export { classifyCondition, describeCondition };
 export const TZ = 'Asia/Ho_Chi_Minh';
 export const API_URL = 'https://api.open-meteo.com/v1/forecast';
 export const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -12,15 +14,17 @@ export const LOCATIONS = [
   { id: 'phong-quang', name: 'Phường Phong Quảng, Huế, Việt Nam', short: 'Phong Quảng', area: 'Huế', lat: 16.6297, lon: 107.5130 },
   { id: 'ha-huy-tap', name: '282 Hà Huy Tập, Thanh Khê, Đà Nẵng, Việt Nam', short: '282 Hà Huy Tập', area: 'Thanh Khê, Đà Nẵng', lat: 16.0640, lon: 108.1903 },
   { id: 'nguyen-phuoc-lan', name: '214 Nguyễn Phước Lan, Hòa Xuân, Đà Nẵng, Việt Nam', short: '214 Nguyễn Phước Lan', area: 'Hòa Xuân, Đà Nẵng', lat: 16.0222, lon: 108.2246 },
+  { id: 'nguyen-luong-bang', name: '54 Nguyễn Lương Bằng, Liên Chiểu, Đà Nẵng, Việt Nam', short: '54 Nguyễn Lương Bằng', area: 'Liên Chiểu, Đà Nẵng', lat: 16.0819, lon: 108.1464 },
+  { id: 'bv-trung-uong-hue', name: 'Bệnh viện Trung ương Huế, 6 Lê Lợi, Thuận Hóa, Huế, Việt Nam', short: 'BV Trung ương Huế', area: 'Thuận Hóa, Huế', lat: 16.4622, lon: 107.5872 },
   { id: 'tuyen-son', name: 'Sân bóng Tuyên Sơn, Đà Nẵng, Việt Nam', short: 'Sân Tuyên Sơn', area: 'Đà Nẵng', lat: 16.0347, lon: 108.2271 },
 ];
 
 const HOURLY = ['temperature_2m', 'apparent_temperature', 'relative_humidity_2m', 'precipitation_probability', 'precipitation',
-  'weather_code', 'wind_speed_10m', 'wind_direction_10m', 'is_day'];
+  'weather_code', 'wind_speed_10m', 'wind_direction_10m', 'is_day', 'cloud_cover', 'uv_index', 'wind_gusts_10m'];
 const DAILY = ['weather_code', 'temperature_2m_max', 'temperature_2m_min', 'precipitation_probability_max', 'precipitation_sum',
-  'wind_speed_10m_max', 'uv_index_max', 'sunrise', 'sunset'];
+  'wind_speed_10m_max', 'uv_index_max', 'sunrise', 'sunset', 'cloud_cover_mean', 'apparent_temperature_max', 'wind_gusts_10m_max'];
 const CURRENT = ['temperature_2m', 'apparent_temperature', 'relative_humidity_2m', 'weather_code', 'wind_speed_10m',
-  'wind_direction_10m', 'precipitation', 'is_day'];
+  'wind_direction_10m', 'precipitation', 'is_day', 'cloud_cover', 'wind_gusts_10m'];
 
 export function buildForecastUrl(loc) {
   const p = new URLSearchParams({
@@ -33,7 +37,7 @@ export function buildForecastUrl(loc) {
 
 // ---------- WMO weather codes ----------
 // Every icon name used below. scripts/build-icons.mjs only bundles names it finds on lines mentioning "icon".
-export const WEATHER_ICONS = ['sun', 'moon', 'cloud-sun', 'cloud-moon', 'cloud', 'cloud-fog', 'cloud-drizzle', 'cloud-rain', 'cloud-snow', 'cloud-lightning'];
+export const WEATHER_ICONS = ['sun', 'moon', 'cloud-sun', 'cloud-moon', 'cloud', 'cloud-fog', 'cloud-drizzle', 'cloud-rain', 'cloud-snow', 'cloud-lightning', 'cloud-downpour', 'cloud-overcast', 'sun-hot', 'sun-blaze'];
 const day = (label, icon, night = icon) => ({ label, icon, night });
 const CODES = {
   0: day('Sunny', 'sun', 'moon'), 1: day('Mostly sunny', 'sun', 'moon'), 2: day('Partly cloudy', 'cloud-sun', 'cloud-moon'),
@@ -82,26 +86,37 @@ export function nowInVietnam(ms = Date.now()) {
   return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
 }
 
+/** Adds `cond` (detailed condition) and `text` (short description) to an hourly or daily row. */
+function withCondition(x, period) {
+  const day = period === 'day';
+  const cond = classifyCondition({ code: x.code, isDay: day ? true : x.isDay, temp: day ? x.max : x.temp, feels: day ? x.feelsMax : x.feels, cloud: x.cloud, uv: x.uv,
+    precip: x.precip, pop: x.pop, period });
+  return { ...x, cond, text: describeCondition(cond, { temp: day ? x.max : x.temp, feels: day ? x.feelsMax : x.feels, pop: x.pop, precip: x.precip, uv: x.uv, period }) };
+}
+
 /** Turn a raw Open-Meteo response into a compact, null-tolerant structure. Throws if the essentials are missing. */
 export function normalizeForecast(raw) {
   const h = raw && raw.hourly, d = raw && raw.daily;
   if (!h || !Array.isArray(h.time) || !d || !Array.isArray(d.time) || !d.time.length) throw new Error('The weather service returned an unexpected response.');
   const hourly = h.time.map((time, i) => {
     const code = at(h.weather_code, i), isDay = at(h.is_day, i) !== 0, dir = at(h.wind_direction_10m, i);
-    return {
+    const x = {
       time, date: time.slice(0, 10), hour: time.slice(11, 13), code, isDay, info: weatherCodeInfo(code, isDay),
       temp: at(h.temperature_2m, i), feels: at(h.apparent_temperature, i), humidity: at(h.relative_humidity_2m, i),
       pop: at(h.precipitation_probability, i), precip: at(h.precipitation, i), wind: at(h.wind_speed_10m, i), windDir: dir, compass: degToCompass(dir),
+      cloud: at(h.cloud_cover, i), uv: at(h.uv_index, i), gust: at(h.wind_gusts_10m, i),
     };
+    return withCondition(x, 'hour');
   });
   const daily = d.time.map((date, i) => {
     const code = at(d.weather_code, i);
-    return {
+    return withCondition({
       date, ...describeDate(date), code, info: weatherCodeInfo(code, true),
       max: at(d.temperature_2m_max, i), min: at(d.temperature_2m_min, i), pop: at(d.precipitation_probability_max, i),
       precip: at(d.precipitation_sum, i), windMax: at(d.wind_speed_10m_max, i), uv: at(d.uv_index_max, i),
       sunrise: typeof d.sunrise?.[i] === 'string' ? d.sunrise[i].slice(11, 16) : null, sunset: typeof d.sunset?.[i] === 'string' ? d.sunset[i].slice(11, 16) : null,
-    };
+      cloud: at(d.cloud_cover_mean, i), feelsMax: at(d.apparent_temperature_max, i), gustMax: at(d.wind_gusts_10m_max, i),
+    }, 'day');
   });
   const c = raw.current || {};
   const curCode = num(c.weather_code), curDay = num(c.is_day) !== 0, curDir = num(c.wind_direction_10m);
@@ -111,7 +126,12 @@ export function normalizeForecast(raw) {
     temp: num(c.temperature_2m) ?? slot?.temp ?? null, feels: num(c.apparent_temperature) ?? slot?.feels ?? null,
     humidity: num(c.relative_humidity_2m) ?? slot?.humidity ?? null, wind: num(c.wind_speed_10m) ?? slot?.wind ?? null,
     windDir: curDir, compass: degToCompass(curDir), precip: num(c.precipitation), pop: slot?.pop ?? null,
+    cloud: num(c.cloud_cover) ?? slot?.cloud ?? null, uv: slot?.uv ?? null, gust: num(c.wind_gusts_10m) ?? slot?.gust ?? null,
   };
+  // "Now" blends the live reading with the current hour's forecast amounts (the live precipitation value covers only the last 15 minutes).
+  current.cond = classifyCondition({ code: curCode, isDay: curDay, temp: current.temp, feels: current.feels, cloud: current.cloud, uv: current.uv,
+    precip: slot?.precip ?? current.precip, pop: current.pop, period: 'hour' });
+  current.text = describeCondition(current.cond, { temp: current.temp, feels: current.feels, pop: current.pop, precip: slot?.precip ?? current.precip, uv: current.uv, period: 'hour' });
   return { current, hourly, daily };
 }
 
