@@ -12,7 +12,7 @@ export const LEVEL_INFO = {
   watch: { label: 'Watch', vi: 'Theo dõi', hint: 'Potential danger; monitor closely.' },
   warning: { label: 'Warning', vi: 'Cảnh báo', hint: 'Confirmed or imminent danger; take precautions immediately.' },
 };
-export const NO_ALERTS_TEXT = 'No severe weather or natural disaster alerts expected in the next 7 days.';
+export const NO_ALERTS_TEXT = 'No severe weather or natural disaster alerts expected in the next 10 days.';
 
 export const SOURCES = {
   nchmf: { name: 'National Center for Hydro-Meteorological Forecasting (NCHMF, Vietnam)', url: 'https://nchmf.gov.vn/' },
@@ -126,7 +126,7 @@ export async function loadAlertSources(locations, opts = {}) {
     cachedFeed('gdacs', async () => parseGdacs(await getJson(GDACS_URL, { fetchImpl, signal })), opts),
     cachedFeed('usgs', async () => parseUsgs(await getJson(usgsUrl, { fetchImpl, signal })), opts),
     ...locations.map(l => cachedFeed(`flood:${l.id}`, async () => parseFlood(await getJson(
-      `${FLOOD_URL}?${new URLSearchParams({ latitude: String(l.lat), longitude: String(l.lon), daily: 'river_discharge', forecast_days: '7', timezone: 'Asia/Ho_Chi_Minh' })}`, { fetchImpl, signal })), opts)),
+      `${FLOOD_URL}?${new URLSearchParams({ latitude: String(l.lat), longitude: String(l.lon), daily: 'river_discharge', forecast_days: '10', timezone: 'Asia/Ho_Chi_Minh' })}`, { fetchImpl, signal })), opts)),
   ]);
   return { gdacs, usgs, flood: Object.fromEntries(locations.map((l, i) => [l.id, floods[i]])) };
 }
@@ -174,7 +174,7 @@ const mm1 = v => `${Number(v.toFixed(v >= 10 ? 0 : 1))} mm`;
 
 /** Model-derived alerts for one location. Capped at "watch": a forecast is never a confirmed warning. */
 function forecastAlerts(loc, data, flood, nowIso, checkedMs) {
-  const v = viewForecast(data, nowIso), days = v.days.slice(0, 7);
+  const v = viewForecast(data, nowIso), days = v.days.slice(0, 10);
   if (!days.length) return [];
   const out = [];
   const push = (type, r, date, hour, severity, extra = '') => out.push({
@@ -227,7 +227,7 @@ function forecastAlerts(loc, data, flood, nowIso, checkedMs) {
   const storms = data.hourly.filter(h => h.date >= v.today && h.code != null && h.code >= 95 && (h.pop ?? 100) >= 50);
   if (storms.length) {
     const s = storms.find(h => h.code >= 96) || storms[0];
-    push('thunder', s.code >= 96 ? 1 : 0, s.date, s.hour, `${s.code >= 96 ? 'Thunderstorm with hail' : 'Thunderstorm'} in the forecast${s.pop != null ? ` (rain chance ${Math.round(s.pop)}%)` : ''}; ${storms.length} stormy hour${storms.length === 1 ? '' : 's'} in the next 7 days.`);
+    push('thunder', s.code >= 96 ? 1 : 0, s.date, s.hour, `${s.code >= 96 ? 'Thunderstorm with hail' : 'Thunderstorm'} in the forecast${s.pop != null ? ` (rain chance ${Math.round(s.pop)}%)` : ''}; ${storms.length} stormy hour${storms.length === 1 ? '' : 's'} in the next 10 days.`);
   }
   return out;
 }

@@ -123,30 +123,20 @@ const levelPill = level => el('span', { class: `wx-pill lvl-${level}` }, icon(LE
 const link = s => el('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer' }, s.name, icon('external-link'));
 const checkedText = ms => (ms ? vnTime(ms) : 'not available');
 
-function alertGroup(g, locName, isOpen, onToggle, onPick) {
+function alertGroup(g, locName, isOpen, onToggle) {
   const d = el('details', { class: `wx-alert lvl-${g.level}`, open: isOpen || null });
   d.addEventListener('toggle', () => onToggle(g.key, d.open));
-  const forecast = g.kind === 'forecast';
-  const rows = g.items.map(a => el('li', { class: 'wx-alert-row' },
-    el('div', { class: 'wx-alert-loc' }, el('button', { class: 'wx-linkbtn', type: 'button', 'data-pick': a.locId, 'aria-label': `Show ${locName(a.locId)}` }, icon('map-pin'), locName(a.locId)), levelPill(a.level)),
-    el('div', { class: 'wx-alert-when' }, icon('clock'), a.whenText),
-    el('div', { class: 'wx-alert-sev' }, a.severity)));
+  const a = g.items[0], forecast = g.kind === 'forecast';
   d.append(
     el('summary', {},
       el('span', { class: 'wx-alert-sum' },
         el('span', { class: 'wx-alert-line' }, levelPill(g.level), el('strong', { class: 'wx-alert-type' }, g.type), el('span', { class: 'wx-cond-vi' }, g.typeVi),
-          el('span', { class: `wx-kind ${g.kind}`, title: forecast ? 'Estimated from weather models; not an official warning.' : 'Reported by the source agency.' }, forecast ? 'Forecast risk (model)' : 'Reported event')),
-        el('span', { class: 'wx-alert-aff' }, 'Affects: ', g.items.map(a => el('span', { class: 'wx-chip' }, locName(a.locId))))),
+          forecast ? el('span', { class: 'wx-kind forecast', title: 'Estimated from weather models; not an official warning.' }, 'Model') : null),
+        el('span', { class: 'wx-alert-brief' }, icon('clock'), `${a.whenText} · ${a.severity}`)),
       el('span', { class: 'wx-chev', 'aria-hidden': 'true' }, icon('chevron-down'))),
     el('div', { class: 'wx-alert-body' },
-      el('ul', { class: 'wx-alert-rows' }, rows),
-      el('p', {}, g.description),
-      el('p', { class: 'hint' }, forecast ? 'This is a risk estimated from forecast models, not a confirmed event or an official warning. Confirm with the Vietnamese authorities below before acting on it.'
-        : 'This event was reported by the source listed below.'),
-      el('h4', {}, 'Recommended precautions'), el('ul', { class: 'wx-tips' }, g.precautions.map(t => el('li', {}, t))),
-      el('div', { class: 'wx-alert-src' }, el('strong', {}, 'Source: '), g.sources.map(link)),
-      el('div', { class: 'hint' }, `Last verified ${checkedText(g.checkedMs)}${g.updatedMs && !forecast ? ` · source updated ${checkedText(g.updatedMs)}` : ''}`)));
-  d.addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (b) { e.preventDefault(); onPick(b.dataset.pick); } });
+      el('ul', { class: 'wx-tips' }, g.precautions.slice(0, 3).map(t => el('li', {}, t))),
+      el('div', { class: 'wx-alert-src hint' }, g.sources.slice(1).map(link))));
   return d;
 }
 
@@ -156,18 +146,17 @@ function alertsSection(av, { locName, isOpen, onToggle, onPick }) {
   const n = av.count;
   const head = n
     ? el('div', { class: `wx-alerts-head lvl-${av.top}` }, icon(LEVEL_ICON[av.top]), el('div', {},
-      el('strong', {}, `${n} ${n === 1 ? 'alert' : 'alerts'} for the next 7 days · highest level: ${LEVEL_INFO[av.top].label} (${LEVEL_INFO[av.top].vi})`), el('div', { class: 'wx-alerts-sub' }, LEVEL_INFO[av.top].hint)))
+      el('strong', {}, `${n} ${n === 1 ? 'alert' : 'alerts'} for the next 10 days · highest level: ${LEVEL_INFO[av.top].label} (${LEVEL_INFO[av.top].vi})`), null))
     : av.complete
       ? el('div', { class: 'wx-alerts-head lvl-clear' }, icon('shield-check'), el('div', {}, el('strong', {}, NO_ALERTS_TEXT),
-        el('div', { class: 'wx-alerts-sub' }, 'Checked: weather-model forecast for all locations, GDACS cyclone and flood reports, USGS earthquake reports.')))
+        null))
       : el('div', { class: 'wx-alerts-head lvl-unknown' }, icon('info'), el('div', {}, el('strong', {}, 'Alert information is incomplete, so we cannot confirm there is no risk.'),
         el('div', { class: 'wx-alerts-sub' }, 'No alerts were found in the data that is available.')));
   const kids = [head];
-  if (n) kids.push(el('div', { class: 'wx-alert-list' }, av.groups.map(g => alertGroup(g, locName, isOpen(g), onToggle, onPick))));
+  if (n) kids.push(el('div', { class: 'wx-alert-list' }, av.groups.map(g => alertGroup(g, locName, isOpen(g), onToggle))));
   if (av.unavailable.length) kids.push(el('div', { class: 'wx-alerts-unavail', role: 'status' }, icon('info'), el('div', {},
     el('strong', {}, 'Unavailable right now: '), av.unavailable.join('; '), '. ', 'Missing data is not the same as no risk.')));
-  kids.push(el('div', { class: 'wx-alerts-foot hint' }, 'Always confirm with the official Vietnamese sources: ', link(SOURCES.nchmf), ' · ', link(SOURCES.vndma), ' · ', link(SOURCES.igp),
-    '. Earthquakes cannot be forecast, so only events reported in the last 7 days are listed.'));
+  kids.push(el('div', { class: 'wx-alerts-foot hint' }, 'Model-based risk, not an official warning. Confirm with ', link(SOURCES.nchmf), ' · ', link(SOURCES.vndma), '.'));
   return el('section', { class: 'wx-alerts', 'aria-label': 'Severe weather and natural disaster alerts' }, kids);
 }
 
@@ -210,17 +199,16 @@ export default {
 
     // ----- render -----
     function renderTabs() {
-      tabsEl.replaceChildren(...LOCATIONS.map(l => {
-        const s = state.get(l.id), on = l.id === selected;
-        return el('button', { class: `wx-tab${on ? ' active' : ''}`, type: 'button', role: 'tab', 'aria-selected': String(on), tabindex: on ? '0' : '-1', 'data-loc': l.id },
-          el('span', { class: 'wx-tab-ic' }, s.data ? wxIcon(s.data.current.cond.icon) : icon(s.status === 'error' ? 'cloud-off' : 'loader')),
-          el('span', { class: 'wx-tab-text' },
-            el('span', { class: 'wx-tab-name' }, l.short), el('span', { class: 'wx-tab-area' }, l.area),
-            el('span', { class: 'wx-tab-now' }, s.data ? s.data.current.cond.en : s.status === 'error' ? 'Unavailable' : 'Loading…')),
-          s.data ? el('span', { class: 'wx-tab-temp' }, `${fmt(s.data.current.temp)}°`) : null,
-          alertsView.byLocation[l.id] ? el('span', { class: `wx-tab-alert lvl-${alertsView.byLocation[l.id]}`, title: `${LEVEL_INFO[alertsView.byLocation[l.id]].label} alert`, role: 'img',
-            'aria-label': `${LEVEL_INFO[alertsView.byLocation[l.id]].label} alert for ${l.short}` }, icon('triangle-alert')) : null);
-      }));
+      const opts = LOCATIONS.map(l => {
+        const s = state.get(l.id), lvl = alertsView.byLocation[l.id];
+        const now = s.data ? `${fmt(s.data.current.temp)}° · ${s.data.current.cond.en}` : s.status === 'error' ? 'Unavailable' : 'Loading…';
+        return el('option', { value: l.id, selected: l.id === selected || null }, `${lvl ? '⚠ ' : ''}${l.short} · ${s.data ? fmt(s.data.current.temp) + '°' : now}`);
+      });
+      const sel = el('select', { class: 'select', id: 'wx-loc-select', 'aria-label': 'Location' }, opts);
+      sel.value = selected;
+      const cur = state.get(selected);
+      tabsEl.replaceChildren(sel,
+        cur.data ? el('span', { class: 'wx-picker-ic' }, wxIcon(cur.data.current.cond.icon)) : null);
       renderIcons(tabsEl);
     }
 
@@ -257,10 +245,12 @@ export default {
     }
 
     function renderAlerts() {
-      alertsView = buildAlerts(LOCATIONS, Object.fromEntries(state), sources);
-      alertsEl.replaceChildren(alertsSection(alertsView, {
+      const forecasts = Object.fromEntries(state);
+      alertsView = buildAlerts(LOCATIONS, forecasts, sources); // all locations: drives the alert badges on the tabs
+      const shown = buildAlerts(LOCATIONS.filter(l => l.id === selected), forecasts, sources); // only the selected location is listed
+      alertsEl.replaceChildren(alertsSection(shown, {
         locName: id => LOCATIONS.find(l => l.id === id)?.short || id,
-        isOpen: g => alertOpen.get(g.key) ?? (g.level === 'watch' || g.level === 'warning'),
+        isOpen: g => alertOpen.get(g.key) ?? false,
         onToggle: (key, open) => alertOpen.set(key, open),
         onPick: id => { selectLocation(id); viewEl.scrollIntoView({ block: 'start', behavior: 'smooth' }); },
       }));
@@ -273,17 +263,8 @@ export default {
       const btn = $('wx-refresh-all'); btn.disabled = busy; btn.querySelector('span').textContent = busy ? 'Refreshing…' : 'Refresh all';
     }
 
-    function selectLocation(id, focus) {
-      selected = id; ctx.storage.set('location', id); renderAll();
-      if (focus) tabsEl.querySelector(`[data-loc="${id}"]`)?.focus();
-    }
-    tabsEl.addEventListener('click', e => { const b = e.target.closest('[data-loc]'); if (b) selectLocation(b.dataset.loc); });
-    tabsEl.addEventListener('keydown', e => {
-      const i = LOCATIONS.findIndex(l => l.id === selected), n = LOCATIONS.length;
-      const to = e.key === 'ArrowRight' ? (i + 1) % n : e.key === 'ArrowLeft' ? (i + n - 1) % n : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : -1;
-      if (to < 0) return;
-      e.preventDefault(); selectLocation(LOCATIONS[to].id, true);
-    });
+    function selectLocation(id) { selected = id; ctx.storage.set('location', id); renderAll(); }
+    tabsEl.addEventListener('change', e => { if (e.target.matches('select')) selectLocation(e.target.value); });
     bindActions(root, {
       'refresh-all': () => { dayRefreshed.clear(); loadAll(true); },
       'refresh-one': () => load(LOCATIONS.find(l => l.id === selected), true),

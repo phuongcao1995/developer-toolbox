@@ -98,7 +98,7 @@ test('forecast URL asks for cloud cover, UV, gusts and feels-like maximum', () =
 test('calm week with every source answering: no alerts and "complete" (the exact no-alert message may be shown)', () => {
   const r = A.buildAlerts(L.LOCATIONS, okForecasts(), calmSources(), NOW);
   assert.equal(r.count, 0); assert.equal(r.complete, true); assert.deepEqual(r.unavailable, []); assert.equal(r.loading, false);
-  assert.equal(A.NO_ALERTS_TEXT, 'No severe weather or natural disaster alerts expected in the next 7 days.');
+  assert.equal(A.NO_ALERTS_TEXT, 'No severe weather or natural disaster alerts expected in the next 10 days.');
 });
 test('still loading sources: reported as loading, not as "no alerts"', () => {
   const r = A.buildAlerts(L.LOCATIONS, okForecasts(), null, NOW);

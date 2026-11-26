@@ -190,3 +190,15 @@
   .tool-weather-forecast .wx-alert-body { padding: 2px 12px 14px; }
   .tool-weather-forecast .wx-pill-vi { display: none; }
 }
+
+/* Location dropdown (top bar, next to Refresh all) */
+.tool-weather-forecast .wx-picker { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.tool-weather-forecast .wx-picker .select { width: min(440px, 100%); min-width: 300px; height: 48px; padding: 0 14px; font-size: 16px; font-weight: 600; border-radius: 12px; border-width: 2px; border-color: var(--primary); cursor: pointer; }
+.tool-weather-forecast .wx-picker-ic { display: inline-flex; flex: none; }
+.tool-weather-forecast .wx-picker-ic svg { width: 34px; height: 34px; }
+.tool-weather-forecast .wx-picker .btn-sm, .tool-weather-forecast .wx-bar-right .btn { height: 48px; }
+@media (max-width: 700px) { .tool-weather-forecast .wx-picker { width: 100%; } .tool-weather-forecast .wx-picker .select { min-width: 0; flex: 1; } }
+
+.tool-weather-forecast .wx-alert-brief { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.tool-weather-forecast .wx-alert-brief svg { width: 14px; height: 14px; flex: none; margin-top: 2px; }
+.tool-weather-forecast .wx-alert-body .wx-tips { margin: 0 0 8px; padding-left: 18px; font-size: 13px; }

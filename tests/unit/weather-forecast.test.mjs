@@ -32,7 +32,7 @@ test('buildForecastUrl', () => {
   const u = new URL(L.buildForecastUrl(L.LOCATIONS[2]));
   assert.equal(u.origin + u.pathname, 'https://api.open-meteo.com/v1/forecast');
   assert.equal(u.searchParams.get('timezone'), 'Asia/Ho_Chi_Minh');
-  assert.equal(u.searchParams.get('forecast_days'), '7');
+  assert.equal(u.searchParams.get('forecast_days'), '10');
   assert.equal(u.searchParams.get('latitude'), String(L.LOCATIONS[2].lat));
   assert.ok(u.searchParams.get('hourly').includes('precipitation_probability'));
   assert.ok(u.searchParams.get('daily').includes('uv_index_max'));

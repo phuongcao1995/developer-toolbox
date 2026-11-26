@@ -28,7 +28,7 @@ const CURRENT = ['temperature_2m', 'apparent_temperature', 'relative_humidity_2m
 
 export function buildForecastUrl(loc) {
   const p = new URLSearchParams({
-    latitude: String(loc.lat), longitude: String(loc.lon), timezone: TZ, forecast_days: '7', wind_speed_unit: 'kmh',
+    latitude: String(loc.lat), longitude: String(loc.lon), timezone: TZ, forecast_days: '10', wind_speed_unit: 'kmh',
     temperature_unit: 'celsius', precipitation_unit: 'mm',
     current: CURRENT.join(','), hourly: HOURLY.join(','), daily: DAILY.join(','),
   });
