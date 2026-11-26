@@ -3,6 +3,7 @@ import { weatherSvg } from './icons.js';
 import { LOCATIONS, loadForecast, viewForecast, nowInVietnam, describeDate, fmt } from './logic.js';
 import { LEVEL_INFO, NO_ALERTS_TEXT, SOURCES, loadAlertSources, buildAlerts, vnTime } from './alerts.js';
 
+const DEFAULT_LOCATION_ID = 'ha-huy-tap'; // shown first until the user picks another location
 const icon = name => el('i', { 'data-lucide': name });
 // Lucide icons used by the UI (listed on an "icon" line so scripts/build-icons.mjs bundles them).
 export const UI_ICONS = ['thermometer', 'droplets', 'wind', 'umbrella', 'sunrise', 'sunset', 'arrow-up', 'arrow-down', 'sun', 'cloud-off', 'loader', 'map-pin', 'refresh-cw', 'chevron-down', 'triangle-alert', 'shield-check', 'external-link', 'info', 'siren', 'octagon-alert', 'clock'];
@@ -166,7 +167,7 @@ export default {
     const $ = id => root.querySelector('#' + id);
     const alertsEl = $('wx-alerts'), tabsEl = $('wx-tabs'), viewEl = $('wx-view'), updatedEl = $('wx-updated'), clockEl = $('wx-clock');
     const savedId = ctx.storage.get('location', null);
-    let selected = LOCATIONS.some(l => l.id === savedId) ? savedId : LOCATIONS[0].id;
+    let selected = LOCATIONS.some(l => l.id === savedId) ? savedId : DEFAULT_LOCATION_ID;
     /** id -> { status: 'loading'|'ok'|'error', data, fetchedAt, error, refreshing } */
     const state = new Map(LOCATIONS.map(l => [l.id, { status: 'loading' }]));
     let renderedHour = '';
